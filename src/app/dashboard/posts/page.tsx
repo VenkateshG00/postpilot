@@ -3,7 +3,7 @@ import { formatDate, getStatusColor } from '@/lib/utils'
 import { ExternalLink } from 'lucide-react'
 
 export default async function PostsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: logs } = await supabase
     .from('post_logs')

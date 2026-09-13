@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import SchedulePageClient from './SchedulePageClient'
 
 export default async function SchedulePage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ data: schedules }, { data: accounts }] = await Promise.all([

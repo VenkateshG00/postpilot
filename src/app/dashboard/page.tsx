@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { formatDate, getStatusColor } from '@/lib/utils'
 
 export default async function DashboardPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ data: biz }, { data: accounts }, { data: logs }, { data: schedules }] = await Promise.all([
