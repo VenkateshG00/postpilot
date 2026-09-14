@@ -5,21 +5,8 @@ import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
 import type { SocialAccount } from '@/types'
 
-const META_SCOPES = [
-  'instagram_business_basic',
-  'instagram_business_content_publish',
-  'pages_show_list'
-].join(',')
-
 function getMetaOAuthURL() {
-  const params = new URLSearchParams({
-    client_id: process.env.NEXT_PUBLIC_META_APP_ID!,
-    redirect_uri: `${window.location.origin}/api/meta/callback`,
-    scope: META_SCOPES,
-    response_type: 'code',
-    state: crypto.randomUUID()
-  })
-  return `https://www.facebook.com/v19.0/dialog/oauth?${params}`
+  return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1745129453437379&redirect_uri=https://postpilot-1ia.pages.dev/api/meta/callback&response_type=code&scope=instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments`
 }
 
 export default function ConnectPageClient({ accounts }: { accounts: SocialAccount[] }) {
