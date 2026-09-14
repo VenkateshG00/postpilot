@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import { createClient } from '@/lib/supabase/server'
 import { BarChart3, Clock, CheckCircle2, AlertCircle, ArrowRight, Plus } from 'lucide-react'
 import Link from 'next/link'
