@@ -2,16 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Clock, Toggle, Trash2, Loader2, X, CheckCircle2 } from 'lucide-react'
+import { Plus, Clock, Trash2, Loader2, X, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const CONTENT_TYPES = [
-  { value: 'post',     label: 'Photo post' },
+  { value: 'post', label: 'Photo post' },
   { value: 'carousel', label: 'Carousel' },
-  { value: 'reel',     label: 'Reel' },
-  { value: 'story',    label: 'Story' }
+  { value: 'reel', label: 'Reel' },
+  { value: 'story', label: 'Story' }
 ]
 
 interface Props {
