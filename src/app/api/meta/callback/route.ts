@@ -49,13 +49,22 @@ export async function GET(request: NextRequest) {
     const longToken = longData.access_token
     const expiresAt = new Date(Date.now() + (longData.expires_in ?? 5183944) * 1000)
 
+
+    // 3. Get Instagram user details
     const userRes = await fetch(
-      `https://graph.instagram.com/v19.0/${igUserId}?` +
+      `https://graph.instagram.com/me?` +
       new URLSearchParams({
         fields: 'id,name,username,profile_picture_url',
         access_token: longToken
       })
     )
+    // const userRes = await fetch(
+    //   `https://graph.instagram.com/v19.0/${igUserId}?` +
+    //   new URLSearchParams({
+    //     fields: 'id,name,username,profile_picture_url',
+    //     access_token: longToken
+    //   })
+    // )
     const userData = await userRes.json()
     if (userData.error) throw new Error(userData.error.message)
 
