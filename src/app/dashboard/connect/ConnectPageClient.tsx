@@ -10,10 +10,6 @@ function getMetaOAuthURL() {
   return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1473785194770846&redirect_uri=https://postpilot-1ia.pages.dev/api/meta/callback&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments`
 }
 
-// function getMetaOAuthURL() {
-//   return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1745129453437379&redirect_uri=https://postpilot-1ia.pages.dev/api/meta/callback&response_type=code&scope=instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments`
-// }
-
 export default function ConnectPageClient({ accounts }: { accounts: SocialAccount[] }) {
   const [loading, setLoading] = useState(false)
   const [urlError, setUrlError] = useState<string | null>(null)
