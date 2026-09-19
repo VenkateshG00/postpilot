@@ -16,9 +16,9 @@ export const INDUSTRIES = [
 
 export const BRAND_VOICES = [
   { value: 'professional', label: 'Professional', desc: 'Authoritative and trustworthy' },
-  { value: 'casual',       label: 'Casual',       desc: 'Friendly and approachable' },
-  { value: 'witty',        label: 'Witty',         desc: 'Clever and entertaining' },
-  { value: 'inspirational',label: 'Inspirational', desc: 'Motivating and uplifting' }
+  { value: 'casual', label: 'Casual', desc: 'Friendly and approachable' },
+  { value: 'witty', label: 'Witty', desc: 'Clever and entertaining' },
+  { value: 'inspirational', label: 'Inspirational', desc: 'Motivating and uplifting' }
 ] as const
 
 export const TIMEZONES = [
@@ -48,9 +48,20 @@ export function formatDate(date: string | null): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case 'published': return 'text-emerald-600 bg-emerald-50'
-    case 'pending':   return 'text-amber-600 bg-amber-50'
-    case 'generating':return 'text-blue-600 bg-blue-50'
-    case 'failed':    return 'text-red-600 bg-red-50'
-    default:          return 'text-gray-600 bg-gray-50'
+    case 'pending': return 'text-amber-600 bg-amber-50'
+    case 'generating': return 'text-blue-600 bg-blue-50'
+    case 'failed': return 'text-red-600 bg-red-50'
+    default: return 'text-gray-600 bg-gray-50'
   }
+}
+export function formatDateIST(date: string | null): string {
+  if (!date) return '—'
+  return new Date(date).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }

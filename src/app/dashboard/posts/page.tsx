@@ -1,6 +1,6 @@
 export const runtime = 'edge'
 import { createClient } from '@/lib/supabase/server'
-import { formatDate, getStatusColor } from '@/lib/utils'
+import { formatDateIST, getStatusColor } from '@/lib/utils'
 import { ExternalLink } from 'lucide-react'
 
 export default async function PostsPage() {
@@ -59,7 +59,7 @@ export default async function PostsPage() {
                         {log.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{formatDate(log.created_at)}</td>
+                    <td className="px-5 py-3 text-gray-400 text-xs">{formatDateIST(log.created_at)}</td>
                     <td className="px-5 py-3">
                       {log.ig_permalink && (
                         <a href={log.ig_permalink} target="_blank" rel="noreferrer"
