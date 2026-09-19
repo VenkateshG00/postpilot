@@ -15,11 +15,12 @@ export async function GET(request: NextRequest) {
 
     try {
         const now = new Date()
-        const currentHour = now.getUTCHours().toString().padStart(2, '0')
-        const currentMinute = now.getUTCMinutes().toString().padStart(2, '0')
+        const istOffset = 5.5 * 60 * 60 * 1000
+        const ist = new Date(now.getTime() + istOffset)
+        const currentHour = ist.getHours().toString().padStart(2, '0')
+        const currentMinute = ist.getMinutes().toString().padStart(2, '0')
         const p_current_time = `${currentHour}:${currentMinute}`
-        const p_current_day = now.getUTCDay()
-
+        const p_current_day = ist.getDay()
         const res = await fetch(
             `${SUPABASE_URL}/rest/v1/rpc/get_due_schedules`,
             {
