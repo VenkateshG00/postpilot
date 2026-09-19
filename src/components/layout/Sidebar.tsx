@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, Zap } from 'lucide-react'
+import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -12,6 +12,7 @@ const NAV = [
   { href: '/dashboard/schedule',  label: 'Schedule',   icon: Calendar },
   { href: '/dashboard/posts',     label: 'Posts',      icon: Image },
   { href: '/dashboard/connect',   label: 'Accounts',   icon: Instagram },
+  { href: '/dashboard/billing',   label: 'Billing',    icon: CreditCard },
   { href: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
