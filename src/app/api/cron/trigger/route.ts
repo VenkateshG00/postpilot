@@ -134,6 +134,15 @@ export async function GET(request: NextRequest) {
             // Count this post toward the cap for the rest of this run.
             usageCache[userId] = used + 1
 
+            // Prefer the schedule's own theme (schedules.topics) over the business default.
+            let effectiveTopics = schedule.topics
+            try {
+                const stRes = await fetch(`${SUPABASE_URL}/rest/v1/schedules?id=eq.${schedule.schedule_id}&select=topics`, { headers: sbHeaders })
+                const stRows = await stRes.json()
+                const st = stRows?.[0]?.topics
+                if (Array.isArray(st) && st.length) effectiveTopics = st
+            } catch { /* fall back to business topics */ }
+
             // Fire the n8n webhook.
             const n8nRes = await fetch(N8N_WEBHOOK_BASE_URL, {
                 method: 'POST',
@@ -146,7 +155,7 @@ export async function GET(request: NextRequest) {
                     description: schedule.description,
                     target_audience: schedule.target_audience,
                     brand_voice: schedule.brand_voice,
-                    topics: schedule.topics,
+                    topics: effectiveTopics,
                     hashtags: schedule.hashtags,
                     language: schedule.language,
                     ig_business_id: schedule.ig_business_id,
