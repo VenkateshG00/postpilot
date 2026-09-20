@@ -30,7 +30,8 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
     frequency: 'daily',
     post_times: ['09:00'],
     days_of_week: [] as number[],
-    content_type: 'post'
+    content_type: 'post',
+    theme: ''
   })
 
   function addTime() {
@@ -63,7 +64,8 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
     setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const payload = { ...form, user_id: user!.id, days_of_week: form.days_of_week.length ? form.days_of_week : null }
+    const { theme, ...rest } = form
+    const payload = { ...rest, user_id: user!.id, days_of_week: form.days_of_week.length ? form.days_of_week : null, topics: theme.trim() ? [theme.trim()] : null }
     const { data, error } = await supabase.from('schedules').insert(payload).select('*, social_accounts(account_name, platform)').single()
     setSaving(false)
     if (error) { alert(error.message); return }
@@ -157,6 +159,26 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
               </div>
             </div>
 
+            <div>
+              <label className="label">Topic / theme <span className="text-gray-400 font-normal">(what these posts are about)</span></label>
+              <input
+                type="text"
+                list="pillar-suggestions"
+                value={form.theme}
+                onChange={e => setForm(f => ({ ...f, theme: e.target.value }))}
+                placeholder="e.g. New listings, Buying tips, Client stories"
+                className="input-base"
+              />
+              <datalist id="pillar-suggestions">
+                <option value="New property listings" />
+                <option value="Home buying tips" />
+                <option value="Investment insights" />
+                <option value="Client success stories" />
+                <option value="Behind the scenes" />
+                <option value="Local market updates" />
+              </datalist>
+            </div>
+
             {form.frequency === 'weekly' && (
               <div>
                 <label className="label">Days of week</label>
@@ -237,6 +259,9 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full capitalize">
                     {s.content_type}
                   </span>
+                  {s.topics?.[0] && (
+                    <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{s.topics[0]}</span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {s.frequency === 'daily' || !s.days_of_week?.length
