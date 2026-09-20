@@ -14,7 +14,7 @@ export default async function PostsPage() {
     .limit(50)
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Post history</h1>
         <p className="text-sm text-gray-500 mt-1">Every post PostPilot has created or attempted</p>
@@ -48,7 +48,7 @@ export default async function PostsPage() {
                       }
                     </td>
                     <td className="px-5 py-3">
-                      <p className="text-gray-700 line-clamp-2 max-w-sm">{log.caption || '—'}</p>
+                      <p className="text-gray-700 line-clamp-2">{log.caption || '—'}</p>
                       {log.error_message && (
                         <p className="text-xs text-red-500 mt-0.5">{log.error_message}</p>
                       )}

@@ -239,7 +239,9 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {s.frequency === 'daily' ? 'Every day' : `${s.days_of_week?.length ?? 0} days/week`}
+                  {s.frequency === 'daily' || !s.days_of_week?.length
+                    ? 'Every day'
+                    : [...s.days_of_week].sort((a: number, b: number) => a - b).map((d: number) => DAYS[d]).join(', ')}
                   {' · '}
                   {s.post_times?.join(', ')}
                   {s.social_accounts && ` · @${s.social_accounts.account_name}`}
