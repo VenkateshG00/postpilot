@@ -32,6 +32,7 @@ export default async function PostsPage() {
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-16">Image</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500">Caption</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-40">Topic</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-24">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-32">Date</th>
                   <th className="px-5 py-3 w-10" />
@@ -52,6 +53,7 @@ export default async function PostsPage() {
                         <p className="text-xs text-red-500 mt-0.5">{log.error_message}</p>
                       )}
                     </td>
+                    <td className="px-5 py-3 text-gray-500 text-xs">{log.topic_used || '—'}</td>
                     <td className="px-5 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(log.status)}`}>
                         {log.status}
