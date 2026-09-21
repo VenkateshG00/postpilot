@@ -12,6 +12,8 @@ export interface Profile {
   avatar_url: string | null
   plan: Plan
   plan_expires_at: string | null
+  is_admin?: boolean
+  credits_balance?: number
   created_at: string
   updated_at: string
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap } from 'lucide-react'
+import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -20,6 +20,10 @@ const NAV = [
 export default function Sidebar({ profile }: { profile: Profile | null }) {
   const pathname = usePathname()
   const router = useRouter()
+
+  const nav = profile?.is_admin
+    ? [...NAV, { href: '/dashboard/admin/plans', label: 'Admin', icon: Shield }]
+    : NAV
 
   async function signOut() {
     const supabase = createClient()
@@ -44,7 +48,7 @@ export default function Sidebar({ profile }: { profile: Profile | null }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, icon: Icon }) => {
           const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href)
           return (
             <Link
