@@ -3,7 +3,8 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { rzpFetch } from '@/lib/razorpay'
-import { PLANS, amountPaise, type PlanKey } from '@/lib/plans'
+import { PLANS, type PlanKey } from '@/lib/plans'
+import { amountPaise } from '@/lib/plans-db'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
   }
 
-  const amount = amountPaise(plan)
+  const amount = await amountPaise(plan)
   let order: any
   try {
     order = await rzpFetch('/orders', {

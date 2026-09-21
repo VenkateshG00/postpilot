@@ -1,5 +1,7 @@
-// Central plan definitions. Plan KEYS (free/starter/pro/agency) match the
-// CHECK constraint on profiles.plan — do not rename them.
+// Central plan definitions (FALLBACK). The live source of truth is the
+// `plans` table in Supabase, read via lib/plans-db.ts. These values mirror it
+// so the app still works if a DB read fails. Plan KEYS (free/starter/pro/agency)
+// match the CHECK constraint on profiles.plan — do not rename them.
 
 export type PlanKey = 'free' | 'starter' | 'pro' | 'agency'
 
@@ -14,19 +16,19 @@ export interface PlanDef {
 export const PLANS: Record<PlanKey, PlanDef> = {
   free: {
     key: 'free', label: 'Free', priceInr: 0, postsPerDay: 1,
-    features: ['1 post per day', '1 Instagram account', 'AI captions + images'],
+    features: ['1 post per day', '1 channel', 'AI captions + stock images'],
   },
   starter: {
-    key: 'starter', label: 'Starter', priceInr: 499, postsPerDay: 3,
-    features: ['3 posts per day', '1 Instagram account', 'Priority scheduling'],
+    key: 'starter', label: 'Starter', priceInr: 499, postsPerDay: 2,
+    features: ['2 posts per day', '1 channel', '90 AI credits / mo', '7-day free trial'],
   },
   pro: {
-    key: 'pro', label: 'Pro', priceInr: 1499, postsPerDay: 10,
-    features: ['10 posts per day', 'Multiple accounts', 'Analytics dashboard'],
+    key: 'pro', label: 'Pro', priceInr: 1299, postsPerDay: 5,
+    features: ['5 posts per day', '3 channels', 'Pexels + DALL-E images', '300 AI credits / mo', 'Analytics'],
   },
   agency: {
     key: 'agency', label: 'Agency', priceInr: 4999, postsPerDay: Infinity,
-    features: ['Unlimited posts', 'Unlimited accounts', 'White-label + client reporting'],
+    features: ['Unlimited posts', '10 channels', '2,000 AI credits / mo', '4 team seats', 'White-label + client reports'],
   },
 }
 

@@ -6,16 +6,16 @@ const PLANS = [
     name: 'Starter',
     price: '₹499',
     period: '/mo',
-    posts: '3 posts/day',
+    posts: '2 posts/day',
     features: ['1 Instagram account', 'AI-generated captions', 'Basic scheduling', 'Post history'],
     cta: 'Start free trial',
     highlight: false
   },
   {
     name: 'Pro',
-    price: '₹1,499',
+    price: '₹1,299',
     period: '/mo',
-    posts: '10 posts/day',
+    posts: '5 posts/day',
     features: ['3 social accounts', 'Reels & carousels', 'Custom brand voice', 'Analytics dashboard', 'Priority support'],
     cta: 'Start free trial',
     highlight: true

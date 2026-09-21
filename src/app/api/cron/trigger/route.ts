@@ -1,7 +1,7 @@
 export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { dailyLimit } from '@/lib/plans'
+import { dailyLimit } from '@/lib/plans-db'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
             const userId = schedule.user_id
             const { plan, expiresAt } = await getProfile(userId)
             const eff = effectivePlan(plan, expiresAt)
-            const limit = dailyLimit(eff) // Infinity for agency
+            const limit = await dailyLimit(eff) // Infinity for agency
             const used = await getUsage(userId)
 
             if (used >= limit) {
