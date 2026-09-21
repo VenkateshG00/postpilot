@@ -36,16 +36,22 @@ export default function LoginForm() {
         if (error) { setServerError(error.message); return }
 
         if (authData.user) {
-            const { data: biz } = await supabase
-                .from('business_profiles')
-                .select('id')
-                .eq('user_id', authData.user.id)
+            // Super admins have no business profile by design — skip onboarding.
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_admin')
+                .eq('id', authData.user.id)
                 .single()
 
-            if (biz) {
-                router.push('/dashboard')
+            if (profile?.is_admin) {
+                router.push('/dashboard/admin/plans')
             } else {
-                router.push('/auth/onboarding')
+                const { data: biz } = await supabase
+                    .from('business_profiles')
+                    .select('id')
+                    .eq('user_id', authData.user.id)
+                    .single()
+                router.push(biz ? '/dashboard' : '/auth/onboarding')
             }
             router.refresh()
         }
