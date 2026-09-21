@@ -2,22 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap } from 'lucide-react'
+import { LayoutDashboard, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 
 const NAV = [
-  { href: '/dashboard',           label: 'Overview',   icon: LayoutDashboard },
-  { href: '/dashboard/schedule',  label: 'Schedule',   icon: Calendar },
-  { href: '/dashboard/posts',     label: 'Posts',      icon: Image },
-  { href: '/dashboard/analytics', label: 'Analytics',  icon: BarChart3 },
-  { href: '/dashboard/connect',   label: 'Accounts',   icon: Instagram },
-  { href: '/dashboard/billing',   label: 'Billing',    icon: CreditCard },
-  { href: '/dashboard/settings',  label: 'Settings',   icon: Settings },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/plans',     label: 'Plans',     icon: CreditCard },
+  { href: '/admin/clients',   label: 'Clients',   icon: Users },
+  { href: '/admin/posts',     label: 'Posts',     icon: Image },
+  { href: '/admin/accounts',  label: 'Accounts',  icon: Instagram },
+  { href: '/admin/settings',  label: 'Settings',  icon: Settings },
 ]
 
-export default function Sidebar({ profile }: { profile: Profile | null }) {
+export default function AdminSidebar({ profile }: { profile: Profile | null }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -30,7 +29,6 @@ export default function Sidebar({ profile }: { profile: Profile | null }) {
 
   return (
     <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-full">
-      {/* Logo */}
       <div className="px-5 h-16 flex items-center border-b border-gray-100">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
@@ -39,13 +37,15 @@ export default function Sidebar({ profile }: { profile: Profile | null }) {
           <span className="font-semibold text-gray-900 tracking-tight">
             Post<span className="text-brand-600">Pilot</span>
           </span>
+          <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">
+            Admin
+          </span>
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV.map(({ href, label, icon: Icon }) => {
-          const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href)
+          const active = pathname.startsWith(href)
           return (
             <Link
               key={href}
@@ -64,15 +64,14 @@ export default function Sidebar({ profile }: { profile: Profile | null }) {
         })}
       </nav>
 
-      {/* User + Sign out */}
       <div className="px-3 py-4 border-t border-gray-100">
         <div className="flex items-center gap-2.5 px-3 py-2 mb-1">
           <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center text-xs font-semibold text-brand-700">
-            {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
+            {profile?.full_name?.[0]?.toUpperCase() || 'S'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-gray-400 capitalize">{profile?.plan} plan</p>
+            <p className="text-xs font-medium text-gray-900 truncate">{profile?.full_name || 'Superadmin'}</p>
+            <p className="text-xs text-gray-400">Super Admin</p>
           </div>
         </div>
         <button

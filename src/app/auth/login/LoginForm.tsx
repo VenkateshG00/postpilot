@@ -39,12 +39,18 @@ export default function LoginForm() {
             // Super admins have no business profile by design — skip onboarding.
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('is_admin')
+                .select('is_admin, is_suspended')
                 .eq('id', authData.user.id)
                 .single()
 
+            if (profile?.is_suspended) {
+                await supabase.auth.signOut()
+                setServerError('This account has been suspended. Please contact support.')
+                return
+            }
+
             if (profile?.is_admin) {
-                router.push('/dashboard/admin/plans')
+                router.push('/admin/dashboard')
             } else {
                 const { data: biz } = await supabase
                     .from('business_profiles')

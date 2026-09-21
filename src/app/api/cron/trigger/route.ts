@@ -45,18 +45,18 @@ export async function GET(request: NextRequest) {
         }
 
         // --- Plan gating caches (per run) ---------------------------------
-        const profileCache: Record<string, { plan: string; expiresAt: string | null }> = {}
+        const profileCache: Record<string, { plan: string; expiresAt: string | null; suspended: boolean }> = {}
         const usageCache: Record<string, number> = {}
 
         const getProfile = async (userId: string) => {
             if (profileCache[userId]) return profileCache[userId]
             const r = await fetch(
-                `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=plan,plan_expires_at`,
+                `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=plan,plan_expires_at,is_suspended`,
                 { headers: sbHeaders }
             )
             const rows = await r.json()
-            const row = rows?.[0] ?? { plan: 'free', plan_expires_at: null }
-            profileCache[userId] = { plan: row.plan ?? 'free', expiresAt: row.plan_expires_at ?? null }
+            const row = rows?.[0] ?? { plan: 'free', plan_expires_at: null, is_suspended: false }
+            profileCache[userId] = { plan: row.plan ?? 'free', expiresAt: row.plan_expires_at ?? null, suspended: row.is_suspended ?? false }
             return profileCache[userId]
         }
 
@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
         // several schedules due in the same minute.
         for (const schedule of schedules) {
             const userId = schedule.user_id
-            const { plan, expiresAt } = await getProfile(userId)
+            const { plan, expiresAt, suspended } = await getProfile(userId)
+            if (suspended) continue
             const eff = effectivePlan(plan, expiresAt)
             const limit = await dailyLimit(eff) // Infinity for agency
             const used = await getUsage(userId)

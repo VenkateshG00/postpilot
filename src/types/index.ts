@@ -13,6 +13,7 @@ export interface Profile {
   plan: Plan
   plan_expires_at: string | null
   is_admin?: boolean
+  is_suspended?: boolean
   credits_balance?: number
   created_at: string
   updated_at: string
