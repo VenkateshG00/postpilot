@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap, Palette } from 'lucide-react'
@@ -25,6 +26,9 @@ export default function Sidebar({ profile, brand }: { profile: Profile | null; b
     ? [...NAV, { href: '/dashboard/white-label', label: 'White-label', icon: Palette }]
     : NAV
 
+  const [logoError, setLogoError] = useState(false)
+  const showLogo = !!(brand?.eligible && brand.logoUrl && !logoError)
+
   async function signOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -36,8 +40,8 @@ export default function Sidebar({ profile, brand }: { profile: Profile | null; b
     <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 h-16 flex items-center border-b border-gray-100">
-        {brand?.eligible && brand.logoUrl ? (
-          <img src={brand.logoUrl} alt="logo" className="h-8 max-w-[150px] object-contain" />
+        {showLogo ? (
+          <img src={brand?.logoUrl || undefined} alt="logo" className="h-8 max-w-[150px] object-contain" onError={() => setLogoError(true)} />
         ) : (
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center"
