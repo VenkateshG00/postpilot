@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap } from 'lucide-react'
+import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap, Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -17,9 +17,13 @@ const NAV = [
   { href: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
-export default function Sidebar({ profile }: { profile: Profile | null }) {
+export default function Sidebar({ profile, brand }: { profile: Profile | null; brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null }) {
   const pathname = usePathname()
   const router = useRouter()
+
+  const nav = brand?.eligible
+    ? [...NAV, { href: '/dashboard/white-label', label: 'White-label', icon: Palette }]
+    : NAV
 
   async function signOut() {
     const supabase = createClient()
@@ -32,19 +36,26 @@ export default function Sidebar({ profile }: { profile: Profile | null }) {
     <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 h-16 flex items-center border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
-            <Zap size={14} className="text-white" />
+        {brand?.eligible && brand.logoUrl ? (
+          <img src={brand.logoUrl} alt="logo" className="h-8 max-w-[150px] object-contain" />
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center"
+              style={brand?.eligible && brand.color ? { backgroundColor: brand.color } : undefined}>
+              <Zap size={14} className="text-white" />
+            </div>
+            <span className="font-semibold text-gray-900 tracking-tight">
+              {brand?.eligible && brand.name
+                ? brand.name
+                : <>Post<span className="text-brand-600">Pilot</span></>}
+            </span>
           </div>
-          <span className="font-semibold text-gray-900 tracking-tight">
-            Post<span className="text-brand-600">Pilot</span>
-          </span>
-        </div>
+        )}
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, icon: Icon }) => {
           const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href)
           return (
             <Link

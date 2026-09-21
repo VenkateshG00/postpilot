@@ -15,6 +15,9 @@ export interface Profile {
   is_admin?: boolean
   is_suspended?: boolean
   credits_balance?: number
+  brand_name?: string | null
+  brand_logo_url?: string | null
+  brand_color?: string | null
   created_at: string
   updated_at: string
 }
