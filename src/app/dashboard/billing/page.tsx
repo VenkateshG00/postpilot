@@ -11,7 +11,7 @@ export default async function BillingPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('plan, plan_expires_at, subscription_status')
+    .select('plan, plan_expires_at, subscription_status, credits_balance')
     .eq('id', user!.id)
     .single()
 
@@ -46,6 +46,8 @@ export default async function BillingPage() {
       dailyLimit={currentLimit === Infinity ? null : currentLimit}
       postsToday={postsToday}
       planExpiresAt={profile?.plan_expires_at ?? null}
+      creditsBalance={profile?.credits_balance ?? 0}
+      creditsMonthly={currentRow?.credits_per_month ?? 0}
     />
   )
 }

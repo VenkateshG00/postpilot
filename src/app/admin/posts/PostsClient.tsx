@@ -27,7 +27,9 @@ function badge(status: string) {
 
 export default function PostsClient({ posts }: { posts: Row[] }) {
   const [filter, setFilter] = useState('all')
-  const shown = filter === 'all' ? posts : posts.filter(p => p.status === filter)
+  const [userFilter, setUserFilter] = useState('all')
+  const users = Array.from(new Set(posts.map(p => p.email))).sort()
+  const shown = posts.filter(p => (filter === 'all' || p.status === filter) && (userFilter === 'all' || p.email === userFilter))
 
   return (
     <div className="p-8 max-w-6xl">
@@ -46,6 +48,11 @@ export default function PostsClient({ posts }: { posts: Row[] }) {
             </button>
           )
         })}
+        <select value={userFilter} onChange={e => setUserFilter(e.target.value)}
+          className="px-3 py-1.5 rounded-lg text-sm bg-white border border-gray-200 text-gray-600 max-w-[220px]">
+          <option value="all">All users</option>
+          {users.map(u => <option key={u} value={u}>{u}</option>)}
+        </select>
       </div>
 
       <div className="card overflow-hidden">

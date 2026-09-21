@@ -98,7 +98,11 @@ export default function ClientsClient({ clients: initial, planKeys }: { clients:
                 <p className="text-sm text-gray-700 py-2">{c.plan_expires_at ? new Date(c.plan_expires_at).toLocaleDateString('en-IN') : '—'}</p>
               </div>
               <div className="flex gap-2">
-                <button disabled={busy === c.id} onClick={() => act(c.id, 'set_expiry', { plan_expires_at: new Date(Date.now() + 30 * 864e5).toISOString() })}
+                <button disabled={busy === c.id} onClick={() => {
+                    const cur = c.plan_expires_at ? new Date(c.plan_expires_at).getTime() : 0
+                    const base = cur > Date.now() ? cur : Date.now()
+                    act(c.id, 'set_expiry', { plan_expires_at: new Date(base + 30 * 864e5).toISOString() })
+                  }}
                   className="px-3 py-2 rounded-lg text-xs font-medium border border-gray-200 text-gray-700 hover:bg-gray-50">+30 days</button>
                 <button disabled={busy === c.id} onClick={() => act(c.id, 'suspend', { is_suspended: !c.is_suspended })}
                   className={'px-3 py-2 rounded-lg text-xs font-medium ' + (c.is_suspended ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-red-600 text-white hover:bg-red-700')}>

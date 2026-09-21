@@ -20,6 +20,8 @@ interface Props {
   dailyLimit: number | null
   postsToday: number
   planExpiresAt: string | null
+  creditsBalance: number
+  creditsMonthly: number
 }
 
 const RANK: Record<string, number> = { free: 0, starter: 1, pro: 2, agency: 3 }
@@ -139,6 +141,16 @@ export default function BillingClient(props: Props) {
               />
             </div>
           )}
+        </div>
+
+        <div className="mt-5 pt-5 border-t border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Credits</span>
+            <span className="font-medium text-gray-900">
+              {props.creditsBalance}{props.creditsMonthly ? ` / ${props.creditsMonthly} incl.` : ''}
+            </span>
+          </div>
+          <a href="/dashboard/credits" className="text-sm font-medium text-brand-600 hover:text-brand-700">Add credits →</a>
         </div>
       </div>
 
