@@ -50,7 +50,7 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
   }
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
         <p className="text-sm text-gray-500 mt-1">Update your business profile and content preferences</p>
