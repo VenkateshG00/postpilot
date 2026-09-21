@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap } from 'lucide-react'
+import { LayoutDashboard, BarChart3, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/plans',     label: 'Plans',     icon: CreditCard },
   { href: '/admin/clients',   label: 'Clients',   icon: Users },
   { href: '/admin/posts',     label: 'Posts',     icon: Image },
