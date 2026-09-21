@@ -4,25 +4,25 @@ import { ArrowRight, Zap, Clock, BarChart3, Instagram, CheckCircle2 } from 'luci
 const PLANS = [
   {
     name: 'Starter',
-    price: '$19',
+    price: '₹499',
     period: '/mo',
-    posts: '1 post/day',
+    posts: '3 posts/day',
     features: ['1 Instagram account', 'AI-generated captions', 'Basic scheduling', 'Post history'],
     cta: 'Start free trial',
     highlight: false
   },
   {
     name: 'Pro',
-    price: '$49',
+    price: '₹1,499',
     period: '/mo',
-    posts: '3 posts/day',
+    posts: '10 posts/day',
     features: ['3 social accounts', 'Reels & carousels', 'Custom brand voice', 'Analytics dashboard', 'Priority support'],
     cta: 'Start free trial',
     highlight: true
   },
   {
     name: 'Agency',
-    price: '$129',
+    price: '₹4,999',
     period: '/mo',
     posts: 'Unlimited posts',
     features: ['20 social accounts', 'Multi-client dashboard', 'White-label reports', 'API access', 'Dedicated support'],
