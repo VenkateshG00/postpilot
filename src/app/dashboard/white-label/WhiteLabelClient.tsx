@@ -19,7 +19,7 @@ export default function WhiteLabelClient({ eligible, planName, brand: initial }:
       const res = await fetch('/api/white-label', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(brand),
+        body: JSON.stringify({ brand_name: brand.name, brand_logo_url: brand.logo_url, brand_color: brand.color }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
