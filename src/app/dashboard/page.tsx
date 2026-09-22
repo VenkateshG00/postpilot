@@ -3,16 +3,24 @@ import { createClient } from '@/lib/supabase/server'
 import { BarChart3, Clock, CheckCircle2, AlertCircle, ArrowRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate, getStatusColor } from '@/lib/utils'
+import { getActiveAccountId } from '@/lib/active-account'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: biz }, { data: accounts }, { data: logs }, { data: schedules }] = await Promise.all([
+  const { data: accounts } = await supabase.from('social_accounts').select('*').eq('user_id', user!.id).eq('is_active', true)
+  const activeId = await getActiveAccountId((accounts ?? []).map(a => a.id))
+
+  let logsQ = supabase.from('post_logs').select('*').eq('user_id', user!.id)
+  if (activeId) logsQ = logsQ.eq('social_account_id', activeId)
+  let schedQ = supabase.from('schedules').select('*').eq('user_id', user!.id).eq('is_active', true)
+  if (activeId) schedQ = schedQ.eq('social_account_id', activeId)
+
+  const [{ data: biz }, { data: logs }, { data: schedules }] = await Promise.all([
     supabase.from('business_profiles').select('*').eq('user_id', user!.id).limit(1).maybeSingle(),
-    supabase.from('social_accounts').select('*').eq('user_id', user!.id).eq('is_active', true),
-    supabase.from('post_logs').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(10),
-    supabase.from('schedules').select('*').eq('user_id', user!.id).eq('is_active', true)
+    logsQ.order('created_at', { ascending: false }).limit(10),
+    schedQ,
   ])
 
   const publishedCount = logs?.filter(l => l.status === 'published').length ?? 0

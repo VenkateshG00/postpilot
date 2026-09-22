@@ -2,6 +2,7 @@ export const runtime = 'edge'
 
 import { createClient } from '@/lib/supabase/server'
 import AnalyticsClient from './AnalyticsClient'
+import { getActiveAccountId } from '@/lib/active-account'
 
 const IST = 5.5 * 60 * 60 * 1000
 const DAY = 24 * 60 * 60 * 1000
@@ -16,18 +17,18 @@ export default async function AnalyticsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: logs }, { data: accounts }] = await Promise.all([
-    supabase
-      .from('post_logs')
-      .select('status, platform, social_account_id, created_at, published_at')
-      .eq('user_id', user!.id)
-      .order('created_at', { ascending: false })
-      .limit(2000),
-    supabase
-      .from('social_accounts')
-      .select('id, account_name, platform')
-      .eq('user_id', user!.id),
-  ])
+  const { data: accounts } = await supabase
+    .from('social_accounts')
+    .select('id, account_name, platform')
+    .eq('user_id', user!.id)
+  const activeId = await getActiveAccountId((accounts ?? []).map(a => a.id))
+
+  let logsQ = supabase
+    .from('post_logs')
+    .select('status, platform, social_account_id, created_at, published_at')
+    .eq('user_id', user!.id)
+  if (activeId) logsQ = logsQ.eq('social_account_id', activeId)
+  const { data: logs } = await logsQ.order('created_at', { ascending: false }).limit(2000)
 
   const rows = logs ?? []
   const now = Date.now()

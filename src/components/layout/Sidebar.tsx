@@ -7,6 +7,7 @@ import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCa
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
+import AccountSwitcher from './AccountSwitcher'
 
 const NAV = [
   { href: '/dashboard',           label: 'Overview',   icon: LayoutDashboard },
@@ -18,7 +19,7 @@ const NAV = [
   { href: '/dashboard/settings',  label: 'Settings',   icon: Settings },
 ]
 
-export default function Sidebar({ profile, brand }: { profile: Profile | null; brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null }) {
+export default function Sidebar({ profile, brand, accounts, activeAccountId }: { profile: Profile | null; brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null; accounts?: { id: string; account_name: string | null; platform: string }[]; activeAccountId?: string | null }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -58,6 +59,10 @@ export default function Sidebar({ profile, brand }: { profile: Profile | null; b
       </div>
 
       {/* Nav */}
+      {accounts && accounts.length >= 2 && (
+        <AccountSwitcher accounts={accounts} activeId={activeAccountId ?? null} />
+      )}
+
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = href === '/dashboard' ? pathname === href : pathname.startsWith(href)

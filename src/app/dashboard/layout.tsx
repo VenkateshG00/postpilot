@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
 import { getPlan } from '@/lib/plans-db'
+import { getActiveAccountId } from '@/lib/active-account'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -32,9 +33,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
     color: profile?.brand_color ?? null,
   }
 
+  const { data: accounts } = await supabase
+    .from('social_accounts')
+    .select('id, account_name, platform')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('connected_at', { ascending: true })
+  const activeAccountId = await getActiveAccountId((accounts ?? []).map(a => a.id))
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar profile={profile} brand={brand} />
+      <Sidebar profile={profile} brand={brand} accounts={accounts ?? []} activeAccountId={activeAccountId} />
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
