@@ -75,12 +75,12 @@ export async function GET(request: NextRequest) {
     await supabase.from('social_accounts').upsert({
       user_id: user.id,
       platform: 'instagram',
-      account_id: String(igUserId),
+      account_id: String(userData.id),
       account_name: userData.username || userData.name,
       account_picture_url: userData.profile_picture_url,
       access_token: longToken,
       token_expires_at: expiresAt.toISOString(),
-      ig_business_id: String(igUserId),
+      ig_business_id: String(userData.id),
       is_active: true
     }, { onConflict: 'user_id,platform,account_id' })
 
