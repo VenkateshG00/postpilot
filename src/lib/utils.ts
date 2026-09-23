@@ -65,3 +65,20 @@ export function formatDateIST(date: string | null): string {
     minute: '2-digit'
   })
 }
+
+
+// Maps a raw publisher/Instagram error into a simple message safe to show clients.
+// Admin views keep the raw error_message; clients see this friendly version.
+export function friendlyPostError(raw?: string | null): string {
+  if (!raw) return 'Publishing failed — please try again or contact support.'
+  const m = raw.toLowerCase()
+  if (m.includes('permission') || m.includes('does not exist') || m.includes('token') || m.includes('expired') || m.includes('oauth') || m.includes('access_token') || m.includes('session'))
+    return 'Your Instagram connection needs attention — please reconnect your account.'
+  if (m.includes('aspect') || m.includes('ratio') || m.includes('media') || m.includes('image') || m.includes('unsupported') || m.includes('format') || m.includes('size') || m.includes('width'))
+    return 'The image couldn’t be posted — it may be too large or the wrong shape.'
+  if (m.includes('limit') || m.includes('rate') || m.includes('too many'))
+    return 'Instagram’s posting limit was reached — we’ll try again later.'
+  if (m.includes('timed out') || m.includes('no response') || m.includes('timeout'))
+    return 'Publishing didn’t complete in time — please try again.'
+  return 'Publishing failed — please try again or contact support.'
+}

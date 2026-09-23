@@ -1,7 +1,7 @@
 export const runtime = 'edge'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveAccountId } from '@/lib/active-account'
-import { formatDateIST, getStatusColor } from '@/lib/utils'
+import { formatDateIST, getStatusColor, friendlyPostError } from '@/lib/utils'
 import { ExternalLink } from 'lucide-react'
 
 export default async function PostsPage() {
@@ -49,8 +49,8 @@ export default async function PostsPage() {
                     </td>
                     <td className="px-5 py-3">
                       <p className="text-gray-700 line-clamp-2">{log.caption || '—'}</p>
-                      {log.error_message && (
-                        <p className="text-xs text-red-500 mt-0.5">{log.error_message}</p>
+                      {log.status === 'failed' && (
+                        <p className="text-xs text-red-500 mt-0.5">{friendlyPostError(log.error_message)}</p>
                       )}
                     </td>
                     <td className="px-5 py-3 text-gray-500 text-xs">{log.topic_used || '—'}</td>
