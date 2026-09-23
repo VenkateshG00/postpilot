@@ -22,6 +22,19 @@ export async function GET(request: NextRequest) {
 
     try {
         const now = new Date()
+
+        // Reap stale 'pending' posts: anything pending >10 min never got a publisher
+        // response (n8n errored, timed out, or never ran) -> mark it failed.
+        const staleCutoff = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/post_logs?status=eq.pending&created_at=lt.${encodeURIComponent(staleCutoff)}`,
+            {
+                method: 'PATCH',
+                headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                body: JSON.stringify({ status: 'failed', error_message: 'Timed out - no response from publisher' }),
+            }
+        ).catch(() => {})
+
         const istOffset = 5.5 * 60 * 60 * 1000
         const ist = new Date(now.getTime() + istOffset)
         const currentHour = ist.getHours().toString().padStart(2, '0')
