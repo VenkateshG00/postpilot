@@ -3,14 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap, Palette } from 'lucide-react'
+import { LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram, CreditCard, BarChart3, Zap, Palette, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 import AccountSwitcher from './AccountSwitcher'
 
 const NAV = [
-  { href: '/dashboard',           label: 'Overview',   icon: LayoutDashboard },
+  { href: '/dashboard',           label: 'Overview',    icon: LayoutDashboard },
+  { href: '/dashboard/create',    label: 'Create post', icon: Sparkles },
   { href: '/dashboard/schedule',  label: 'Schedule',   icon: Calendar },
   { href: '/dashboard/posts',     label: 'Posts',      icon: Image },
   { href: '/dashboard/analytics', label: 'Analytics',  icon: BarChart3 },
