@@ -53,6 +53,29 @@ export default function OnboardingPage() {
     if (t && !topics.includes(t)) { setValue('topics', [...topics, t]); setTopicInput('') }
   }
 
+  const [suggesting, setSuggesting] = useState(false)
+  async function suggestTopics() {
+    const v = getValues()
+    if (!v.business_name || !v.industry) { setServerError('Add your business name & industry first (step 1).'); return }
+    setServerError('')
+    setSuggesting(true)
+    try {
+      const res = await fetch('/api/pillars/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: v.business_name, industry: v.industry,
+          description: v.description, target_audience: v.target_audience, brand_voice: v.brand_voice,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (Array.isArray(data.topics) && data.topics.length) {
+        const merged = Array.from(new Set([...(getValues('topics') || []), ...data.topics]))
+        setValue('topics', merged, { shouldValidate: true })
+      }
+    } catch (e: any) { setServerError(e.message) } finally { setSuggesting(false) }
+  }
+
   function addHashtag() {
     const h = hashtagInput.trim().replace(/^#/, '')
     if (h && !hashtags.includes(h)) { setValue('hashtags', [...hashtags, h]); setHashtagInput('') }
@@ -221,7 +244,13 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="label">Content topics</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="label mb-0">Content topics</label>
+                  <button type="button" onClick={suggestTopics} disabled={suggesting}
+                    className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50">
+                    {suggesting ? 'Generating…' : '✨ Suggest topics for me'}
+                  </button>
+                </div>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
