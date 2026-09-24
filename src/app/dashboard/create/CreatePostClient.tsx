@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2 } from 'lucide-react'
+import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock } from 'lucide-react'
 
 interface Acct { id: string; account_name: string }
 interface Preview { caption: string; image_url: string; topic: string }
@@ -13,12 +13,13 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
   const [gen, setGen] = useState(false)
   const [posting, setPosting] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
-  const [posted, setPosted] = useState(false)
+  const [posted, setPosted] = useState<'now' | 'scheduled' | null>(null)
+  const [scheduledFor, setScheduledFor] = useState('')
   const [error, setError] = useState('')
 
   async function generate() {
     if (!brief.trim()) { setError('Tell us what the post is about'); return }
-    setError(''); setPosted(false); setGen(true)
+    setError(''); setPosted(null); setGen(true)
     try {
       const res = await fetch('/api/posts/custom/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -31,17 +32,17 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
     } catch (e: any) { setError(e.message) } finally { setGen(false) }
   }
 
-  async function postNow() {
+  async function publish(scheduleAt?: string) {
     if (!preview || !accountId) return
     setPosting(true); setError('')
     try {
       const res = await fetch('/api/posts/custom/publish', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account_id: accountId, caption: preview.caption, image_url: preview.image_url, topic: preview.topic }),
+        body: JSON.stringify({ account_id: accountId, caption: preview.caption, image_url: preview.image_url, topic: preview.topic, scheduled_for: scheduleAt || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
-      setPosted(true); setPreview(null); setBrief('')
+      setPosted(data.scheduled ? 'scheduled' : 'now'); setPreview(null); setBrief(''); setScheduledFor('')
     } catch (e: any) { setError(e.message) } finally { setPosting(false) }
   }
 
@@ -57,7 +58,7 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
 
       {posted && (
         <div className="card p-4 mb-5 flex items-center gap-2 text-emerald-700 bg-emerald-50 border-emerald-100">
-          <CheckCircle2 size={16} /> Post sent — it will appear on your account shortly.
+          <CheckCircle2 size={16} /> {posted === 'scheduled' ? 'Scheduled — it will publish automatically at the chosen time.' : 'Post sent — it will appear on your account shortly.'}
         </div>
       )}
       {error && <div className="card p-3 mb-5 text-sm text-red-600 bg-red-50 border-red-100">{error}</div>}
@@ -92,10 +93,18 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
               className="btn-secondary justify-center disabled:opacity-50">
               {gen ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Regenerate (1 credit)
             </button>
-            <button onClick={postNow} disabled={posting}
+            <button onClick={() => publish()} disabled={posting}
               className="btn-primary flex-1 justify-center disabled:opacity-50">
               {posting ? <><Loader2 size={16} className="animate-spin" /> Posting…</> : <><Send size={16} /> Post now</>}
             </button>
+          </div>
+          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+            <Clock size={14} className="text-gray-400" />
+            <span className="text-xs text-gray-500 whitespace-nowrap">or schedule for</span>
+            <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)}
+              className="input-base flex-1 text-sm" />
+            <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor}
+              className="btn-secondary whitespace-nowrap disabled:opacity-50">Schedule</button>
           </div>
         </div>
       )}

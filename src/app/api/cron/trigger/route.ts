@@ -7,6 +7,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const N8N_WEBHOOK_BASE_URL = process.env.N8N_WEBHOOK_BASE_URL!
 const CRON_SECRET = process.env.CRON_SECRET!
+const N8N_PUBLISH_WEBHOOK_URL = process.env.N8N_PUBLISH_WEBHOOK_URL
 
 const sbHeaders = {
     'Content-Type': 'application/json',
@@ -34,6 +35,32 @@ export async function GET(request: NextRequest) {
                 body: JSON.stringify({ status: 'failed', error_message: 'Timed out - no response from publisher' }),
             }
         ).catch(() => {})
+
+        // Publish any custom one-off posts whose scheduled time has arrived.
+        if (N8N_PUBLISH_WEBHOOK_URL) {
+            const dueRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/post_logs?status=eq.scheduled&scheduled_for=lte.${encodeURIComponent(now.toISOString())}&select=id,social_account_id,image_url,caption`,
+                { headers: sbHeaders }
+            )
+            const due = await dueRes.json()
+            for (const p of due ?? []) {
+                const aRes = await fetch(
+                    `${SUPABASE_URL}/rest/v1/social_accounts?id=eq.${p.social_account_id}&select=ig_business_id,access_token`,
+                    { headers: sbHeaders }
+                )
+                const acct = (await aRes.json())?.[0]
+                if (!acct) continue
+                // Flip to pending first so it is not picked again next minute.
+                await fetch(`${SUPABASE_URL}/rest/v1/post_logs?id=eq.${p.id}`, {
+                    method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                    body: JSON.stringify({ status: 'pending' }),
+                })
+                await fetch(N8N_PUBLISH_WEBHOOK_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_url: p.image_url, caption: p.caption, ig_business_id: acct.ig_business_id, access_token: acct.access_token, post_log_id: p.id }),
+                }).catch(() => {})
+            }
+        }
 
         const istOffset = 5.5 * 60 * 60 * 1000
         const ist = new Date(now.getTime() + istOffset)

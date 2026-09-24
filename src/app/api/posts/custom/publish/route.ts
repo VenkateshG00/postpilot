@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
   const caption = String(body.caption ?? '')
   const image_url = String(body.image_url ?? '')
   const topic = String(body.topic ?? 'Custom post')
+  const scheduledFor = body.scheduled_for ? new Date(body.scheduled_for) : null
+  const isFuture = !!scheduledFor && !isNaN(scheduledFor.getTime()) && scheduledFor.getTime() > Date.now() + 30000
   if (!accountId || !image_url || !caption) return NextResponse.json({ error: 'Missing post content' }, { status: 400 })
 
   const { data: acct } = await supabase.from('social_accounts')
@@ -26,6 +28,16 @@ export async function POST(req: NextRequest) {
   if (!acct) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
 
   const svc = await createServiceClient()
+
+  // Scheduled for later -> store it; the cron publishes it when its time arrives.
+  if (isFuture) {
+    const { data: slog, error: sErr } = await svc.from('post_logs').insert({
+      user_id: user.id, social_account_id: accountId, platform: 'instagram',
+      status: 'scheduled', image_url, caption, topic_used: topic, scheduled_for: scheduledFor!.toISOString(),
+    }).select('id').single()
+    if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 })
+    return NextResponse.json({ ok: true, scheduled: true, scheduled_for: scheduledFor!.toISOString(), post_log_id: slog.id })
+  }
   const { data: log, error: logErr } = await svc.from('post_logs').insert({
     user_id: user.id, social_account_id: accountId, platform: 'instagram',
     status: 'pending', image_url, caption, topic_used: topic, scheduled_for: new Date().toISOString(),
