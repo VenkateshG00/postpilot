@@ -59,7 +59,7 @@ export default async function PostsPage() {
                         {log.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{log.status === 'scheduled' ? <>&rarr; {formatDateIST(log.scheduled_for)}</> : formatDateIST(log.status === 'published' ? (log.published_at || log.created_at) : log.created_at)}</td>
+                    <td className="px-5 py-3 text-gray-400 text-xs">{log.status === 'scheduled' ? (<><span className="block">{formatDateIST(log.created_at)}</span><span className="block text-brand-600 font-medium mt-0.5">&rarr; {formatDateIST(log.scheduled_for)}</span></>) : formatDateIST(log.status === 'published' ? (log.published_at || log.created_at) : log.created_at)}</td>
                     <td className="px-5 py-3">
                       {log.ig_permalink && (
                         <a href={log.ig_permalink} target="_blank" rel="noreferrer"
