@@ -10,7 +10,15 @@ function getMetaOAuthURL() {
   return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1745129453437379&redirect_uri=https://postpilot-1ia.pages.dev/api/meta/callback&response_type=code&scope=instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments`
 }
 
-export default function ConnectPageClient({ accounts }: { accounts: SocialAccount[] }) {
+export default function ConnectPageClient({ accounts, eligible }: { accounts: SocialAccount[]; eligible: boolean }) {
+  const [approval, setApproval] = useState<Record<string, boolean>>(Object.fromEntries(accounts.map(a => [a.id, !!(a as any).require_approval])))
+  async function toggleApproval(id: string, val: boolean) {
+    setApproval(prev => ({ ...prev, [id]: val }))
+    try {
+      const res = await fetch('/api/accounts/approval', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ account_id: id, require_approval: val }) })
+      if (!res.ok) throw new Error()
+    } catch { setApproval(prev => ({ ...prev, [id]: !val })) }
+  }
   const [loading, setLoading] = useState(false)
   const [urlError, setUrlError] = useState<string | null>(null)
   const [urlSuccess, setUrlSuccess] = useState(false)
@@ -105,6 +113,12 @@ export default function ConnectPageClient({ accounts }: { accounts: SocialAccoun
                   <p className="text-xs text-amber-600 mt-1">⚠ Token expires soon — reconnect to avoid interruptions</p>
                 )}
               </div>
+              {eligible && (
+                <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer whitespace-nowrap" title="Hold posts for your review before publishing">
+                  <input type="checkbox" checked={approval[account.id] ?? false} onChange={e => toggleApproval(account.id, e.target.checked)} />
+                  Require approval
+                </label>
+              )}
               <button onClick={connectInstagram} title="Refresh token" className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700">
                 <RefreshCw size={14} />
               </button>

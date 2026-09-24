@@ -2,6 +2,7 @@ export const runtime = 'edge'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { dailyLimit } from '@/lib/plans-db'
+import { generatePost } from '@/lib/generate'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -199,6 +200,30 @@ export async function GET(request: NextRequest) {
                 const st = stRows?.[0]?.topics
                 if (Array.isArray(st) && st.length) effectiveTopics = st
             } catch { /* fall back to business topics */ }
+
+            // Approval queue: if this account requires approval, generate the post
+            // in-app and HOLD it (don't publish, don't call n8n).
+            let requireApproval = false
+            try {
+                const raRes = await fetch(`${SUPABASE_URL}/rest/v1/social_accounts?id=eq.${schedule.social_account_id}&select=require_approval`, { headers: sbHeaders })
+                const raRows = await raRes.json()
+                requireApproval = !!raRows?.[0]?.require_approval
+            } catch { /* default: no approval */ }
+
+            if (requireApproval) {
+                const topicList = Array.isArray(effectiveTopics) ? effectiveTopics : []
+                const topic = topicList.length ? topicList[Math.floor(Math.random() * topicList.length)] : (schedule.industry || 'update')
+                const gen = await generatePost(topic, {
+                    business_name: schedule.business_name, industry: schedule.industry,
+                    brand_voice: schedule.brand_voice, target_audience: schedule.target_audience,
+                })
+                await fetch(`${SUPABASE_URL}/rest/v1/post_logs?id=eq.${logId}`, {
+                    method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                    body: JSON.stringify({ status: 'pending_approval', image_url: gen?.image_url || '', caption: gen?.caption || '', topic_used: topic }),
+                })
+                results.push({ schedule_id: schedule.schedule_id, log_id: logId, held_for_approval: true })
+                continue
+            }
 
             // Fire the n8n webhook.
             const n8nRes = await fetch(N8N_WEBHOOK_BASE_URL, {
