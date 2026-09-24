@@ -7,7 +7,7 @@ insert into public.plans
    seats_included, allow_dalle, white_label, trial_days, analytics_level,
    extra_channel_price, extra_seat_price, is_active, sort_order)
 values
-  ('trial', 'Free Trial', 0, 3, 5, 300, 1, true, false, 7, 'full', 249, 0, true, 0)
+  ('trial', 'Free Trial', 0, 3, 1, 300, 1, true, false, 7, 'full', 249, 0, true, 0)
 on conflict (key) do update set
   name=excluded.name, price_inr=excluded.price_inr,
   channels_included=excluded.channels_included, posts_per_day=excluded.posts_per_day,

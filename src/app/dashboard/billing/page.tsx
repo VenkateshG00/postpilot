@@ -25,7 +25,7 @@ export default async function BillingPage() {
   const currentLimit = currentRow?.posts_per_day == null ? Infinity : currentRow.posts_per_day
 
   // Price + limit come from the DB; marketing feature bullets stay as copy.
-  const plans = PLAN_ORDER.map((k) => {
+  const plans = PLAN_ORDER.filter((k) => k !== 'free').map((k) => {
     const row = dbPlans[k]
     const copy = PLANS[k]
     const ppd = row?.posts_per_day

@@ -19,7 +19,7 @@ export const PLANS: Record<PlanKey, PlanDef> = {
     features: ['1 post per day', '1 channel', 'AI captions + stock images'],
   },
   trial: {
-    key: 'trial', label: 'Free Trial', priceInr: 0, postsPerDay: 5,
+    key: 'trial', label: 'Free Trial', priceInr: 0, postsPerDay: 1,
     features: ['7-day free trial', '5 posts per day', 'Full Pro features'],
   },
   starter: {
