@@ -22,7 +22,7 @@ export default async function AdminDashboard() {
   for (const u of nonAdmin) {
     counts[u.plan] = (counts[u.plan] ?? 0) + 1
     const notExpired = !u.plan_expires_at || new Date(u.plan_expires_at).getTime() > now
-    if (u.plan !== 'free' && notExpired) { activePaid++; mrr += priceByKey[u.plan] ?? 0 }
+    if (u.plan !== 'free' && u.plan !== 'trial' && notExpired) { activePaid++; mrr += priceByKey[u.plan] ?? 0 }
   }
 
   const som = new Date(); som.setDate(1); som.setHours(0, 0, 0, 0)

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   }
-  if (!plan || plan === 'free' || !PLANS[plan]) {
+  if (!plan || plan === 'free' || plan === 'trial' || !PLANS[plan]) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
   }
 

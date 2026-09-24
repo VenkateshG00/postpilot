@@ -45,7 +45,7 @@ export default function LandingPage() {
               Sign in
             </Link>
             <Link href="/auth/register" className="btn-primary text-xs px-4 py-2">
-              Get started free
+              Start free trial
             </Link>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/auth/register" className="btn-primary px-6 py-3 text-base">
-              Start posting for free
+              Start your 7-day free trial
               <ArrowRight size={16} />
             </Link>
             <p className="text-sm text-gray-400">No credit card required</p>

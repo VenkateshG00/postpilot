@@ -85,12 +85,8 @@ export async function GET(request: NextRequest) {
             return usageCache[userId]
         }
 
-        // Effective plan honours expiry: an expired paid plan is treated as free.
-        const effectivePlan = (plan: string, expiresAt: string | null): string => {
-            if (plan === 'free') return 'free'
-            if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return 'free'
-            return plan
-        }
+        // Trial or paid plans stop posting once expired (handled in the loop).
+        // Legacy 'free' has no expiry and keeps its allowance.
 
         const results: any[] = []
 
@@ -100,8 +96,28 @@ export async function GET(request: NextRequest) {
             const userId = schedule.user_id
             const { plan, expiresAt, suspended } = await getProfile(userId)
             if (suspended) continue
-            const eff = effectivePlan(plan, expiresAt)
-            const limit = await dailyLimit(eff) // Infinity for agency
+
+            // Trial or paid plan lapsed -> stop posting until they subscribe.
+            const isExpired = !!expiresAt && new Date(expiresAt).getTime() < Date.now()
+            if (plan !== 'free' && isExpired) {
+                await fetch(`${SUPABASE_URL}/rest/v1/post_logs`, {
+                    method: 'POST',
+                    headers: sbHeaders,
+                    body: JSON.stringify({
+                        user_id: userId,
+                        schedule_id: schedule.schedule_id,
+                        social_account_id: schedule.social_account_id,
+                        platform: 'instagram',
+                        status: 'failed',
+                        error_message: 'plan_expired',
+                        scheduled_for: new Date().toISOString()
+                    })
+                })
+                results.push({ schedule_id: schedule.schedule_id, skipped: 'plan_expired', plan })
+                continue
+            }
+
+            const limit = await dailyLimit(plan) // Infinity for agency
             const used = await getUsage(userId)
 
             if (used >= limit) {
@@ -122,7 +138,7 @@ export async function GET(request: NextRequest) {
                 results.push({
                     schedule_id: schedule.schedule_id,
                     skipped: 'plan_limit_reached',
-                    plan: eff,
+                    plan,
                     limit: limit === Infinity ? 'unlimited' : limit,
                     used
                 })

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       const userId: string | undefined = payment?.notes?.user_id
       const plan = payment?.notes?.plan as PlanKey | undefined
 
-      if (paymentId && userId && plan && plan !== 'free' && PLANS[plan]) {
+      if (paymentId && userId && plan && plan !== 'free' && plan !== 'trial' && PLANS[plan]) {
         // Idempotency: one grant per payment id (shared with the verify route).
         const { data: seen } = await service.from('billing_events').select('id').eq('id', paymentId).maybeSingle()
         if (seen) return NextResponse.json({ received: true, duplicate: true })

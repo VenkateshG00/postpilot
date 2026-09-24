@@ -38,7 +38,7 @@ export default async function AdminAnalyticsPage() {
     creditsOut += u.credits_balance ?? 0
     if (new Date(u.created_at).getTime() >= now - 30 * DAY) new30++
     const notExpired = !u.plan_expires_at || new Date(u.plan_expires_at).getTime() > now
-    if (u.plan !== 'free' && notExpired) { activePaid++; mrr += priceByKey[u.plan] ?? 0; mrrByPlanMap[u.plan] = (mrrByPlanMap[u.plan] ?? 0) + (priceByKey[u.plan] ?? 0) }
+    if (u.plan !== 'free' && u.plan !== 'trial' && notExpired) { activePaid++; mrr += priceByKey[u.plan] ?? 0; mrrByPlanMap[u.plan] = (mrrByPlanMap[u.plan] ?? 0) + (priceByKey[u.plan] ?? 0) }
   }
 
   const published = rows.filter(r => r.status === 'published').length

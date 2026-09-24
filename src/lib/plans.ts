@@ -3,7 +3,7 @@
 // so the app still works if a DB read fails. Plan KEYS (free/starter/pro/agency)
 // match the CHECK constraint on profiles.plan — do not rename them.
 
-export type PlanKey = 'free' | 'starter' | 'pro' | 'agency'
+export type PlanKey = 'free' | 'trial' | 'starter' | 'pro' | 'agency'
 
 export interface PlanDef {
   key: PlanKey
@@ -17,6 +17,10 @@ export const PLANS: Record<PlanKey, PlanDef> = {
   free: {
     key: 'free', label: 'Free', priceInr: 0, postsPerDay: 1,
     features: ['1 post per day', '1 channel', 'AI captions + stock images'],
+  },
+  trial: {
+    key: 'trial', label: 'Free Trial', priceInr: 0, postsPerDay: 5,
+    features: ['7-day free trial', '5 posts per day', 'Full Pro features'],
   },
   starter: {
     key: 'starter', label: 'Starter', priceInr: 499, postsPerDay: 2,
