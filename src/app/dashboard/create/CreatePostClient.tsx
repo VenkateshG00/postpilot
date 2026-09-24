@@ -38,7 +38,7 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
     try {
       const res = await fetch('/api/posts/custom/publish', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account_id: accountId, caption: preview.caption, image_url: preview.image_url, topic: preview.topic, scheduled_for: scheduleAt || undefined }),
+        body: JSON.stringify({ account_id: accountId, caption: preview.caption, image_url: preview.image_url, topic: preview.topic, scheduled_for: scheduleAt ? new Date(scheduleAt).toISOString() : undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
