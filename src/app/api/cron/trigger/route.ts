@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
                 })
             })
 
-            results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: n8nRes.status, plan: eff })
+            results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: n8nRes.status, plan })
         }
 
         return NextResponse.json({ message: 'Cron executed', time: p_current_time, triggered: schedules.length, results })
