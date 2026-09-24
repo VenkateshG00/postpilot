@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Clock, Trash2, Loader2, X, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { pillarsForIndustry } from '@/lib/pillars'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const CONTENT_TYPES = [
@@ -17,9 +18,11 @@ const CONTENT_TYPES = [
 interface Props {
   schedules: any[]
   accounts: any[]
+  industry?: string | null
+  topics?: string[] | null
 }
 
-export default function SchedulePageClient({ schedules: initial, accounts }: Props) {
+export default function SchedulePageClient({ schedules: initial, accounts, industry, topics }: Props) {
   const router = useRouter()
   const [schedules, setSchedules] = useState(initial)
   const [showForm, setShowForm] = useState(false)
@@ -166,16 +169,11 @@ export default function SchedulePageClient({ schedules: initial, accounts }: Pro
                 list="pillar-suggestions"
                 value={form.theme}
                 onChange={e => setForm(f => ({ ...f, theme: e.target.value }))}
-                placeholder="e.g. New listings, Buying tips, Client stories"
+                placeholder={`e.g. ${(topics?.length ? topics : pillarsForIndustry(industry)).slice(0, 3).join(', ')}`}
                 className="input-base"
               />
               <datalist id="pillar-suggestions">
-                <option value="New property listings" />
-                <option value="Home buying tips" />
-                <option value="Investment insights" />
-                <option value="Client success stories" />
-                <option value="Behind the scenes" />
-                <option value="Local market updates" />
+                {(topics?.length ? topics : pillarsForIndustry(industry)).map(t => <option key={t} value={t} />)}
               </datalist>
             </div>
 

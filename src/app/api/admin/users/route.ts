@@ -23,6 +23,14 @@ export async function POST(req: NextRequest) {
   if (!userId || !action) return NextResponse.json({ error: 'Missing user_id or action' }, { status: 400 })
   if (userId === adminId) return NextResponse.json({ error: "Can't modify your own account here" }, { status: 400 })
 
+  if (action === 'set_topics') {
+    const topics = Array.isArray(body.topics) ? body.topics.map((t: any) => String(t).trim()).filter(Boolean) : []
+    const svc = await createServiceClient()
+    const { error } = await svc.from('business_profiles').update({ topics }).eq('user_id', userId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   const update: Record<string, any> = {}
   if (action === 'set_plan') {
     update.plan = String(body.plan)

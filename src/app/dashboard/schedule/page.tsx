@@ -13,5 +13,7 @@ export default async function SchedulePage() {
   if (activeId) sq = sq.eq('social_account_id', activeId)
   const { data: schedules } = await sq.order('created_at')
 
-  return <SchedulePageClient schedules={schedules ?? []} accounts={accounts ?? []} />
+  const { data: bp } = await supabase.from('business_profiles').select('industry, topics').eq('user_id', user!.id).maybeSingle()
+
+  return <SchedulePageClient schedules={schedules ?? []} accounts={accounts ?? []} industry={bp?.industry ?? null} topics={bp?.topics ?? null} />
 }

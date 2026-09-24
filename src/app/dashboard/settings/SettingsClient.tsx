@@ -27,6 +27,24 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
     setForm(f => ({ ...f, [key]: val }))
   }
 
+  const [gen, setGen] = useState(false)
+  async function suggestTopics() {
+    setGen(true)
+    try {
+      const res = await fetch('/api/pillars/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: form.business_name, industry: form.industry,
+          description: form.description, target_audience: form.target_audience,
+          brand_voice: form.brand_voice,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (Array.isArray(data.topics) && data.topics.length) setForm(f => ({ ...f, topics: data.topics.join(', ') }))
+    } catch (e: any) { alert(e.message) } finally { setGen(false) }
+  }
+
   async function save() {
     setSaving(true)
     const supabase = createClient()
@@ -110,7 +128,13 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
         </div>
 
         <div>
-          <label className="label">Content topics <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="label mb-0">Content topics <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+            <button type="button" onClick={suggestTopics} disabled={gen}
+              className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50">
+              {gen ? 'Generating…' : '✨ Suggest with AI'}
+            </button>
+          </div>
           <input
             value={form.topics}
             onChange={e => set('topics', e.target.value)}

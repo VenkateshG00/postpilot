@@ -12,12 +12,33 @@ interface Client {
   is_suspended: boolean
   created_at: string
   published: number
+  topics: string[]
 }
 
 export default function ClientsClient({ clients: initial, planKeys }: { clients: Client[]; planKeys: string[] }) {
   const [clients, setClients] = useState<Client[]>(initial)
   const [filter, setFilter] = useState<string>('all')
   const [busy, setBusy] = useState<string>('')
+  const [topicsEdit, setTopicsEdit] = useState<Record<string, string>>({})
+  const [genning, setGenning] = useState<string>('')
+
+  async function genTopics(c: Client) {
+    setGenning(c.id)
+    try {
+      const res = await fetch('/api/pillars/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: c.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (Array.isArray(data.topics)) setTopicsEdit(prev => ({ ...prev, [c.id]: data.topics.join(', ') }))
+    } catch (e: any) { alert(e.message) } finally { setGenning('') }
+  }
+
+  function saveTopics(c: Client) {
+    const arr = (topicsEdit[c.id] ?? c.topics.join(', ')).split(',').map(t => t.trim()).filter(Boolean)
+    act(c.id, 'set_topics', { topics: arr })
+  }
 
   async function act(userId: string, action: string, payload: Record<string, any>) {
     setBusy(userId)
@@ -108,6 +129,23 @@ export default function ClientsClient({ clients: initial, planKeys }: { clients:
                   className={'px-3 py-2 rounded-lg text-xs font-medium ' + (c.is_suspended ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-red-600 text-white hover:bg-red-700')}>
                   {c.is_suspended ? 'Unsuspend' : 'Suspend'}
                 </button>
+              </div>
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-1">
+                <label className="label mb-0">Content topics</label>
+                <button disabled={genning === c.id} onClick={() => genTopics(c)}
+                  className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50">
+                  {genning === c.id ? 'Generating…' : '✨ Generate for client'}
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <input className="input-base flex-1" value={topicsEdit[c.id] ?? c.topics.join(', ')}
+                  onChange={e => setTopicsEdit(prev => ({ ...prev, [c.id]: e.target.value }))}
+                  placeholder="e.g. Nutrition tips, Daily wellness, Myth-busting" />
+                <button disabled={busy === c.id} onClick={() => saveTopics(c)}
+                  className="px-3 py-2 rounded-lg text-xs font-medium bg-brand-600 text-white hover:bg-brand-700 whitespace-nowrap">Save topics</button>
               </div>
             </div>
           </div>
