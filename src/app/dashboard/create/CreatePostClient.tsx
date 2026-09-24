@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper } from 'lucide-react'
+import { upcomingFestivals, whenLabel, type Festival } from '@/lib/festivals'
 
 interface Acct { id: string; account_name: string }
 interface Preview { caption: string; image_url: string; topic: string }
@@ -17,19 +18,28 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
   const [scheduledFor, setScheduledFor] = useState('')
   const [error, setError] = useState('')
 
-  async function generate() {
-    if (!brief.trim()) { setError('Tell us what the post is about'); return }
+  const upcoming = useMemo(() => upcomingFestivals(45, 8), [])
+
+  async function generate(briefText?: string) {
+    const text = (briefText ?? brief).trim()
+    if (!text) { setError('Tell us what the post is about'); return }
     setError(''); setPosted(null); setGen(true)
     try {
       const res = await fetch('/api/posts/custom/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brief }),
+        body: JSON.stringify({ brief: text }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       setPreview({ caption: data.caption, image_url: data.image_url, topic: data.topic })
       if (typeof data.credits_left === 'number') setCredits(data.credits_left)
     } catch (e: any) { setError(e.message) } finally { setGen(false) }
+  }
+
+  function pickFestival(f: Festival) {
+    if (!accountId) { setError('Connect an Instagram account first'); return }
+    setBrief(f.greeting)
+    generate(f.greeting)
   }
 
   async function publish(scheduleAt?: string) {
@@ -63,6 +73,26 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
       )}
       {error && <div className="card p-3 mb-5 text-sm text-red-600 bg-red-50 border-red-100">{error}</div>}
 
+      {upcoming.length > 0 && (
+        <div className="card p-5 mb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <PartyPopper size={16} className="text-brand-600" />
+            <p className="text-sm font-medium text-gray-900">Upcoming festivals &amp; occasions</p>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">One click drafts a greeting post you can edit, post now, or schedule.</p>
+          <div className="flex flex-wrap gap-2">
+            {upcoming.map((f) => (
+              <button key={f.date + f.name} onClick={() => pickFestival(f)} disabled={gen || !accountId}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:border-brand-300 hover:bg-brand-50 text-sm text-gray-700 transition-colors disabled:opacity-50">
+                <span aria-hidden>{f.emoji}</span>
+                <span className="font-medium">{f.name}</span>
+                <span className="text-xs text-gray-400">{whenLabel(f.date)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card p-5 space-y-4">
         <div>
           <label className="label">Instagram account</label>
@@ -77,7 +107,7 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
             className="input-base" />
           <p className="text-xs text-gray-400 mt-1">Generating a post uses 1 credit.</p>
         </div>
-        <button onClick={generate} disabled={gen || !accountId}
+        <button onClick={() => generate()} disabled={gen || !accountId}
           className="btn-primary w-full justify-center disabled:opacity-50">
           {gen ? <><Loader2 size={16} className="animate-spin" /> Generating…</> : <><Sparkles size={16} /> Generate post</>}
         </button>
@@ -89,7 +119,7 @@ export default function CreatePostClient({ accounts, credits: initialCredits }: 
           {preview.image_url && <img src={preview.image_url} alt="" className="w-full max-w-sm rounded-xl object-cover" />}
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{preview.caption}</p>
           <div className="flex gap-2">
-            <button onClick={generate} disabled={gen}
+            <button onClick={() => generate()} disabled={gen}
               className="btn-secondary justify-center disabled:opacity-50">
               {gen ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Regenerate (1 credit)
             </button>
