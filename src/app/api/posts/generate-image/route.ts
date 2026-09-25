@@ -3,26 +3,25 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN
 const AI_IMAGE_CREDITS = 4
 const POLL_INTERVAL_MS = 1500
 const MAX_POLL_ATTEMPTS = 20 // ~30s max wait
 
 // Polls a Replicate prediction until it succeeds, fails, or times out.
-async function pollPrediction(predictionId: string): Promise<string> {
+async function pollPrediction(predictionId: string, token: string): Promise<string> {
   for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, POLL_INTERVAL_MS))
     const r = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-      headers: { Authorization: `Bearer ${REPLICATE_API_TOKEN}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
-    const pred = await r.json() as { status: string; output?: string | string[]; error?: string }
+    const pred = await r.json() as { status: string; output?: string | string[]; error?: string; detail?: string }
     if (pred.status === 'succeeded') {
       const out = Array.isArray(pred.output) ? pred.output[0] : pred.output
       if (typeof out === 'string' && out) return out
       throw new Error('Model returned no image URL')
     }
     if (pred.status === 'failed' || pred.status === 'canceled') {
-      throw new Error(pred.error || 'Image generation failed on Replicate')
+      throw new Error(pred.error || pred.detail || 'Image generation failed on Replicate')
     }
     // status is 'starting' or 'processing' — keep polling
   }
@@ -31,8 +30,10 @@ async function pollPrediction(predictionId: string): Promise<string> {
 
 // Generates an AI image via Flux Schnell on Replicate. Costs 4 credits.
 export async function POST(req: NextRequest) {
+  // Read inside handler — required for Cloudflare edge runtime env var access
+  const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN
   if (!REPLICATE_API_TOKEN) {
-    return NextResponse.json({ error: 'AI image generation is not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'AI image generation is not configured (missing REPLICATE_API_TOKEN)' }, { status: 500 })
   }
 
   const supabase = await createClient()
@@ -100,7 +101,13 @@ export async function POST(req: NextRequest) {
         }),
       },
     )
-    const pred = await r.json() as { id?: string; status?: string; output?: string | string[]; error?: string }
+    const pred = await r.json() as {
+      id?: string
+      status?: string
+      output?: string | string[]
+      error?: string
+      detail?: string  // Replicate auth/validation errors use this field
+    }
 
     // If Replicate fast-path already finished, return immediately.
     if (pred.status === 'succeeded') {
@@ -112,7 +119,9 @@ export async function POST(req: NextRequest) {
 
     if (!pred.id) {
       await refund()
-      return NextResponse.json({ error: pred.error || 'Failed to start image generation' }, { status: 502 })
+      // pred.detail covers auth errors ("Invalid token."), pred.error covers model errors
+      const reason = pred.detail || pred.error || 'Failed to start image generation'
+      return NextResponse.json({ error: reason }, { status: 502 })
     }
     predictionId = pred.id
   } catch {
@@ -123,7 +132,7 @@ export async function POST(req: NextRequest) {
   // Poll until done.
   let image_url: string
   try {
-    image_url = await pollPrediction(predictionId)
+    image_url = await pollPrediction(predictionId, REPLICATE_API_TOKEN)
   } catch (e: unknown) {
     await refund()
     const msg = e instanceof Error ? e.message : 'Image generation failed'
