@@ -11,7 +11,7 @@ async function requireAdmin() {
   return p?.is_admin ? user.id : null
 }
 
-const VALID_AI_PROVIDERS = ['none', 'replicate_flux', 'huggingface_flux', 'cloudflare_sdxl', 'pollinations']
+const VALID_AI_PROVIDERS = ['none', 'replicate_flux', 'gemini_flash', 'huggingface_flux', 'cloudflare_sdxl', 'pollinations']
 
 export async function POST(req: NextRequest) {
   const adminId = await requireAdmin()

@@ -15,7 +15,7 @@ export default async function AdminSettings() {
     default_trial_days: 7,
     default_image_provider: 'pexels',
     ai_active_provider: 'none',
-    ai_provider_credits: { replicate_flux: 4, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1 },
+    ai_provider_credits: { replicate_flux: 4, gemini_flash: 2, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1 },
     cron_frequency: 'every 5 min',
     maintenance_mode: false,
     announcement_banner: '',
