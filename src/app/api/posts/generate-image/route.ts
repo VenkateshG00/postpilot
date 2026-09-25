@@ -8,7 +8,7 @@ const MAX_POLL_ATTEMPTS = 20
 
 // ─── Provider registry ────────────────────────────────────────────────────────
 // Add new providers here. credits come from app_settings.ai_provider_credits.
-export const AI_PROVIDERS: Record<string, { label: string; quality: number; suggestedCredits: number }> = {
+const AI_PROVIDERS: Record<string, { label: string; quality: number; suggestedCredits: number }> = {
   replicate_flux:   { label: 'Flux Schnell (Replicate)',     quality: 4, suggestedCredits: 4 },
   huggingface_flux: { label: 'Flux Schnell (Hugging Face)',  quality: 3, suggestedCredits: 3 },
   cloudflare_sdxl:  { label: 'SDXL Lightning (Cloudflare)', quality: 2, suggestedCredits: 2 },
