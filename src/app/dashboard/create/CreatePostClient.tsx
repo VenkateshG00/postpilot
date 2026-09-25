@@ -11,10 +11,12 @@ export default function CreatePostClient({
   accounts,
   credits: initialCredits,
   aiImageProvider,
+  aiImageCredits,
 }: {
   accounts: Acct[]
   credits: number
   aiImageProvider: string  // 'none' | 'replicate_flux' | future providers
+  aiImageCredits: number
 }) {
   const [accountId, setAccountId] = useState(accounts[0]?.id || '')
   const [brief, setBrief] = useState('')
@@ -201,13 +203,13 @@ export default function CreatePostClient({
             {!genImg && aiImageProvider !== 'none' && (
               <button
                 onClick={generateAIImage}
-                disabled={genImg || credits < 4}
-                title={credits < 4 ? 'Need at least 4 credits for AI image' : 'Generate a unique AI image for this post'}
+                disabled={genImg || credits < aiImageCredits}
+                title={credits < aiImageCredits ? `Need at least ${aiImageCredits} credits for AI image` : 'Generate a unique AI image for this post'}
                 className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm text-xs font-medium text-gray-700 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Wand2 size={13} />
                 AI image
-                <span className="text-gray-400">(4 credits)</span>
+                <span className="text-gray-400">({aiImageCredits} credits)</span>
               </button>
             )}
             {genImg && (

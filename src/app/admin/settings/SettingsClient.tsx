@@ -2,18 +2,55 @@
 
 import { useState } from 'react'
 
-// Available AI image providers. Add new entries here as you wire them up.
-const AI_PROVIDERS = [
-  { value: 'none',          label: 'Disabled — hide from all users' },
-  { value: 'replicate_flux', label: 'Flux Schnell (Replicate) — fast, cheap, high-quality' },
-  // { value: 'stability_sdxl', label: 'Stability AI SDXL' },
-  // { value: 'dalle3',         label: 'OpenAI DALL·E 3' },
-] as const
+const AI_PROVIDERS: {
+  value: string
+  label: string
+  quality: number
+  suggestedCredits: number
+  desc: string
+  envHint: string
+  note?: string
+}[] = [
+  {
+    value: 'replicate_flux',
+    label: 'Flux Schnell (Replicate)',
+    quality: 4,
+    suggestedCredits: 4,
+    desc: 'Best quality, fastest. Needs a Replicate account with billing.',
+    envHint: 'REPLICATE_API_TOKEN',
+  },
+  {
+    value: 'huggingface_flux',
+    label: 'Flux Schnell (Hugging Face)',
+    quality: 3,
+    suggestedCredits: 3,
+    desc: 'Same model via HuggingFace free inference tier. Occasional cold starts.',
+    envHint: 'HUGGINGFACE_TOKEN',
+  },
+  {
+    value: 'cloudflare_sdxl',
+    label: 'SDXL Lightning (Cloudflare)',
+    quality: 2,
+    suggestedCredits: 2,
+    desc: 'Included in Cloudflare Workers AI free allowance. SDXL-based, slightly less detailed.',
+    envHint: 'CF_ACCOUNT_ID + CF_AI_TOKEN',
+  },
+  {
+    value: 'pollinations',
+    label: 'Pollinations.ai',
+    quality: 1,
+    suggestedCredits: 1,
+    desc: 'Completely free, no API key needed. Lower consistency; great for testing.',
+    envHint: 'none required',
+    note: 'Public service — image quality may vary.',
+  },
+]
 
 interface Settings {
   default_trial_days: number
   default_image_provider: string
-  ai_image_provider: string
+  ai_active_provider: string
+  ai_provider_credits: Record<string, number>
   cron_frequency: string
   maintenance_mode: boolean
   announcement_banner: string | null
@@ -24,7 +61,10 @@ export default function AdminSettingsClient({ settings: initial, packs: initialP
   const [s, setS] = useState<Settings>({
     default_trial_days: initial.default_trial_days ?? 7,
     default_image_provider: initial.default_image_provider ?? 'pexels',
-    ai_image_provider: initial.ai_image_provider ?? 'none',
+    ai_active_provider: initial.ai_active_provider ?? 'none',
+    ai_provider_credits: initial.ai_provider_credits ?? {
+      replicate_flux: 4, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1,
+    },
     cron_frequency: initial.cron_frequency ?? '',
     maintenance_mode: initial.maintenance_mode ?? false,
     announcement_banner: initial.announcement_banner ?? '',
@@ -101,30 +141,60 @@ export default function AdminSettingsClient({ settings: initial, packs: initialP
         <div>
           <h2 className="font-medium text-gray-900">AI image generation</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Pick the active provider. Clients only see the "AI image" button when a provider is enabled.
-            You can swap providers any time without redeploying.
+            Select the active provider and set how many credits each generation costs.
+            Clients only see the button when a provider is active. Switch any time — no redeploy needed.
           </p>
         </div>
-        <div className="space-y-2">
-          {AI_PROVIDERS.map(p => (
-            <label key={p.value} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-              <input
-                type="radio"
-                name="ai_image_provider"
-                value={p.value}
-                checked={s.ai_image_provider === p.value}
-                onChange={() => setField('ai_image_provider', p.value)}
-                className="mt-0.5 accent-brand-600"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-800">{p.label.split(' — ')[0]}</p>
-                {p.label.includes(' — ') && (
-                  <p className="text-xs text-gray-400">{p.label.split(' — ')[1]}</p>
-                )}
+
+        {/* Disabled option */}
+        <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+          <input type="radio" name="ai_active_provider" value="none"
+            checked={s.ai_active_provider === 'none'}
+            onChange={() => setField('ai_active_provider', 'none')}
+            className="accent-brand-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-700">Disabled</p>
+            <p className="text-xs text-gray-400">AI image button hidden from all users</p>
+          </div>
+        </label>
+
+        {/* Provider cards */}
+        {AI_PROVIDERS.map(p => {
+          const active = s.ai_active_provider === p.value
+          return (
+            <label key={p.value}
+              className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                active ? 'border-brand-400 bg-brand-50' : 'border-gray-200 hover:bg-gray-50'
+              }`}>
+              <input type="radio" name="ai_active_provider" value={p.value}
+                checked={active}
+                onChange={() => setField('ai_active_provider', p.value)}
+                className="mt-1 accent-brand-600" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800">{p.label}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{p.envHint}</span>
+                  <span className="text-yellow-500 text-xs">{'★'.repeat(p.quality) + '☆'.repeat(4 - p.quality)}</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">{p.desc}</p>
+                {p.note && <p className="text-xs text-amber-600 mt-0.5">⚠ {p.note}</p>}
+              </div>
+              {/* Credit cost editor */}
+              <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.preventDefault()}>
+                <span className="text-xs text-gray-500">Credits:</span>
+                <input
+                  type="number" min={1} max={20}
+                  value={s.ai_provider_credits[p.value] ?? p.suggestedCredits}
+                  onChange={e => setField('ai_provider_credits', {
+                    ...s.ai_provider_credits,
+                    [p.value]: Math.max(1, Number(e.target.value)),
+                  })}
+                  className="w-14 text-center text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-400"
+                />
               </div>
             </label>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
       <div className="card p-6 space-y-4">

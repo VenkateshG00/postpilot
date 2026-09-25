@@ -11,6 +11,8 @@ async function requireAdmin() {
   return p?.is_admin ? user.id : null
 }
 
+const VALID_AI_PROVIDERS = ['none', 'replicate_flux', 'huggingface_flux', 'cloudflare_sdxl', 'pollinations']
+
 export async function POST(req: NextRequest) {
   const adminId = await requireAdmin()
   if (!adminId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -20,15 +22,25 @@ export async function POST(req: NextRequest) {
 
   const service = await createServiceClient()
 
-  // Global settings
-  const VALID_AI_PROVIDERS = ['none', 'replicate_flux', 'stability_sdxl', 'dalle3']
-  const rawProvider = String(body.ai_image_provider ?? 'none')
+  // Validate & sanitise ai_provider_credits JSONB
+  const rawCredits = body.ai_provider_credits
+  const providerCredits: Record<string, number> = {}
+  if (rawCredits && typeof rawCredits === 'object') {
+    for (const [k, v] of Object.entries(rawCredits)) {
+      if (VALID_AI_PROVIDERS.includes(k) && k !== 'none') {
+        providerCredits[k] = Math.max(1, Math.min(20, Math.trunc(Number(v) || 1)))
+      }
+    }
+  }
+
+  const rawProvider = String(body.ai_active_provider ?? 'none')
 
   const settings = {
     id: 1,
     default_trial_days: Math.trunc(Number(body.default_trial_days) || 7),
     default_image_provider: String(body.default_image_provider ?? 'pexels'),
-    ai_image_provider: VALID_AI_PROVIDERS.includes(rawProvider) ? rawProvider : 'none',
+    ai_active_provider: VALID_AI_PROVIDERS.includes(rawProvider) ? rawProvider : 'none',
+    ai_provider_credits: providerCredits,
     cron_frequency: String(body.cron_frequency ?? ''),
     maintenance_mode: Boolean(body.maintenance_mode),
     announcement_banner: body.announcement_banner ? String(body.announcement_banner) : null,
