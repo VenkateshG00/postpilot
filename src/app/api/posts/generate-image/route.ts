@@ -69,9 +69,9 @@ async function generatePollinations(prompt: string): Promise<string> {
 async function generateGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
-
+  // gemini-2.5-flash-image: dedicated image generation model, free tier
   const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,8 @@ async function generateGemini(prompt: string): Promise<string> {
   )
   if (!r.ok) {
     const err = await r.text()
-    throw new Error(`Gemini error ${r.status}: ${err.slice(0, 200)}`)
+    if (r.status === 429) throw new Error('AI image rate limit reached — please wait a moment and try again.')
+    throw new Error(`Google Gemini image error ${r.status}: ${err.slice(0, 200)}`)
   }
   type GeminiResp = { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[] }
   const data = await r.json() as GeminiResp

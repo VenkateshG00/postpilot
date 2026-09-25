@@ -26,7 +26,7 @@ export default async function CreatePostPage() {
   const aiProvider = appSettings?.ai_active_provider ?? 'none'
   const creditsMap: Record<string, number> = appSettings?.ai_provider_credits ?? {}
   const defaultCosts: Record<string, number> = {
-    replicate_flux: 4, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1,
+    replicate_flux: 4, gemini_flash: 2, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1,
   }
   const aiImageCredits = creditsMap[aiProvider] ?? defaultCosts[aiProvider] ?? 4
 
