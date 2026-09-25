@@ -2,9 +2,18 @@
 
 import { useState } from 'react'
 
+// Available AI image providers. Add new entries here as you wire them up.
+const AI_PROVIDERS = [
+  { value: 'none',          label: 'Disabled — hide from all users' },
+  { value: 'replicate_flux', label: 'Flux Schnell (Replicate) — fast, cheap, high-quality' },
+  // { value: 'stability_sdxl', label: 'Stability AI SDXL' },
+  // { value: 'dalle3',         label: 'OpenAI DALL·E 3' },
+] as const
+
 interface Settings {
   default_trial_days: number
   default_image_provider: string
+  ai_image_provider: string
   cron_frequency: string
   maintenance_mode: boolean
   announcement_banner: string | null
@@ -15,6 +24,7 @@ export default function AdminSettingsClient({ settings: initial, packs: initialP
   const [s, setS] = useState<Settings>({
     default_trial_days: initial.default_trial_days ?? 7,
     default_image_provider: initial.default_image_provider ?? 'pexels',
+    ai_image_provider: initial.ai_image_provider ?? 'none',
     cron_frequency: initial.cron_frequency ?? '',
     maintenance_mode: initial.maintenance_mode ?? false,
     announcement_banner: initial.announcement_banner ?? '',
@@ -84,6 +94,37 @@ export default function AdminSettingsClient({ settings: initial, packs: initialP
           <input type="checkbox" checked={s.maintenance_mode} onChange={e => setField('maintenance_mode', e.target.checked)} />
           Maintenance mode
         </label>
+      </div>
+
+      {/* AI Image Generation */}
+      <div className="card p-6 space-y-5 mb-6">
+        <div>
+          <h2 className="font-medium text-gray-900">AI image generation</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Pick the active provider. Clients only see the "AI image" button when a provider is enabled.
+            You can swap providers any time without redeploying.
+          </p>
+        </div>
+        <div className="space-y-2">
+          {AI_PROVIDERS.map(p => (
+            <label key={p.value} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="radio"
+                name="ai_image_provider"
+                value={p.value}
+                checked={s.ai_image_provider === p.value}
+                onChange={() => setField('ai_image_provider', p.value)}
+                className="mt-0.5 accent-brand-600"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-800">{p.label.split(' — ')[0]}</p>
+                {p.label.includes(' — ') && (
+                  <p className="text-xs text-gray-400">{p.label.split(' — ')[1]}</p>
+                )}
+              </div>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="card p-6 space-y-4">

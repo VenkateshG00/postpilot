@@ -10,9 +10,11 @@ interface Preview { caption: string; image_url: string; topic: string }
 export default function CreatePostClient({
   accounts,
   credits: initialCredits,
+  aiImageProvider,
 }: {
   accounts: Acct[]
   credits: number
+  aiImageProvider: string  // 'none' | 'replicate_flux' | future providers
 }) {
   const [accountId, setAccountId] = useState(accounts[0]?.id || '')
   const [brief, setBrief] = useState('')
@@ -196,7 +198,7 @@ export default function CreatePostClient({
             )}
 
             {/* AI Image overlay button */}
-            {!genImg && (
+            {!genImg && aiImageProvider !== 'none' && (
               <button
                 onClick={generateAIImage}
                 disabled={genImg || credits < 4}
@@ -218,10 +220,12 @@ export default function CreatePostClient({
           </div>
 
           {/* AI image tip */}
-          <p className="text-xs text-gray-400 -mt-1">
+          {aiImageProvider !== 'none' && (
+            <p className="text-xs text-gray-400 -mt-1">
             <ImagePlus size={11} className="inline mr-1" />
             Tap <span className="font-medium text-gray-500">"AI image"</span> to replace the stock photo with a unique, AI-generated image — stock photos can appear on anyone's feed; AI images are yours alone.
           </p>
+          )}
 
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{preview.caption}</p>
 

@@ -21,10 +21,14 @@ export async function POST(req: NextRequest) {
   const service = await createServiceClient()
 
   // Global settings
+  const VALID_AI_PROVIDERS = ['none', 'replicate_flux', 'stability_sdxl', 'dalle3']
+  const rawProvider = String(body.ai_image_provider ?? 'none')
+
   const settings = {
     id: 1,
     default_trial_days: Math.trunc(Number(body.default_trial_days) || 7),
     default_image_provider: String(body.default_image_provider ?? 'pexels'),
+    ai_image_provider: VALID_AI_PROVIDERS.includes(rawProvider) ? rawProvider : 'none',
     cron_frequency: String(body.cron_frequency ?? ''),
     maintenance_mode: Boolean(body.maintenance_mode),
     announcement_banner: body.announcement_banner ? String(body.announcement_banner) : null,

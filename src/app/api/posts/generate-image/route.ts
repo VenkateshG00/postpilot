@@ -40,6 +40,14 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Check if admin has enabled AI image generation
+  const svc0 = await createServiceClient()
+  const { data: appCfg } = await svc0.from('app_settings').select('ai_image_provider').eq('id', 1).maybeSingle()
+  const aiProvider = appCfg?.ai_image_provider ?? 'none'
+  if (aiProvider === 'none') {
+    return NextResponse.json({ error: 'AI image generation is currently disabled' }, { status: 503 })
+  }
+
   let body: Record<string, unknown> = {}
   try { body = await req.json() } catch {}
   const brief = String(body.brief ?? '').trim()
