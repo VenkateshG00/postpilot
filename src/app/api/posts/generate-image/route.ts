@@ -70,11 +70,16 @@ async function generateGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
   // gemini-2.5-flash-image: dedicated image generation model, free tier
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
-    {
+  // AQ. keys use Bearer auth; AIza keys use ?key= query param
+  const isBearer = apiKey.startsWith('AQ.')
+  const geminiUrl = isBearer
+    ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`
+  const geminiHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (isBearer) geminiHeaders['Authorization'] = `Bearer ${apiKey}`
+  const r = await fetch(geminiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: geminiHeaders,
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseModalities: ['IMAGE'] },
