@@ -59,11 +59,8 @@ async function generateReplicate(prompt: string): Promise<string> {
 // ─── Pollinations ─────────────────────────────────────────────────────────────
 async function generatePollinations(prompt: string): Promise<string> {
   const seed = Math.floor(Math.random() * 999999)
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1080&height=1080&seed=${seed}&nologo=true&model=flux&enhance=true`
-  // Pollinations serves the image at the URL itself — verify it's reachable
-  const check = await fetch(url, { method: 'HEAD' })
-  if (!check.ok) throw new Error('Pollinations.ai is currently unavailable')
-  return url
+  // Pollinations generates on demand — just return the URL; no HEAD check needed
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1080&height=1080&seed=${seed}&nologo=true&model=flux&enhance=true`
 }
 
 // ─── Hugging Face ─────────────────────────────────────────────────────────────
