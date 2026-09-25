@@ -220,7 +220,7 @@ export default function CreatePostClient({
           {/* AI image tip */}
           <p className="text-xs text-gray-400 -mt-1">
             <ImagePlus size={11} className="inline mr-1" />
-            Tap <span className="font-medium text-gray-500">"AI image"</span> on the photo to replace the stock image with a unique Flux-generated one (4 credits).
+            Tap <span className="font-medium text-gray-500">"AI image"</span> to replace the stock photo with a unique, AI-generated image — stock photos can appear on anyone's feed; AI images are yours alone.
           </p>
 
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{preview.caption}</p>
