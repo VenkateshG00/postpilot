@@ -69,14 +69,13 @@ async function generatePollinations(prompt: string): Promise<string> {
 async function generateGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
-  // gemini-2.5-flash-image: dedicated image generation model, free tier
-  // AQ. keys use Bearer auth; AIza keys use ?key= query param
-  const isBearer = apiKey.startsWith('AQ.')
-  const geminiUrl = isBearer
-    ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`
-  const geminiHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (isBearer) geminiHeaders['Authorization'] = `Bearer ${apiKey}`
+
+  // Both AQ. and AIza keys work via x-goog-api-key header (Google standard for Gemini)
+  const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
+  const geminiHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': apiKey,
+  }
   const r = await fetch(geminiUrl, {
       method: 'POST',
       headers: geminiHeaders,
