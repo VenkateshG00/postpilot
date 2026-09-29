@@ -87,7 +87,7 @@ async function generateGemini(prompt: string): Promise<string> {
   )
   if (!r.ok) {
     const err = await r.text()
-    if (r.status === 429) throw new Error('AI image rate limit reached — please wait a moment and try again.')
+    if (r.status === 429) throw new Error(`Gemini quota exceeded: ${err.slice(0, 200)}`)
     throw new Error(`Google Gemini image error ${r.status}: ${err.slice(0, 200)}`)
   }
   type GeminiResp = { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[] }
