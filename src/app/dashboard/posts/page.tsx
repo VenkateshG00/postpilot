@@ -1,80 +1,30 @@
 export const runtime = 'edge'
+
 import { createClient } from '@/lib/supabase/server'
 import { getActiveAccountId } from '@/lib/active-account'
-import { formatDateIST, getStatusColor, friendlyPostError } from '@/lib/utils'
-import { ExternalLink } from 'lucide-react'
+import PostsClient from './PostsClient'
 
 export default async function PostsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: accts } = await supabase.from('social_accounts').select('id').eq('user_id', user!.id)
+
+  const { data: accts } = await supabase
+    .from('social_accounts')
+    .select('id')
+    .eq('user_id', user!.id)
+
   const activeId = await getActiveAccountId((accts ?? []).map(a => a.id))
-  let q = supabase.from('post_logs').select('*').eq('user_id', user!.id)
+
+  let q = supabase
+    .from('post_logs')
+    .select('*')
+    .eq('user_id', user!.id)
+
   if (activeId) q = q.eq('social_account_id', activeId)
-  const { data: logs } = await q.order('created_at', { ascending: false }).limit(50)
 
-  return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Post history</h1>
-        <p className="text-sm text-gray-500 mt-1">Every post PostPilot has created or attempted</p>
-      </div>
+  const { data: logs } = await q
+    .order('created_at', { ascending: false })
+    .limit(100)
 
-      {!logs?.length ? (
-        <div className="card p-16 text-center">
-          <p className="text-gray-400 text-sm">No posts yet — set up a schedule to get started.</p>
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-16">Image</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500">Caption</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-40">Topic</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-24">Status</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 w-32">Date</th>
-                  <th className="px-5 py-3 w-10" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {logs.map(log => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3">
-                      {log.image_url
-                        ? <img src={log.image_url} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
-                        : <div className="w-10 h-10 rounded-lg bg-gray-100" />
-                      }
-                    </td>
-                    <td className="px-5 py-3">
-                      <p className="text-gray-700 line-clamp-2">{log.caption || '—'}</p>
-                      {log.status === 'failed' && (
-                        <p className="text-xs text-red-500 mt-0.5">{friendlyPostError(log.error_message)}</p>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-gray-500 text-xs">{log.topic_used || '—'}</td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(log.status)}`}>
-                        {log.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-gray-400 text-xs">{log.status === 'scheduled' ? (<><span className="block">{formatDateIST(log.created_at)}</span><span className="block text-brand-600 font-medium mt-0.5">&rarr; {formatDateIST(log.scheduled_for)}</span></>) : formatDateIST(log.status === 'published' ? (log.published_at || log.created_at) : log.created_at)}</td>
-                    <td className="px-5 py-3">
-                      {log.ig_permalink && (
-                        <a href={log.ig_permalink} target="_blank" rel="noreferrer"
-                          className="text-gray-400 hover:text-brand-600 transition-colors">
-                          <ExternalLink size={13} />
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+  return <PostsClient logs={logs ?? []} />
 }
