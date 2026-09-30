@@ -2,16 +2,49 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { INDUSTRIES, BRAND_VOICES, TIMEZONES, LANGUAGES, cn } from '@/lib/utils'
+import { INDUSTRIES, BRAND_VOICES, TIMEZONES, LANGUAGES } from '@/lib/utils'
 import type { Profile, BusinessProfile } from '@/types'
 
-export default function SettingsClient({ profile, biz }: { profile: Profile | null, biz: BusinessProfile | null }) {
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
+        {label}{hint && <span className="font-normal ml-1" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{hint}</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 12,
+  fontSize: 14,
+  outline: 'none',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-primary)',
+}
+
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} style={inputStyle} />
+}
+function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} style={{ ...inputStyle, appearance: 'none' }} className="w-full" />
+}
+function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} style={{ ...inputStyle, resize: 'none' }} />
+}
+
+export default function SettingsClient({ profile, biz }: { profile: Profile | null; biz: BusinessProfile | null }) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved]   = useState(false)
-  const [form, setForm]     = useState({
+  const [saved, setSaved] = useState(false)
+  const [gen, setGen] = useState(false)
+  const [form, setForm] = useState({
     business_name:   biz?.business_name   || '',
     industry:        biz?.industry        || '',
     description:     biz?.description     || '',
@@ -20,14 +53,13 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
     language:        biz?.language        || 'en',
     timezone:        biz?.timezone        || 'UTC',
     topics:          biz?.topics?.join(', ')  || '',
-    hashtags:        biz?.hashtags?.join(', ') || ''
+    hashtags:        biz?.hashtags?.join(', ') || '',
   })
 
   function set(key: string, val: string) {
     setForm(f => ({ ...f, [key]: val }))
   }
 
-  const [gen, setGen] = useState(false)
   async function suggestTopics() {
     setGen(true)
     try {
@@ -50,16 +82,16 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('business_profiles').upsert({
-      user_id:         user!.id,
-      business_name:   form.business_name,
-      industry:        form.industry,
-      description:     form.description,
+      user_id: user!.id,
+      business_name: form.business_name,
+      industry: form.industry,
+      description: form.description,
       target_audience: form.target_audience,
-      brand_voice:     form.brand_voice as any,
-      language:        form.language,
-      timezone:        form.timezone,
+      brand_voice: form.brand_voice as any,
+      language: form.language,
+      timezone: form.timezone,
       topics:   form.topics.split(',').map(t => t.trim()).filter(Boolean),
-      hashtags: form.hashtags.split(',').map(h => h.trim().replace(/^#/, '')).filter(Boolean)
+      hashtags: form.hashtags.split(',').map(h => h.trim().replace(/^#/, '')).filter(Boolean),
     }, { onConflict: 'user_id' })
     setSaving(false)
     setSaved(true)
@@ -68,115 +100,132 @@ export default function SettingsClient({ profile, biz }: { profile: Profile | nu
   }
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">Update your business profile and content preferences</p>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Update your business profile and content preferences
+        </p>
       </div>
 
-      <div className="card p-7 space-y-5">
-        <h2 className="font-medium text-gray-900">Business profile</h2>
+      {/* Card */}
+      <div
+        className="rounded-2xl p-6 space-y-5"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+      >
+        <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Business profile</h2>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label">Business name</label>
-            <input value={form.business_name} onChange={e => set('business_name', e.target.value)} className="input-base" />
-          </div>
-          <div>
-            <label className="label">Industry</label>
-            <select value={form.industry} onChange={e => set('industry', e.target.value)} className="input-base">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Business name">
+            <Input value={form.business_name} onChange={e => set('business_name', e.target.value)} placeholder="My Business" />
+          </Field>
+          <Field label="Industry">
+            <Select value={form.industry} onChange={e => set('industry', e.target.value)}>
+              <option value="">Select industry…</option>
               {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-            </select>
-          </div>
+            </Select>
+          </Field>
         </div>
 
-        <div>
-          <label className="label">What does your business do?</label>
-          <textarea
+        <Field label="What does your business do?">
+          <Textarea
             value={form.description}
             onChange={e => set('description', e.target.value)}
             rows={3}
-            className="input-base resize-none"
+            placeholder="We sell handmade pastries and coffee in downtown Austin…"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="label">Target audience</label>
-          <input value={form.target_audience} onChange={e => set('target_audience', e.target.value)} className="input-base" />
-        </div>
+        <Field label="Target audience">
+          <Input
+            value={form.target_audience}
+            onChange={e => set('target_audience', e.target.value)}
+            placeholder="Local food lovers aged 25–45"
+          />
+        </Field>
 
-        <div>
-          <label className="label">Brand voice</label>
-          <div className="grid grid-cols-2 gap-3">
+        {/* Brand voice */}
+        <Field label="Brand voice">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1">
             {BRAND_VOICES.map(v => (
               <button
                 key={v.value}
                 type="button"
                 onClick={() => set('brand_voice', v.value)}
-                className={cn(
-                  'text-left p-3.5 rounded-xl border-2 transition-all',
-                  form.brand_voice === v.value
-                    ? 'border-brand-500 bg-brand-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                )}
+                className="text-left p-3.5 rounded-xl transition-all"
+                style={{
+                  border: `2px solid ${form.brand_voice === v.value ? 'var(--accent)' : 'var(--border)'}`,
+                  background: form.brand_voice === v.value ? 'var(--accent-subtle)' : 'var(--bg)',
+                }}
               >
-                <div className="font-medium text-sm text-gray-900">{v.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{v.desc}</div>
+                <div className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{v.label}</div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{v.desc}</div>
               </button>
             ))}
           </div>
-        </div>
+        </Field>
 
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="label mb-0">Content topics <span className="text-gray-400 font-normal">(comma-separated)</span></label>
-            <button type="button" onClick={suggestTopics} disabled={gen}
-              className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50">
-              {gen ? 'Generating…' : '✨ Suggest with AI'}
+        {/* Topics */}
+        <Field label="Content topics" hint="(comma-separated)">
+          <div className="flex items-center gap-2 mb-1.5 justify-between">
+            <span />
+            <button
+              type="button"
+              onClick={suggestTopics}
+              disabled={gen}
+              className="flex items-center gap-1.5 text-xs font-semibold hover:opacity-70 transition-opacity disabled:opacity-40"
+              style={{ color: 'var(--accent)' }}
+            >
+              <Sparkles size={11} /> {gen ? 'Generating…' : 'Suggest with AI'}
             </button>
           </div>
-          <input
+          <Input
             value={form.topics}
             onChange={e => set('topics', e.target.value)}
             placeholder="Daily specials, Behind the scenes, Customer stories"
-            className="input-base"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="label">Default hashtags <span className="text-gray-400 font-normal">(comma-separated, no #)</span></label>
-          <input
+        <Field label="Default hashtags" hint="(comma-separated, no #)">
+          <Input
             value={form.hashtags}
             onChange={e => set('hashtags', e.target.value)}
-            placeholder="austinfood, bakery, freshbread"
-            className="input-base"
+            placeholder="localfood, bakery, freshbread"
           />
-        </div>
+        </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label">Language</label>
-            <select value={form.language} onChange={e => set('language', e.target.value)} className="input-base">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Language">
+            <Select value={form.language} onChange={e => set('language', e.target.value)}>
               {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Timezone</label>
-            <select value={form.timezone} onChange={e => set('timezone', e.target.value)} className="input-base">
+            </Select>
+          </Field>
+          <Field label="Timezone">
+            <Select value={form.timezone} onChange={e => set('timezone', e.target.value)}>
               {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
+            </Select>
+          </Field>
         </div>
 
-        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+        {/* Save row */}
+        <div
+          className="flex items-center justify-between pt-4"
+          style={{ borderTop: '1px solid var(--border)' }}
+        >
           <div>
             {saved && (
-              <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-                <CheckCircle2 size={14} /> Saved
+              <span className="flex items-center gap-1.5 text-sm" style={{ color: '#22c55e' }}>
+                <CheckCircle2 size={14} /> Saved successfully
               </span>
             )}
           </div>
-          <button onClick={save} disabled={saving} className="btn-primary">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+            style={{ background: 'var(--accent)' }}
+          >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Save changes
           </button>

@@ -2,6 +2,7 @@ export const runtime = 'edge'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
+import MobileNav from '@/components/layout/MobileNav'
 import { getPlan } from '@/lib/plans-db'
 import { getActiveAccountId } from '@/lib/active-account'
 
@@ -9,14 +10,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
-
-  const { data: bizList } = await supabase
-    .from('business_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-
-  const biz = bizList?.[0] ?? null
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -38,6 +31,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('connected_at', { ascending: true })
+
   const activeAccountId = await getActiveAccountId((accounts ?? []).map(a => a.id))
 
   return (
@@ -45,13 +39,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
       className="flex h-screen overflow-hidden"
       style={{ background: 'var(--bg)' }}
     >
-      <Sidebar
+      {/* Desktop sidebar — hidden on mobile */}
+      <div className="hidden md:flex md:shrink-0">
+        <Sidebar
+          profile={profile}
+          brand={brand}
+          accounts={accounts ?? []}
+          activeAccountId={activeAccountId}
+        />
+      </div>
+
+      {/* Mobile nav (hamburger + slide-in drawer) */}
+      <MobileNav
         profile={profile}
         brand={brand}
         accounts={accounts ?? []}
         activeAccountId={activeAccountId}
       />
-      <main className="flex-1 overflow-y-auto" style={{ background: 'var(--bg)' }}>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto w-0">
         {children}
       </main>
     </div>

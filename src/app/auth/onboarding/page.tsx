@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Plus, X, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Loader2, Plus, X, ArrowRight, ArrowLeft, Sparkles, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { INDUSTRIES, BRAND_VOICES, TIMEZONES, LANGUAGES } from '@/lib/utils'
 import type { OnboardingFormData } from '@/types'
-import { cn } from '@/lib/utils'
 
 const schema = z.object({
   business_name: z.string().min(2, 'Enter your business name'),
@@ -25,12 +24,24 @@ const schema = z.object({
 
 const STEPS = ['Business details', 'Brand voice', 'Content setup']
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 12,
+  fontSize: 14,
+  outline: 'none',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-primary)',
+}
+
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [topicInput, setTopicInput] = useState('')
   const [hashtagInput, setHashtagInput] = useState('')
   const [serverError, setServerError] = useState('')
+  const [suggesting, setSuggesting] = useState(false)
 
   const { register, handleSubmit, watch, setValue, getValues, trigger,
     formState: { errors, isSubmitting } } = useForm<OnboardingFormData>({
@@ -53,7 +64,6 @@ export default function OnboardingPage() {
     if (t && !topics.includes(t)) { setValue('topics', [...topics, t]); setTopicInput('') }
   }
 
-  const [suggesting, setSuggesting] = useState(false)
   async function suggestTopics() {
     const v = getValues()
     if (!v.business_name || !v.industry) { setServerError('Add your business name & industry first (step 1).'); return }
@@ -115,91 +125,116 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
-      <div className="text-xl font-semibold tracking-tight mb-10">
-        Post<span className="text-brand-600">Pilot</span>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
+      style={{ background: 'var(--bg)' }}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-2 mb-10">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+          <Zap size={16} className="text-white" />
+        </div>
+        <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>PostPilot</span>
       </div>
 
       {/* Progress */}
       <div className="w-full max-w-lg mb-8">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2 flex-1">
-              <div className={cn(
-                'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors',
-                i < step ? 'bg-brand-600 text-white' :
-                  i === step ? 'bg-brand-600 text-white ring-4 ring-brand-100' :
-                    'bg-gray-200 text-gray-500'
-              )}>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0"
+                style={{
+                  background: i <= step ? 'var(--accent)' : 'var(--bg-card)',
+                  color: i <= step ? '#fff' : 'var(--text-muted)',
+                  border: i <= step ? 'none' : '1px solid var(--border)',
+                  boxShadow: i === step ? '0 0 0 4px rgba(255,77,77,0.15)' : 'none',
+                }}
+              >
                 {i < step ? '✓' : i + 1}
               </div>
-              <span className={cn('text-xs hidden sm:block', i === step ? 'text-brand-600 font-medium' : 'text-gray-400')}>
+              <span
+                className="text-xs hidden sm:block"
+                style={{ color: i === step ? 'var(--accent)' : 'var(--text-muted)', fontWeight: i === step ? 600 : 400 }}
+              >
                 {s}
               </span>
-              {i < STEPS.length - 1 && <div className={cn('h-0.5 flex-1 rounded', i < step ? 'bg-brand-400' : 'bg-gray-200')} />}
+              {i < STEPS.length - 1 && (
+                <div
+                  className="h-0.5 flex-1 rounded"
+                  style={{ background: i < step ? 'var(--accent)' : 'var(--border)' }}
+                />
+              )}
             </div>
           ))}
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-lg">
-        <div className="card p-8">
+        <div
+          className="rounded-2xl p-8"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
 
           {/* Step 0: Business details */}
           {step === 0 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Tell us about your business</h2>
-                <p className="text-sm text-gray-500">This shapes everything PostPilot writes for you.</p>
+                <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  Tell us about your business
+                </h2>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  This shapes everything PostPilot writes for you.
+                </p>
               </div>
 
               <div>
-                <label className="label">Business name</label>
-                <input {...register('business_name')} type="text" placeholder="Sunrise Bakery" className="input-base" />
-                {errors.business_name && <p className="error-text">{errors.business_name.message}</p>}
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Business name</label>
+                <input {...register('business_name')} type="text" placeholder="Sunrise Bakery" style={inputStyle} />
+                {errors.business_name && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.business_name.message}</p>}
               </div>
 
               <div>
-                <label className="label">Industry</label>
-                <select {...register('industry')} className="input-base">
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Industry</label>
+                <select {...register('industry')} style={{ ...inputStyle, appearance: 'none' }}>
                   <option value="">Select your industry</option>
                   {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
-                {errors.industry && <p className="error-text">{errors.industry.message}</p>}
+                {errors.industry && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.industry.message}</p>}
               </div>
 
               <div>
-                <label className="label">What does your business do?</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>What does your business do?</label>
                 <textarea
                   {...register('description')}
                   rows={3}
-                  placeholder="We're a family-owned bakery specializing in artisan breads and custom cakes, serving downtown Austin since 2018."
-                  className="input-base resize-none"
+                  placeholder="We're a family-owned bakery specializing in artisan breads and custom cakes..."
+                  style={{ ...inputStyle, resize: 'none' }}
                 />
-                {errors.description && <p className="error-text">{errors.description.message}</p>}
+                {errors.description && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.description.message}</p>}
               </div>
 
               <div>
-                <label className="label">Who are your customers?</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Who are your customers?</label>
                 <input
                   {...register('target_audience')}
                   type="text"
                   placeholder="Local families, young professionals, coffee lovers"
-                  className="input-base"
+                  style={inputStyle}
                 />
-                {errors.target_audience && <p className="error-text">{errors.target_audience.message}</p>}
+                {errors.target_audience && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.target_audience.message}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="label">Language</label>
-                  <select {...register('language')} className="input-base">
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Language</label>
+                  <select {...register('language')} style={{ ...inputStyle, appearance: 'none' }}>
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="label">Timezone</label>
-                  <select {...register('timezone')} className="input-base">
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Timezone</label>
+                  <select {...register('timezone')} style={{ ...inputStyle, appearance: 'none' }}>
                     {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
@@ -211,8 +246,8 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Choose your brand voice</h2>
-                <p className="text-sm text-gray-500">How should PostPilot sound when it writes for you?</p>
+                <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Choose your brand voice</h2>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>How should PostPilot sound when it writes for you?</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {BRAND_VOICES.map(v => (
@@ -220,15 +255,14 @@ export default function OnboardingPage() {
                     key={v.value}
                     type="button"
                     onClick={() => setValue('brand_voice', v.value)}
-                    className={cn(
-                      'text-left p-4 rounded-xl border-2 transition-all',
-                      voice === v.value
-                        ? 'border-brand-500 bg-brand-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
+                    className="text-left p-4 rounded-xl transition-all"
+                    style={{
+                      border: `2px solid ${voice === v.value ? 'var(--accent)' : 'var(--border)'}`,
+                      background: voice === v.value ? 'rgba(255,77,77,0.06)' : 'var(--bg)',
+                    }}
                   >
-                    <div className="font-medium text-sm text-gray-900">{v.label}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{v.desc}</div>
+                    <div className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{v.label}</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{v.desc}</div>
                   </button>
                 ))}
               </div>
@@ -239,16 +273,22 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Set up your content</h2>
-                <p className="text-sm text-gray-500">What topics should your posts cover?</p>
+                <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Set up your content</h2>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>What topics should your posts cover?</p>
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="label mb-0">Content topics</label>
-                  <button type="button" onClick={suggestTopics} disabled={suggesting}
-                    className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50">
-                    {suggesting ? 'Generating…' : '✨ Suggest topics for me'}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Content topics</label>
+                  <button
+                    type="button"
+                    onClick={suggestTopics}
+                    disabled={suggesting}
+                    className="flex items-center gap-1 text-xs font-semibold hover:opacity-70 transition-opacity disabled:opacity-40"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    <Sparkles size={11} />
+                    {suggesting ? 'Generating…' : 'Suggest with AI'}
                   </button>
                 </div>
                 <div className="flex gap-2 mb-2">
@@ -258,15 +298,24 @@ export default function OnboardingPage() {
                     onChange={e => setTopicInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTopic())}
                     placeholder="e.g. Daily specials, Behind the scenes"
-                    className="input-base flex-1"
+                    style={{ ...inputStyle, flex: 1 }}
                   />
-                  <button type="button" onClick={addTopic} className="btn-secondary px-3">
+                  <button
+                    type="button"
+                    onClick={addTopic}
+                    className="px-3 py-2 rounded-xl font-bold transition-opacity hover:opacity-80"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  >
                     <Plus size={16} />
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {topics.map(t => (
-                    <span key={t} className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 text-xs px-2.5 py-1 rounded-lg">
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
+                      style={{ background: 'rgba(255,77,77,0.1)', color: 'var(--accent)' }}
+                    >
                       {t}
                       <button type="button" onClick={() => setValue('topics', topics.filter(x => x !== t))}>
                         <X size={10} />
@@ -274,11 +323,13 @@ export default function OnboardingPage() {
                     </span>
                   ))}
                 </div>
-                {errors.topics && <p className="error-text">{errors.topics.message}</p>}
+                {errors.topics && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.topics.message}</p>}
               </div>
 
               <div>
-                <label className="label">Default hashtags <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                  Default hashtags <span style={{ fontWeight: 400, opacity: 0.6 }}>(optional)</span>
+                </label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
@@ -286,15 +337,24 @@ export default function OnboardingPage() {
                     onChange={e => setHashtagInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
                     placeholder="e.g. austinfood (no #)"
-                    className="input-base flex-1"
+                    style={{ ...inputStyle, flex: 1 }}
                   />
-                  <button type="button" onClick={addHashtag} className="btn-secondary px-3">
+                  <button
+                    type="button"
+                    onClick={addHashtag}
+                    className="px-3 py-2 rounded-xl font-bold transition-opacity hover:opacity-80"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  >
                     <Plus size={16} />
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {hashtags.map(h => (
-                    <span key={h} className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-lg">
+                    <span
+                      key={h}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                    >
                       #{h}
                       <button type="button" onClick={() => setValue('hashtags', hashtags.filter(x => x !== h))}>
                         <X size={10} />
@@ -307,25 +367,46 @@ export default function OnboardingPage() {
           )}
 
           {serverError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-4">
+            <div
+              className="rounded-xl px-3 py-2 text-sm mt-4"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+            >
               {serverError}
-            </p>
+            </div>
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+          <div
+            className="flex items-center justify-between mt-8 pt-6"
+            style={{ borderTop: '1px solid var(--border)' }}
+          >
             {step > 0 ? (
-              <button type="button" onClick={() => setStep(s => s - 1)} className="btn-secondary">
+              <button
+                type="button"
+                onClick={() => setStep(s => s - 1)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-opacity hover:opacity-80"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              >
                 <ArrowLeft size={14} /> Back
               </button>
             ) : <div />}
 
             {step < STEPS.length - 1 ? (
-              <button type="button" onClick={nextStep} className="btn-primary">
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                style={{ background: 'var(--accent)' }}
+              >
                 Continue <ArrowRight size={14} />
               </button>
             ) : (
-              <button type="submit" disabled={isSubmitting} className="btn-primary">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
+                style={{ background: 'var(--accent)' }}
+              >
                 {isSubmitting && <Loader2 size={14} className="animate-spin" />}
                 Set up my account <ArrowRight size={14} />
               </button>

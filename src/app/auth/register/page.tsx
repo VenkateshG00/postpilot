@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const schema = z.object({
@@ -19,6 +19,17 @@ const schema = z.object({
   path: ['confirm']
 })
 type FormData = z.infer<typeof schema>
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 12,
+  fontSize: 14,
+  outline: 'none',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-primary)',
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -35,9 +46,7 @@ export default function RegisterPage() {
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: {
-        data: { full_name: data.full_name }
-      }
+      options: { data: { full_name: data.full_name } }
     })
     if (error) { setServerError(error.message); return }
     router.push('/auth/onboarding')
@@ -46,14 +55,20 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-sm card p-10 text-center">
-          <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 size={24} className="text-emerald-500" />
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
+        <div
+          className="w-full max-w-sm rounded-2xl p-10 text-center"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'rgba(34,197,94,0.1)' }}
+          >
+            <CheckCircle2 size={24} color="#22c55e" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-sm text-gray-500">
-            We sent a confirmation link to your inbox. Click it to activate your account and continue setup.
+          <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Check your email</h2>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            We sent a confirmation link to your inbox. Click it to activate your account.
           </p>
         </div>
       </div>
@@ -61,85 +76,77 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      <Link href="/" className="text-xl font-semibold tracking-tight mb-10">
-        Post<span className="text-brand-600">Pilot</span>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: 'var(--bg)' }}>
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-2 mb-10">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+          <Zap size={16} className="text-white" />
+        </div>
+        <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>PostPilot</span>
       </Link>
 
-      <div className="w-full max-w-sm card p-8">
-        <h1 className="text-xl font-semibold text-gray-900 mb-1">Create your account</h1>
-        <p className="text-sm text-gray-500 mb-7">Free for 14 days, no credit card needed</p>
+      <div
+        className="w-full max-w-sm rounded-2xl p-8"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+      >
+        <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Create your account</h1>
+        <p className="text-sm mb-7" style={{ color: 'var(--text-muted)' }}>Free to get started, no credit card needed</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="label">Your name</label>
-            <input
-              {...register('full_name')}
-              type="text"
-              placeholder="Jane Smith"
-              className="input-base"
-              autoComplete="name"
-            />
-            {errors.full_name && <p className="error-text">{errors.full_name.message}</p>}
-          </div>
-
-          <div>
-            <label className="label">Work email</label>
-            <input
-              {...register('email')}
-              type="email"
-              placeholder="you@business.com"
-              className="input-base"
-              autoComplete="email"
-            />
-            {errors.email && <p className="error-text">{errors.email.message}</p>}
-          </div>
-
-          <div>
-            <label className="label">Password</label>
-            <input
-              {...register('password')}
-              type="password"
-              placeholder="At least 8 characters"
-              className="input-base"
-              autoComplete="new-password"
-            />
-            {errors.password && <p className="error-text">{errors.password.message}</p>}
-          </div>
-
-          <div>
-            <label className="label">Confirm password</label>
-            <input
-              {...register('confirm')}
-              type="password"
-              placeholder="••••••••"
-              className="input-base"
-              autoComplete="new-password"
-            />
-            {errors.confirm && <p className="error-text">{errors.confirm.message}</p>}
-          </div>
+          {[
+            { name: 'full_name', label: 'Your name', type: 'text', placeholder: 'Jane Smith', autoComplete: 'name' },
+            { name: 'email', label: 'Work email', type: 'email', placeholder: 'you@business.com', autoComplete: 'email' },
+            { name: 'password', label: 'Password', type: 'password', placeholder: 'At least 8 characters', autoComplete: 'new-password' },
+            { name: 'confirm', label: 'Confirm password', type: 'password', placeholder: '••••••••', autoComplete: 'new-password' },
+          ].map(field => (
+            <div key={field.name}>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                {field.label}
+              </label>
+              <input
+                {...register(field.name as any)}
+                type={field.type}
+                placeholder={field.placeholder}
+                autoComplete={field.autoComplete}
+                style={inputStyle}
+              />
+              {errors[field.name as keyof typeof errors] && (
+                <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                  {errors[field.name as keyof typeof errors]?.message as string}
+                </p>
+              )}
+            </div>
+          ))}
 
           {serverError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <div
+              className="rounded-xl px-3 py-2 text-sm"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+            >
               {serverError}
-            </p>
+            </div>
           )}
 
-          <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white mt-2 disabled:opacity-50 hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--accent)' }}
+          >
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}
             Create account
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-5">
+        <p className="text-center text-xs mt-5" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
           By signing up you agree to our{' '}
           <Link href="#" className="underline">Terms</Link> and{' '}
           <Link href="#" className="underline">Privacy Policy</Link>
         </p>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-sm mt-4" style={{ color: 'var(--text-muted)' }}>
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-brand-600 font-medium hover:underline">
+          <Link href="/auth/login" className="font-semibold hover:opacity-70 transition-opacity" style={{ color: 'var(--accent)' }}>
             Sign in
           </Link>
         </p>

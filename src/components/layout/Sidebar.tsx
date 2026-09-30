@@ -32,12 +32,13 @@ const MANAGE_NAV = [
 ]
 
 /* ── Sub-components ──────────────────────────────────── */
-function NavItem({ href, label, icon: Icon, active }: {
-  href: string; label: string; icon: React.ElementType; active: boolean
+function NavItem({ href, label, icon: Icon, active, onClick }: {
+  href: string; label: string; icon: React.ElementType; active: boolean; onClick?: () => void
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={cn(
         'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all font-medium',
         active ? 'text-white' : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -89,11 +90,13 @@ export default function Sidebar({
   brand,
   accounts,
   activeAccountId,
+  onNavigate,
 }: {
   profile: Profile | null
   brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null
   accounts?: { id: string; account_name: string | null; platform: string }[]
   activeAccountId?: string | null
+  onNavigate?: () => void
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -185,17 +188,17 @@ export default function Sidebar({
       {/* ── Navigation ── */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5">
         {MAIN_NAV.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
         ))}
 
         <SectionLabel>AI Tools</SectionLabel>
         {allAiTools.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
         ))}
 
         <SectionLabel>Manage</SectionLabel>
         {MANAGE_NAV.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} />
+          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
         ))}
       </nav>
 
