@@ -5,6 +5,46 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 const N8N_PUBLISH_WEBHOOK_URL = process.env.N8N_PUBLISH_WEBHOOK_URL
 
+// ─── Ensure a stable Supabase public URL before posting to Instagram ──────────
+// Called only at publish time — this is the ONE write per posted image.
+async function ensurePublicUrl(
+  imageUrl: string,
+  svc: Awaited<ReturnType<typeof createServiceClient>>,
+): Promise<string> {
+  // Already in our storage — nothing to do
+  if (imageUrl.includes('/storage/v1/object/public/')) return imageUrl
+
+  let buffer: ArrayBuffer
+  let mime: string
+
+  if (imageUrl.startsWith('data:')) {
+    // base64 data URL (HuggingFace / Cloudflare preview)
+    const comma = imageUrl.indexOf(',')
+    const header = imageUrl.slice(0, comma)
+    mime = header.split(':')[1]?.split(';')[0] ?? 'image/jpeg'
+    const b64 = imageUrl.slice(comma + 1)
+    const binary = atob(b64)
+    buffer = new ArrayBuffer(binary.length)
+    const view = new Uint8Array(buffer)
+    for (let i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i)
+  } else {
+    // External URL (Pollinations, Replicate, etc.)
+    const r = await fetch(imageUrl)
+    if (!r.ok) throw new Error(`Failed to fetch image for upload: ${r.status}`)
+    buffer = await r.arrayBuffer()
+    mime = r.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
+  }
+
+  const ext = mime === 'image/png' ? 'png' : 'jpg'
+  const filename = `published/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await svc.storage.from('ai-images').upload(filename, buffer, {
+    contentType: mime, upsert: false,
+  })
+  if (error) throw new Error(`Storage upload failed: ${error.message}`)
+  const { data: { publicUrl } } = svc.storage.from('ai-images').getPublicUrl(filename)
+  return publicUrl
+}
+
 // Publishes a ready one-off post via the n8n "Publish ready post" webhook.
 export async function POST(req: NextRequest) {
   if (!N8N_PUBLISH_WEBHOOK_URL) return NextResponse.json({ error: 'Publishing is not configured' }, { status: 500 })
@@ -29,25 +69,33 @@ export async function POST(req: NextRequest) {
 
   const svc = await createServiceClient()
 
+  // Resolve image to a stable public Supabase URL (only happens at publish time)
+  let stableImageUrl: string
+  try { stableImageUrl = await ensurePublicUrl(image_url, svc) }
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Image upload failed'
+    return NextResponse.json({ error: msg }, { status: 502 })
+  }
+
   // Scheduled for later -> store it; the cron publishes it when its time arrives.
   if (isFuture) {
     const { data: slog, error: sErr } = await svc.from('post_logs').insert({
       user_id: user.id, social_account_id: accountId, platform: 'instagram',
-      status: 'scheduled', image_url, caption, topic_used: topic, scheduled_for: scheduledFor!.toISOString(),
+      status: 'scheduled', image_url: stableImageUrl, caption, topic_used: topic, scheduled_for: scheduledFor!.toISOString(),
     }).select('id').single()
     if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 })
     return NextResponse.json({ ok: true, scheduled: true, scheduled_for: scheduledFor!.toISOString(), post_log_id: slog.id })
   }
   const { data: log, error: logErr } = await svc.from('post_logs').insert({
     user_id: user.id, social_account_id: accountId, platform: 'instagram',
-    status: 'pending', image_url, caption, topic_used: topic, scheduled_for: new Date().toISOString(),
+    status: 'pending', image_url: stableImageUrl, caption, topic_used: topic, scheduled_for: new Date().toISOString(),
   }).select('id').single()
   if (logErr) return NextResponse.json({ error: logErr.message }, { status: 500 })
 
   try {
     await fetch(N8N_PUBLISH_WEBHOOK_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image_url, caption, ig_business_id: acct.ig_business_id, access_token: acct.access_token, post_log_id: log.id }),
+      body: JSON.stringify({ image_url: stableImageUrl, caption, ig_business_id: acct.ig_business_id, access_token: acct.access_token, post_log_id: log.id }),
     })
   } catch {
     await svc.from('post_logs').update({ status: 'failed', error_message: 'Publish webhook unreachable' }).eq('id', log.id)

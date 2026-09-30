@@ -10,9 +10,10 @@ interface Props {
   brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null
   accounts?: { id: string; account_name: string | null; platform: string }[]
   activeAccountId?: string | null
+  workspaces?: { id: string; name: string; owner_id: string }[]
 }
 
-export default function MobileNav({ profile, brand, accounts, activeAccountId }: Props) {
+export default function MobileNav({ profile, brand, accounts, activeAccountId, workspaces }: Props) {
   const [open, setOpen] = useState(false)
 
   // Close on route change
@@ -86,6 +87,7 @@ export default function MobileNav({ profile, brand, accounts, activeAccountId }:
           brand={brand}
           accounts={accounts}
           activeAccountId={activeAccountId}
+          workspaces={workspaces}
           onNavigate={() => setOpen(false)}
         />
       </div>

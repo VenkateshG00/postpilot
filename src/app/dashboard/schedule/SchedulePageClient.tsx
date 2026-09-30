@@ -2,24 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Loader2, X, Clock, Calendar, ChevronRight, ToggleLeft, ToggleRight } from 'lucide-react'
+import {
+  Plus, Trash2, Loader2, X, Clock, Calendar, ToggleLeft, ToggleRight,
+  Zap, Edit3, Check, Sparkles
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { cn } from '@/lib/utils'
 import { pillarsForIndustry } from '@/lib/pillars'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const CONTENT_TYPES = [
-  { value: 'post',      label: 'Photo post' },
-  { value: 'carousel',  label: 'Carousel' },
-  { value: 'reel',      label: 'Reel' },
-  { value: 'story',     label: 'Story' },
+  { value: 'post', label: 'Photo post' },
+  { value: 'carousel', label: 'Carousel' },
+  { value: 'reel', label: 'Reel' },
+  { value: 'story', label: 'Story' },
 ]
 
-const FREQ_LABEL: Record<string, string> = {
-  daily: 'Every day',
-  weekly: 'Specific days',
-  custom: 'Custom',
-}
+const BEST_TIMES = [
+  { label: 'Morning', time: '09:00', desc: 'Great for professionals' },
+  { label: 'Lunch', time: '12:30', desc: 'Peak engagement window' },
+  { label: 'Evening', time: '18:00', desc: 'After-work scrolling' },
+  { label: 'Night', time: '21:00', desc: 'Highest reach for reels' },
+]
 
 interface Props {
   schedules: any[]
@@ -28,26 +31,26 @@ interface Props {
   topics?: string[] | null
 }
 
-/* ── Toggle switch ────────────────────────────────────────── */
+/* ── Toggle switch ─────────────────────────────────── */
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
       className="relative flex items-center shrink-0 transition-all"
       style={{
-        width: 36,
-        height: 20,
-        borderRadius: 10,
-        background: on ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
+        width: 40,
+        height: 22,
+        borderRadius: 11,
+        background: on ? 'var(--accent)' : 'var(--border)',
         transition: 'background 0.2s',
       }}
     >
       <span
-        className="absolute rounded-full bg-white shadow"
+        className="absolute rounded-full bg-white shadow-sm"
         style={{
-          width: 14,
-          height: 14,
-          left: on ? 18 : 3,
+          width: 16,
+          height: 16,
+          left: on ? 20 : 3,
           transition: 'left 0.2s',
         }}
       />
@@ -55,50 +58,45 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   )
 }
 
-/* ── Label / input wrappers ──────────────────────────────── */
+/* ── Field / Input wrappers ────────────────────────── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>{label}</label>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </label>
       {children}
     </div>
   )
 }
 
-function Input({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="w-full px-3 py-2 rounded-xl text-sm outline-none transition-all"
-      style={{
-        background: 'var(--bg)',
-        border: '1px solid var(--border)',
-        color: 'var(--text-primary)',
-      }}
-    />
-  )
+const inputCls = 'w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all'
+const inputStyle: React.CSSProperties = {
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-primary)',
 }
 
-function Select({ ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={inputCls} style={{ ...inputStyle, ...props.style }} />
+}
+function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className="w-full px-3 py-2 rounded-xl text-sm outline-none transition-all appearance-none"
-      style={{
-        background: 'var(--bg)',
-        border: '1px solid var(--border)',
-        color: 'var(--text-primary)',
-      }}
+      className={`${inputCls} appearance-none`}
+      style={{ ...inputStyle, ...props.style }}
     />
   )
 }
 
-/* ── Main component ──────────────────────────────────────── */
+/* ── Main ──────────────────────────────────────────── */
 export default function SchedulePageClient({ schedules: initial, accounts, industry, topics }: Props) {
   const router = useRouter()
   const [schedules, setSchedules] = useState(initial)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: 'Daily Posts',
     social_account_id: accounts[0]?.id || '',
@@ -111,13 +109,26 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
 
   const suggestions = topics?.length ? topics : pillarsForIndustry(industry)
 
-  /* ── Form helpers ── */
+  function resetForm() {
+    setForm({
+      name: 'Daily Posts',
+      social_account_id: accounts[0]?.id || '',
+      frequency: 'daily',
+      post_times: ['09:00'],
+      days_of_week: [],
+      content_type: 'post',
+      theme: '',
+    })
+    setEditingId(null)
+  }
+
   function addTime() {
     if (form.post_times.length < 5)
       setForm(f => ({ ...f, post_times: [...f.post_times, '12:00'] }))
   }
   function updateTime(i: number, v: string) {
-    const t = [...form.post_times]; t[i] = v
+    const t = [...form.post_times]
+    t[i] = v
     setForm(f => ({ ...f, post_times: t }))
   }
   function removeTime(i: number) {
@@ -132,7 +143,20 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
     }))
   }
 
-  /* ── Save ── */
+  function startEdit(s: any) {
+    setForm({
+      name: s.name || '',
+      social_account_id: s.social_account_id || accounts[0]?.id || '',
+      frequency: s.frequency || 'daily',
+      post_times: s.post_times || ['09:00'],
+      days_of_week: s.days_of_week || [],
+      content_type: s.content_type || 'post',
+      theme: s.custom_topics?.[0] || s.topics?.[0] || '',
+    })
+    setEditingId(s.id)
+    setShowForm(true)
+  }
+
   async function saveSchedule() {
     if (!form.social_account_id) return alert('Connect an Instagram account first.')
     setSaving(true)
@@ -145,22 +169,37 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       days_of_week: form.days_of_week.length ? form.days_of_week : null,
       topics: theme.trim() ? [theme.trim()] : null,
     }
-    const { data, error } = await supabase
-      .from('schedules')
-      .insert(payload)
-      .select('*, social_accounts(account_name, platform)')
-      .single()
+
+    if (editingId) {
+      const { user_id, ...updatePayload } = payload
+      const { error } = await supabase
+        .from('schedules')
+        .update(updatePayload)
+        .eq('id', editingId)
+      if (error) { alert(error.message); setSaving(false); return }
+      setSchedules(s =>
+        s.map(x => (x.id === editingId ? { ...x, ...updatePayload } : x))
+      )
+    } else {
+      const { data, error } = await supabase
+        .from('schedules')
+        .insert(payload)
+        .select('*, social_accounts(account_name, platform)')
+        .single()
+      if (error) { alert(error.message); setSaving(false); return }
+      setSchedules(s => [...s, data])
+    }
+
     setSaving(false)
-    if (error) { alert(error.message); return }
-    setSchedules(s => [...s, data])
     setShowForm(false)
+    resetForm()
     router.refresh()
   }
 
   async function toggleSchedule(id: string, current: boolean) {
     const supabase = createClient()
     await supabase.from('schedules').update({ is_active: !current }).eq('id', id)
-    setSchedules(s => s.map(x => x.id === id ? { ...x, is_active: !current } : x))
+    setSchedules(s => s.map(x => (x.id === id ? { ...x, is_active: !current } : x)))
   }
 
   async function deleteSchedule(id: string) {
@@ -170,14 +209,21 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
     setSchedules(s => s.filter(x => x.id !== id))
   }
 
-  /* ── Render ── */
-  return (
-    <div className="p-6 max-w-3xl mx-auto">
+  const activeCount = schedules.filter(s => s.is_active).length
+  const totalPostsPerWeek = schedules
+    .filter(s => s.is_active)
+    .reduce((sum, s) => {
+      const timesPerDay = s.post_times?.length ?? 1
+      if (s.frequency === 'daily') return sum + timesPerDay * 7
+      return sum + timesPerDay * (s.days_of_week?.length ?? 0)
+    }, 0)
 
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Posting Schedules
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -185,24 +231,93 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           </p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
+          onClick={() => { resetForm(); setShowForm(true) }}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80 shrink-0"
           style={{ background: 'var(--accent)' }}
         >
           <Plus size={14} /> New schedule
         </button>
       </div>
 
-      {/* ── Slide-in form ── */}
-      {showForm && (
+      {/* Stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <div
-          className="rounded-2xl p-6 mb-6"
+          className="rounded-xl p-4"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>New schedule</h2>
+          <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+            Active Schedules
+          </p>
+          <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{activeCount}</p>
+        </div>
+        <div
+          className="rounded-xl p-4"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+            Posts / Week
+          </p>
+          <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{totalPostsPerWeek}</p>
+        </div>
+        <div
+          className="rounded-xl p-4 hidden sm:block"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+            Accounts
+          </p>
+          <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{accounts.length}</p>
+        </div>
+      </div>
+
+      {/* Best times suggestion */}
+      <div
+        className="rounded-2xl p-4 sm:p-5 mb-6"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+          <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+            Best Times to Post
+          </h3>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}>
+            AI recommended
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {BEST_TIMES.map(bt => (
             <button
-              onClick={() => setShowForm(false)}
+              key={bt.time}
+              type="button"
+              onClick={() => {
+                if (!showForm) { resetForm(); setShowForm(true) }
+                if (!form.post_times.includes(bt.time) && form.post_times.length < 5) {
+                  setForm(f => ({ ...f, post_times: [...f.post_times.filter(t => t !== '09:00' || f.post_times.length > 1), bt.time] }))
+                }
+              }}
+              className="p-3 rounded-xl text-left transition-all hover:scale-[1.02]"
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+            >
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{bt.time}</p>
+              <p className="text-[11px] font-medium" style={{ color: 'var(--accent)' }}>{bt.label}</p>
+              <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{bt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Create / Edit form ── */}
+      {showForm && (
+        <div
+          className="rounded-2xl p-4 sm:p-6 mb-6"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+              {editingId ? 'Edit schedule' : 'New schedule'}
+            </h2>
+            <button
+              onClick={() => { setShowForm(false); resetForm() }}
               className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
               style={{ color: 'var(--text-muted)' }}
             >
@@ -211,7 +326,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           </div>
 
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Schedule name">
                 <Input
                   type="text"
@@ -226,18 +341,22 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
                   onChange={e => setForm(f => ({ ...f, social_account_id: e.target.value }))}
                 >
                   {accounts.length === 0 && <option value="">No accounts connected</option>}
-                  {accounts.map(a => <option key={a.id} value={a.id}>@{a.account_name}</option>)}
+                  {accounts.map((a: any) => (
+                    <option key={a.id} value={a.id}>@{a.account_name}</option>
+                  ))}
                 </Select>
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Content type">
                 <Select
                   value={form.content_type}
                   onChange={e => setForm(f => ({ ...f, content_type: e.target.value }))}
                 >
-                  {CONTENT_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {CONTENT_TYPES.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
                 </Select>
               </Field>
               <Field label="Frequency">
@@ -260,7 +379,9 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
                 placeholder={`e.g. ${suggestions.slice(0, 2).join(', ')}`}
               />
               <datalist id="pillar-suggestions">
-                {suggestions.map(t => <option key={t} value={t} />)}
+                {suggestions.map((t: string) => (
+                  <option key={t} value={t} />
+                ))}
               </datalist>
             </Field>
 
@@ -286,18 +407,18 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
               </Field>
             )}
 
-            <Field label="Posting times (your timezone)">
+            <Field label="Posting times">
               <div className="space-y-2">
                 {form.post_times.map((t, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <Input
-                      type="time"
-                      value={t}
-                      onChange={e => updateTime(i, e.target.value)}
-                      style={{ maxWidth: 140 }}
-                    />
+                    <Input type="time" value={t} onChange={e => updateTime(i, e.target.value)} style={{ maxWidth: 160 }} />
                     {form.post_times.length > 1 && (
-                      <button type="button" onClick={() => removeTime(i)} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-muted)' }}>
+                      <button
+                        type="button"
+                        onClick={() => removeTime(i)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
                         <X size={13} />
                       </button>
                     )}
@@ -318,12 +439,12 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           </div>
 
           <div
-            className="flex justify-end gap-3 mt-6 pt-5"
+            className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6 pt-5"
             style={{ borderTop: '1px solid var(--border)' }}
           >
             <button
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              onClick={() => { setShowForm(false); resetForm() }}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors text-center"
               style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
             >
               Cancel
@@ -331,12 +452,57 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
             <button
               onClick={saveSchedule}
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
               style={{ background: 'var(--accent)' }}
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
-              Save schedule
+              {editingId ? 'Update schedule' : 'Save schedule'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Weekly overview grid ── */}
+      {schedules.length > 0 && !showForm && (
+        <div
+          className="rounded-2xl overflow-hidden mb-6"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          <div className="px-4 sm:px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+              Weekly Posting Overview
+            </h3>
+          </div>
+          <div className="grid grid-cols-7 text-center">
+            {DAYS.map((day, di) => {
+              const count = schedules
+                .filter(s => s.is_active)
+                .filter(s => {
+                  if (s.frequency === 'daily') return true
+                  return s.days_of_week?.includes(di)
+                })
+                .reduce((sum: number, s: any) => sum + (s.post_times?.length ?? 0), 0)
+              return (
+                <div
+                  key={day}
+                  className="py-3 sm:py-4"
+                  style={{ borderRight: di < 6 ? '1px solid var(--border)' : undefined }}
+                >
+                  <p className="text-[10px] sm:text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+                    {day}
+                  </p>
+                  <p
+                    className="text-base sm:text-lg font-bold"
+                    style={{ color: count > 0 ? 'var(--accent)' : 'var(--text-muted)', opacity: count > 0 ? 1 : 0.3 }}
+                  >
+                    {count}
+                  </p>
+                  <p className="text-[9px] sm:text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    {count === 1 ? 'post' : 'posts'}
+                  </p>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -344,7 +510,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       {/* ── Schedule list ── */}
       {schedules.length === 0 && !showForm ? (
         <div
-          className="rounded-2xl p-14 text-center"
+          className="rounded-2xl p-10 sm:p-14 text-center"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
           <div
@@ -353,8 +519,10 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           >
             <Clock size={22} style={{ color: 'var(--accent)' }} />
           </div>
-          <p className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>No schedules yet</p>
-          <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
+          <p className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
+            No schedules yet
+          </p>
+          <p className="text-xs mb-5 max-w-xs mx-auto" style={{ color: 'var(--text-muted)' }}>
             Create a schedule and PostPilot will auto-post at your chosen times.
           </p>
           <button
@@ -368,26 +536,37 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       ) : (
         <div className="space-y-3">
           {schedules.map(s => {
-            const dayLabel = s.frequency === 'daily' || !s.days_of_week?.length
-              ? 'Every day'
-              : [...s.days_of_week].sort((a: number, b: number) => a - b).map((d: number) => DAYS[d]).join(', ')
+            const dayLabel =
+              s.frequency === 'daily' || !s.days_of_week?.length
+                ? 'Every day'
+                : [...s.days_of_week]
+                    .sort((a: number, b: number) => a - b)
+                    .map((d: number) => DAYS[d])
+                    .join(', ')
 
             return (
               <div
                 key={s.id}
-                className="rounded-2xl p-5 flex items-center gap-4"
+                className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
               >
                 {/* Status dot */}
                 <div
-                  className="w-2 h-2 rounded-full shrink-0"
+                  className="w-2.5 h-2.5 rounded-full shrink-0 hidden sm:block"
                   style={{ background: s.is_active ? '#22c55e' : 'var(--border)' }}
                 />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {/* Mobile status dot */}
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0 sm:hidden"
+                      style={{ background: s.is_active ? '#22c55e' : 'var(--border)' }}
+                    />
+                    <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                      {s.name}
+                    </span>
                     <span
                       className="text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize"
                       style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}
@@ -403,7 +582,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
                       </span>
                     )}
                   </div>
-                  <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-xs flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--text-muted)' }}>
                     <Calendar size={10} />
                     {dayLabel}
                     <span style={{ color: 'var(--border)' }}>·</span>
@@ -419,7 +598,15 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
                 </div>
 
                 {/* Controls */}
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => startEdit(s)}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                    style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                    title="Edit schedule"
+                  >
+                    <Edit3 size={13} />
+                  </button>
                   <Toggle on={s.is_active} onToggle={() => toggleSchedule(s.id, s.is_active)} />
                   <button
                     onClick={() => deleteSchedule(s.id)}

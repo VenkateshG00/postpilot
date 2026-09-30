@@ -1,6 +1,6 @@
 export const runtime = 'edge'
 import { createClient } from '@/lib/supabase/server'
-import { Plus, ArrowRight, Sparkles, LayoutGrid, Calendar } from 'lucide-react'
+import { Plus, ArrowRight, Sparkles, LayoutGrid, Calendar, Check, Instagram, Zap, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate, getStatusColor } from '@/lib/utils'
 import { getActiveAccountId } from '@/lib/active-account'
@@ -9,15 +9,90 @@ import { getActiveAccountId } from '@/lib/active-account'
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div
-      className="rounded-2xl p-5"
+      className="rounded-2xl p-4 sm:p-5"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
     >
-      <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      <p className="text-[11px] sm:text-xs mb-1.5 sm:mb-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
       {sub && (
-        <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>
+        <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>
       )}
     </div>
+  )
+}
+
+/* ── Setup Step (ReelDrop-style checklist row) ────── */
+function SetupStep({
+  step,
+  title,
+  description,
+  href,
+  done,
+  icon: Icon,
+}: {
+  step: number
+  title: string
+  description: string
+  href: string
+  done: boolean
+  icon: React.ElementType
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-all group"
+      style={{
+        background: done ? 'rgba(34,197,94,0.06)' : 'var(--bg)',
+        border: `1px solid ${done ? 'rgba(34,197,94,0.2)' : 'var(--border)'}`,
+      }}
+    >
+      {/* Step number / check */}
+      <div
+        className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
+        style={{
+          background: done ? '#22c55e' : 'var(--accent)',
+          color: '#fff',
+        }}
+      >
+        {done ? <Check size={16} strokeWidth={3} /> : step}
+      </div>
+
+      {/* Icon — hidden on smallest screens */}
+      <div
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl hidden sm:flex items-center justify-center shrink-0"
+        style={{
+          background: done ? 'rgba(34,197,94,0.1)' : 'var(--accent-subtle)',
+        }}
+      >
+        <Icon size={18} style={{ color: done ? '#22c55e' : 'var(--accent)' }} />
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-xs sm:text-sm font-semibold"
+          style={{
+            color: done ? '#22c55e' : 'var(--text-primary)',
+            textDecoration: done ? 'line-through' : 'none',
+            opacity: done ? 0.7 : 1,
+          }}
+        >
+          {title}
+        </p>
+        <p className="text-[11px] sm:text-xs mt-0.5 hidden sm:block" style={{ color: 'var(--text-muted)' }}>
+          {description}
+        </p>
+      </div>
+
+      {/* Arrow */}
+      {!done && (
+        <ArrowRight
+          size={16}
+          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ color: 'var(--accent)' }}
+        />
+      )}
+    </Link>
   )
 }
 
@@ -49,6 +124,13 @@ export default async function DashboardPage() {
   const failedCount    = logs?.filter(l => l.status === 'failed').length ?? 0
   const pendingCount   = logs?.filter(l => l.status === 'pending').length ?? 0
 
+  /* ── Setup checklist status ─────────────────────── */
+  const hasAccount   = (accounts?.length ?? 0) > 0
+  const hasSchedule  = (schedules?.length ?? 0) > 0
+  const hasPublished = publishedCount > 0
+  const stepsComplete = [hasAccount, hasSchedule, hasPublished].filter(Boolean).length
+  const allDone = stepsComplete === 3
+
   /* Build this week Mon–Sun */
   const today    = new Date()
   const dow      = today.getDay()
@@ -71,57 +153,138 @@ export default async function DashboardPage() {
   const displayName = biz?.business_name ?? user?.email?.split('@')[0] ?? 'there'
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[26px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-            Welcome back,{' '}
-            <span style={{ color: 'var(--accent)', fontStyle: 'italic' }}>{displayName}</span>
+          <h1 className="text-xl sm:text-[26px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+            {allDone ? (
+              <>Welcome back, <span style={{ color: 'var(--accent)' }}>{displayName}</span></>
+            ) : (
+              <>Hi <span style={{ color: 'var(--accent)' }}>{displayName}</span>, let&apos;s get your first post scheduled</>
+            )}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Here's what's happening with your account today
+            {allDone
+              ? "Here's what's happening with your account today"
+              : 'Complete the steps below to start auto-posting'
+            }
           </p>
         </div>
         <Link
           href="/dashboard/create"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80 shrink-0"
-          style={{ background: 'var(--text-primary)' }}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80 shrink-0"
+          style={{ background: 'var(--accent)' }}
         >
           <Plus size={14} />
           Create post
         </Link>
       </div>
 
-      {/* ── Stats 3×2 ── */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <StatCard label="Active Schedules"  value={schedules?.length ?? 0} sub="Auto-posting" />
-        <StatCard label="Posts Published"   value={publishedCount}         sub="All time" />
-        <StatCard label="Accounts Linked"   value={accounts?.length ?? 0}  sub="Instagram &amp; Facebook" />
-        <StatCard label="Posts Pending"     value={pendingCount}           sub="In queue" />
-        <StatCard label="Posts Failed"      value={failedCount}            sub="Needs attention" />
-        <StatCard label="Engagement Rate"   value="—"                      sub="Connect analytics" />
+      {/* ── Setup Checklist (shown until all 3 done) ── */}
+      {!allDone && (
+        <div
+          className="rounded-2xl p-4 sm:p-6 mb-6"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        >
+          {/* Progress header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: 'var(--accent-subtle)' }}
+              >
+                <Zap size={16} style={{ color: 'var(--accent)' }} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Get started with PostPilot
+                </h2>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {stepsComplete} of 3 steps completed
+                </p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="flex items-center gap-3">
+              <div
+                className="flex-1 sm:w-32 h-2 rounded-full overflow-hidden"
+                style={{ background: 'var(--border)' }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(stepsComplete / 3) * 100}%`,
+                    background: stepsComplete === 3 ? '#22c55e' : 'var(--accent)',
+                  }}
+                />
+              </div>
+              <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>
+                {Math.round((stepsComplete / 3) * 100)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div className="space-y-2 sm:space-y-3">
+            <SetupStep
+              step={1}
+              title="Connect your Instagram account"
+              description="Link your Instagram Business or Creator account to start publishing"
+              href="/dashboard/connect"
+              done={hasAccount}
+              icon={Instagram}
+            />
+            <SetupStep
+              step={2}
+              title="Create your first schedule"
+              description="Set up auto-posting with AI-generated captions and images"
+              href="/dashboard/schedule"
+              done={hasSchedule}
+              icon={Calendar}
+            />
+            <SetupStep
+              step={3}
+              title="Publish your first post"
+              description="Create and publish a post or let your schedule do it automatically"
+              href="/dashboard/create"
+              done={hasPublished}
+              icon={Sparkles}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+        <StatCard label="Active Schedules" value={schedules?.length ?? 0} sub="Auto-posting" />
+        <StatCard label="Posts Published"  value={publishedCount}         sub="All time" />
+        <StatCard label="Accounts Linked"  value={accounts?.length ?? 0}  sub="Instagram &amp; Facebook" />
+        <StatCard label="Posts Pending"    value={pendingCount}           sub="In queue" />
+        <StatCard label="Posts Failed"     value={failedCount}            sub="Needs attention" />
+        <StatCard label="Engagement Rate"  value="—"                      sub="Connect analytics" />
       </div>
 
       {/* ── Two-column: Calendar + Quick Actions ── */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
-        {/* Content Calendar (2 cols) */}
+        {/* Content Calendar (2 cols on lg) */}
         <div
-          className="col-span-2 rounded-2xl overflow-hidden"
+          className="lg:col-span-2 rounded-2xl overflow-hidden"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
           {/* Card header */}
           <div
-            className="px-5 py-4 flex items-center justify-between"
+            className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between"
             style={{ borderBottom: '1px solid var(--border)' }}
           >
             <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
               Content Calendar
             </h2>
             <Link
-              href="/dashboard/schedule"
+              href="/dashboard/calendar"
               className="text-xs font-semibold flex items-center gap-1 hover:underline"
               style={{ color: 'var(--accent)' }}
             >
@@ -131,16 +294,18 @@ export default async function DashboardPage() {
 
           {/* Day headers */}
           <div
-            className="grid grid-cols-7 text-center py-2 px-2"
+            className="grid grid-cols-7 text-center py-2 px-1 sm:px-2"
             style={{ borderBottom: '1px solid var(--border)' }}
           >
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => {
               const isToday = weekDays[i]?.toDateString() === today.toDateString()
               return (
                 <div key={d} className="py-1 select-none">
-                  <p className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{d}</p>
+                  <p className="text-[10px] sm:text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                    {d}
+                  </p>
                   <div
-                    className="w-7 h-7 mx-auto mt-1 flex items-center justify-center rounded-full text-sm font-bold"
+                    className="w-6 h-6 sm:w-7 sm:h-7 mx-auto mt-1 flex items-center justify-center rounded-full text-xs sm:text-sm font-bold"
                     style={{
                       background: isToday ? 'var(--accent)' : 'transparent',
                       color: isToday ? '#fff' : 'var(--text-primary)',
@@ -160,7 +325,7 @@ export default async function DashboardPage() {
               className="grid grid-cols-7"
               style={{
                 borderBottom: rowIdx === 0 ? '1px solid var(--border)' : undefined,
-                minHeight: 90,
+                minHeight: 70,
               }}
             >
               {weekDays.map((day, i) => {
@@ -170,7 +335,7 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={i}
-                    className="p-1.5 border-r last:border-r-0"
+                    className="p-1 sm:p-1.5 border-r last:border-r-0"
                     style={{
                       borderColor: 'var(--border)',
                       background: isToday ? 'var(--accent-subtle)' : 'transparent',
@@ -178,7 +343,7 @@ export default async function DashboardPage() {
                   >
                     {slotLog ? (
                       <div
-                        className="rounded-lg p-1.5 text-[11px] leading-tight"
+                        className="rounded-lg p-1 sm:p-1.5 text-[10px] sm:text-[11px] leading-tight"
                         style={{
                           background: slotLog.status === 'published'
                             ? 'rgba(34,197,94,0.12)'
@@ -188,9 +353,9 @@ export default async function DashboardPage() {
                         }}
                       >
                         <p className="font-semibold truncate">
-                          {slotLog.caption?.slice(0, 18) || 'Post'}
+                          {slotLog.caption?.slice(0, 14) || 'Post'}
                         </p>
-                        <p className="opacity-70 mt-0.5">{slotLog.status}</p>
+                        <p className="opacity-70 mt-0.5 hidden sm:block">{slotLog.status}</p>
                       </div>
                     ) : (
                       <Link
@@ -209,7 +374,7 @@ export default async function DashboardPage() {
 
           {/* No posts empty state */}
           {!logs?.length && (
-            <div className="px-6 py-10 text-center">
+            <div className="px-4 sm:px-6 py-8 sm:py-10 text-center">
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No posts yet this week.</p>
               <Link
                 href="/dashboard/schedule"
@@ -227,29 +392,29 @@ export default async function DashboardPage() {
 
           {/* Quick Actions card */}
           <div
-            className="rounded-2xl p-5"
+            className="rounded-2xl p-4 sm:p-5"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
-            <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="font-semibold text-sm mb-3 sm:mb-4" style={{ color: 'var(--text-primary)' }}>
               Quick Actions
             </h2>
             <div className="space-y-2">
               {[
-                { href: '/dashboard/create',   icon: Sparkles,    title: 'AI Caption Studio',  sub: 'Create post' },
-                { href: '/dashboard/schedule', icon: Calendar,    title: 'Content Calendar',   sub: 'Schedule' },
-                { href: '/dashboard/posts',    icon: LayoutGrid,  title: 'Post History',       sub: 'View all' },
+                { href: '/dashboard/create',   icon: Sparkles,   title: 'AI Caption Studio',  sub: 'Generate captions with AI' },
+                { href: '/dashboard/calendar',  icon: Calendar,   title: 'Content Calendar',   sub: 'Plan your content' },
+                { href: '/dashboard/posts',     icon: LayoutGrid, title: 'Post History',       sub: 'View all posts' },
               ].map(({ href, icon: Icon, title, sub }) => (
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-colors group"
+                  className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.01] group"
                   style={{ border: '1px solid var(--border)' }}
                 >
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: 'var(--accent-subtle)' }}
                   >
-                    <Icon size={15} style={{ color: 'var(--accent)' }} />
+                    <Icon size={16} style={{ color: 'var(--accent)' }} />
                   </div>
                   <div>
                     <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</p>
@@ -263,7 +428,7 @@ export default async function DashboardPage() {
           {/* Connect CTA — only if no IG accounts */}
           {!accounts?.length && (
             <div
-              className="rounded-2xl p-5"
+              className="rounded-2xl p-4 sm:p-5"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,77,77,0.12) 0%, rgba(255,77,77,0.05) 100%)',
                 border: '1px solid rgba(255,77,77,0.22)',
@@ -312,10 +477,10 @@ export default async function DashboardPage() {
                   className="flex items-center gap-3 px-4 py-3"
                   style={{ borderBottom: i < 3 ? '1px solid var(--border)' : undefined }}
                 >
-                  <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center" style={{ background: 'var(--border)' }}>
                     {log.image_url
                       ? <img src={log.image_url} alt="" className="w-full h-full object-cover" />
-                      : <div className="w-4 h-4 rounded" style={{ background: 'var(--border)' }} />
+                      : <div className="w-4 h-4 rounded" style={{ background: 'var(--text-muted)', opacity: 0.2 }} />
                     }
                   </div>
                   <div className="flex-1 min-w-0">

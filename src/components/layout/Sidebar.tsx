@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram,
-  CreditCard, BarChart3, Sparkles, ClipboardCheck, ChevronDown,
-  MoreHorizontal, Zap, Palette, Moon, Sun,
+  CreditCard, BarChart3, Sparkles, ClipboardCheck, Film, Grid3X3, Layers, ChevronDown,
+  MoreHorizontal, Zap, Palette, Moon, Sun, MessageSquare, Inbox, Users, Building2, Gift, FileText, PlayCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -22,12 +22,21 @@ const MAIN_NAV = [
 
 const AI_TOOLS_NAV = [
   { href: '/dashboard/create',    label: 'Create Post', icon: Sparkles },
+  { href: '/dashboard/reels',     label: 'Reels & Stories', icon: Film },
+  { href: '/dashboard/carousel',  label: 'Carousel',    icon: Layers },
+  { href: '/dashboard/grid',      label: 'Grid Planner', icon: Grid3X3 },
   { href: '/dashboard/approvals', label: 'Approvals',   icon: ClipboardCheck },
+  { href: '/dashboard/automations', label: 'Automations',  icon: Zap },
+  { href: '/dashboard/inbox',       label: 'Inbox',         icon: Inbox },
+  { href: '/dashboard/trial-reels',  label: 'Trial Reels',   icon: PlayCircle },
 ]
 
 const MANAGE_NAV = [
   { href: '/dashboard/connect',  label: 'Accounts',  icon: Instagram },
   { href: '/dashboard/billing',  label: 'Billing',   icon: CreditCard },
+  { href: '/dashboard/referral',  label: 'Referral',   icon: Gift },
+  { href: '/dashboard/media-kit',  label: 'Media Kit',  icon: FileText },
+  { href: '/dashboard/team',     label: 'Team',      icon: Users },
   { href: '/dashboard/settings', label: 'Settings',  icon: Settings },
 ]
 
@@ -90,18 +99,21 @@ export default function Sidebar({
   brand,
   accounts,
   activeAccountId,
+  workspaces,
   onNavigate,
 }: {
   profile: Profile | null
   brand?: { eligible: boolean; name: string | null; logoUrl: string | null; color: string | null } | null
   accounts?: { id: string; account_name: string | null; platform: string }[]
   activeAccountId?: string | null
+  workspaces?: { id: string; name: string; owner_id: string }[]
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
   const router = useRouter()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [acctMenuOpen, setAcctMenuOpen] = useState(false)
+  const [wsMenuOpen, setWsMenuOpen] = useState(false)
 
   const activeAccount = accounts?.find(a => a.id === activeAccountId) ?? accounts?.[0]
 
@@ -142,6 +154,49 @@ export default function Sidebar({
         </div>
         <DarkModeToggle />
       </div>
+
+      {/* ── Workspace selector ── */}
+      {workspaces && workspaces.length > 1 && (
+        <div className="px-3 mb-1 relative">
+          <button
+            onClick={() => setWsMenuOpen(o => !o)}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/5 transition-colors"
+          >
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--accent)', opacity: 0.8 }}>
+              <Building2 size={12} className="text-white" />
+            </div>
+            <span className="flex-1 text-left text-xs font-medium text-white truncate">
+              {workspaces.find(w => {
+                try { const c = document.cookie.match(/active_workspace_id=([^;]+)/); return c && w.id === c[1] } catch { return false }
+              })?.name ?? workspaces[0]?.name ?? 'Workspace'}
+            </span>
+            <ChevronDown size={12} className={cn('text-gray-500 transition-transform', wsMenuOpen && 'rotate-180')} />
+          </button>
+
+          {wsMenuOpen && (
+            <div
+              className="absolute left-3 right-3 top-full mt-1 rounded-xl overflow-hidden shadow-xl z-50"
+              style={{ background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              {workspaces.map(w => (
+                <button
+                  key={w.id}
+                  onClick={() => {
+                    document.cookie = `active_workspace_id=${w.id}; path=/`
+                    setWsMenuOpen(false)
+                    router.refresh()
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs hover:bg-white/5 transition-colors"
+                  style={{ color: '#d1d5db' }}
+                >
+                  <Building2 size={12} />
+                  <span className="truncate">{w.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Account selector ── */}
       {accounts && accounts.length > 0 && (

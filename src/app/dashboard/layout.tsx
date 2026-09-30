@@ -32,6 +32,27 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('is_active', true)
     .order('connected_at', { ascending: true })
 
+  /* Fetch workspaces (owned + member-of) */
+  const { data: ownedWs } = await supabase
+    .from('workspaces')
+    .select('id, name, owner_id')
+    .eq('owner_id', user.id)
+  const { data: memberWs } = await supabase
+    .from('team_members')
+    .select('workspace_id')
+    .eq('email', user.email ?? '')
+    .eq('status', 'accepted')
+  const memberWsIds = (memberWs ?? []).map(m => m.workspace_id)
+  let joinedWs: any[] = []
+  if (memberWsIds.length > 0) {
+    const { data } = await supabase
+      .from('workspaces')
+      .select('id, name, owner_id')
+      .in('id', memberWsIds)
+    joinedWs = data ?? []
+  }
+  const allWorkspaces = [...(ownedWs ?? []), ...joinedWs]
+
   const activeAccountId = await getActiveAccountId((accounts ?? []).map(a => a.id))
 
   return (
@@ -46,6 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           brand={brand}
           accounts={accounts ?? []}
           activeAccountId={activeAccountId}
+          workspaces={allWorkspaces}
         />
       </div>
 
