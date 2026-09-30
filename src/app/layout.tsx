@@ -9,15 +9,15 @@ export const metadata: Metadata = {
   description: 'AI-powered Instagram & Facebook posts published automatically on your schedule.',
   openGraph: {
     title: 'PostPilot',
-    description: 'AI-powered social media automation for local businesses.',
+    description: 'AI-powered social media automation for Indian businesses.',
     type: 'website'
   }
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="bg-white text-gray-900 antialiased">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="antialiased">
         {children}
       </body>
     </html>
