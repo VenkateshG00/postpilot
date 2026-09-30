@@ -156,7 +156,7 @@ export default function Sidebar({
       </div>
 
       {/* ── Workspace selector ── */}
-      {workspaces && workspaces.length > 1 && (
+      {workspaces && workspaces.length > 0 && (
         <div className="px-3 mb-1 relative">
           <button
             onClick={() => setWsMenuOpen(o => !o)}

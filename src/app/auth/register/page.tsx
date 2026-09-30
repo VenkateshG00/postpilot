@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,6 +33,8 @@ const inputStyle: React.CSSProperties = {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const refCode = searchParams.get('ref')
   const [serverError, setServerError] = useState('')
   const [success, setSuccess] = useState(false)
 
@@ -49,6 +51,18 @@ export default function RegisterPage() {
       options: { data: { full_name: data.full_name } }
     })
     if (error) { setServerError(error.message); return }
+    /* If referred, record the referral */
+    if (refCode) {
+      const { data: { user: newUser } } = await supabase.auth.getUser()
+      if (newUser) {
+        await supabase.from('referrals').insert({
+          referrer_id: refCode,
+          referred_email: data.email,
+          referred_user_id: newUser.id,
+          status: 'signed_up',
+        })
+      }
+    }
     router.push('/auth/onboarding')
     router.refresh()
   }
