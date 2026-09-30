@@ -10,7 +10,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // Check if onboarding is done
   const { data: bizList } = await supabase
     .from('business_profiles')
     .select('id')
@@ -42,9 +41,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const activeAccountId = await getActiveAccountId((accounts ?? []).map(a => a.id))
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar profile={profile} brand={brand} accounts={accounts ?? []} activeAccountId={activeAccountId} />
-      <main className="flex-1 overflow-y-auto">
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ background: 'var(--bg)' }}
+    >
+      <Sidebar
+        profile={profile}
+        brand={brand}
+        accounts={accounts ?? []}
+        activeAccountId={activeAccountId}
+      />
+      <main className="flex-1 overflow-y-auto" style={{ background: 'var(--bg)' }}>
         {children}
       </main>
     </div>
