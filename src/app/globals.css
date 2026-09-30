@@ -3,49 +3,55 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light mode tokens ── */
   :root {
     --bg:           #FAF7F2;
     --bg-card:      #FFFFFF;
-    --bg-subtle:    #F3EEE7;
-    --fg:           #1A1A1A;
-    --fg-muted:     #666666;
-    --fg-subtle:    #999999;
-    --border:       #E8E3DC;
+    --bg-sidebar:   #111111;
+    --border:       #EEEBE5;
+    --border-dark:  rgba(255,255,255,0.07);
+    --text-primary: #1A1A1A;
+    --text-muted:   #888888;
     --accent:       #FF4D4D;
     --accent-hover: #E63E3E;
-    --accent-light: #FFF0F0;
-    --accent-fg:    #FFFFFF;
+    --accent-subtle:rgba(255,77,77,0.08);
+    --selection-bg: #FFE0E0;
+    --selection-fg: #CC2E2E;
   }
 
+  /* ── Dark mode tokens ── */
   [data-theme="dark"] {
     --bg:           #0F0F0F;
     --bg-card:      #1C1C1C;
-    --bg-subtle:    #161616;
-    --fg:           #F5F5F5;
-    --fg-muted:     #999999;
-    --fg-subtle:    #555555;
-    --border:       #2A2A2A;
+    --bg-sidebar:   #0A0A0A;
+    --border:       rgba(255,255,255,0.07);
+    --border-dark:  rgba(255,255,255,0.07);
+    --text-primary: #FFFFFF;
+    --text-muted:   #666666;
     --accent:       #FF4D4D;
     --accent-hover: #FF6B6B;
-    --accent-light: #2A1010;
-    --accent-fg:    #FFFFFF;
+    --accent-subtle:rgba(255,77,77,0.10);
+    --selection-bg: #CC2E2E;
+    --selection-fg: #FFFFFF;
   }
 
   * { box-sizing: border-box; }
 
-  html { scroll-behavior: smooth; }
+  html {
+    background: var(--bg);
+    color: var(--text-primary);
+  }
 
   body {
     font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     background: var(--bg);
-    color: var(--fg);
-    transition: background 0.2s ease, color 0.2s ease;
+    color: var(--text-primary);
   }
 
   ::selection {
-    background: var(--accent-light);
-    color: var(--accent);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 }
 
@@ -54,34 +60,41 @@
     @apply w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    color: var(--fg);
+    color: var(--text-primary);
   }
-  .input-base::placeholder { color: var(--fg-subtle); }
+  .input-base::placeholder {
+    color: var(--text-muted);
+  }
   .input-base:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-light);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
   .input-base:disabled {
-    background: var(--bg-subtle);
-    color: var(--fg-subtle);
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+           text-white text-sm font-semibold transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed;
     background: var(--accent);
-    color: var(--accent-fg);
   }
-  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+           text-sm font-semibold transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed;
     background: var(--bg-card);
-    color: var(--fg);
+    color: var(--text-primary);
     border: 1px solid var(--border);
   }
-  .btn-secondary:hover:not(:disabled) { background: var(--bg-subtle); }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--accent-subtle);
+  }
 
   .card {
     @apply rounded-2xl;
@@ -91,7 +104,7 @@
 
   .label {
     @apply block text-sm font-medium mb-1.5;
-    color: var(--fg);
+    color: var(--text-primary);
   }
 
   .error-text {
