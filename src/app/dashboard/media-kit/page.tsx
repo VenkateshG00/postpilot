@@ -22,28 +22,10 @@ export default async function MediaKitPage() {
     .eq('user_id', user.id)
     .single()
 
-  /* Fetch accounts */
-  const { data: accounts } = await supabase
-    .from('social_accounts')
-    .select('id, account_name, platform, followers_count, following_count')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-
-  /* Fetch post stats for the media kit */
-  const { data: posts } = await supabase
-    .from('post_logs')
-    .select('id, status, content_type, likes, comments, shares, reach, impressions, created_at')
-    .eq('user_id', user.id)
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(100)
-
   return (
     <MediaKitClient
       profile={profile}
       biz={biz}
-      accounts={accounts ?? []}
-      posts={posts ?? []}
     />
   )
 }
