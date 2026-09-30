@@ -137,6 +137,7 @@ export default async function AnalyticsPage() {
       perAccount={perAccount}
       topPosts={topPosts}
       csvRows={csvRows}
+      activeAccountId={activeId}
     />
   )
 }
