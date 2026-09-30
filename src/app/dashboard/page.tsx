@@ -1,18 +1,59 @@
 export const runtime = 'edge'
 import { createClient } from '@/lib/supabase/server'
-import { Plus, ArrowRight, Sparkles, LayoutGrid, Calendar, Check, Instagram, Zap, MessageCircle } from 'lucide-react'
+import { Plus, ArrowRight, Sparkles, LayoutGrid, Calendar, Check, Instagram, Zap, MessageCircle, Users, TrendingUp, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate, getStatusColor } from '@/lib/utils'
 import { getActiveAccountId } from '@/lib/active-account'
 
+const IG_API = 'https://graph.instagram.com'
+
+/* ── Fetch Instagram profile + recent media for engagement rate ── */
+async function fetchInstagramStats(accountId: string, token: string) {
+  try {
+    // Fetch profile and recent media in parallel
+    const [profileRes, mediaRes] = await Promise.all([
+      fetch(`${IG_API}/me?fields=id,username,media_count,followers_count,follows_count&access_token=${token}`),
+      fetch(`${IG_API}/me/media?fields=id,like_count,comments_count&limit=25&access_token=${token}`),
+    ])
+
+    const profile = profileRes.ok ? await profileRes.json() : null
+    const mediaData = mediaRes.ok ? await mediaRes.json() : null
+    const media = mediaData?.data ?? []
+
+    const totalLikes = media.reduce((s: number, m: any) => s + (m.like_count ?? 0), 0)
+    const totalComments = media.reduce((s: number, m: any) => s + (m.comments_count ?? 0), 0)
+    const totalEngagement = totalLikes + totalComments
+    const followers = profile?.followers_count ?? 0
+    const engagementRate = followers > 0 && media.length > 0
+      ? ((totalEngagement / media.length) / followers * 100)
+      : 0
+
+    // Account reach: sum of likes + comments as proxy (real reach needs business account insights)
+    const accountReach = totalEngagement
+
+    return {
+      followers: profile?.followers_count ?? 0,
+      following: profile?.follows_count ?? 0,
+      mediaCount: profile?.media_count ?? 0,
+      engagementRate: Math.round(engagementRate * 10) / 10,
+      accountReach,
+    }
+  } catch {
+    return null
+  }
+}
+
 /* ── Stat card ─────────────────────────────────────── */
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, icon: Icon }: { label: string; value: string | number; sub?: string; icon?: React.ElementType }) {
   return (
     <div
       className="rounded-2xl p-4 sm:p-5"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
     >
-      <p className="text-[11px] sm:text-xs mb-1.5 sm:mb-2" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+        <p className="text-[11px] sm:text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
+        {Icon && <Icon size={14} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />}
+      </div>
       <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
       {sub && (
         <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>
@@ -96,6 +137,13 @@ function SetupStep({
   )
 }
 
+/* ── Helper to format numbers ── */
+function fmt(n: number) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
+  return String(n)
+}
+
 /* ── Page ──────────────────────────────────────────── */
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -119,6 +167,12 @@ export default async function DashboardPage() {
     logsQ.order('created_at', { ascending: false }).limit(30),
     schedQ,
   ])
+
+  // Fetch Instagram stats if we have a connected account
+  const activeAccount = accounts?.find(a => a.id === activeId) ?? accounts?.[0]
+  const igStats = activeAccount?.access_token
+    ? await fetchInstagramStats(activeAccount.account_id, activeAccount.access_token)
+    : null
 
   const publishedCount = logs?.filter(l => l.status === 'published').length ?? 0
   const failedCount    = logs?.filter(l => l.status === 'failed').length ?? 0
@@ -257,14 +311,31 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── Stats ── */}
+      {/* ── Stats — Row 1: Instagram live stats (like ReelDrop) ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-3">
+        <StatCard
+          label="Total Followers"
+          value={igStats ? fmt(igStats.followers) : '—'}
+          icon={Users}
+        />
+        <StatCard
+          label="Account Reach"
+          value={igStats ? fmt(igStats.accountReach) : '—'}
+          icon={Eye}
+        />
+        <StatCard
+          label="Engagement Rate"
+          value={igStats ? `${igStats.engagementRate}%` : '—'}
+          sub={igStats ? undefined : 'Connect analytics'}
+          icon={TrendingUp}
+        />
+      </div>
+
+      {/* ── Stats — Row 2: PostPilot delivery stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-        <StatCard label="Active Schedules" value={schedules?.length ?? 0} sub="Auto-posting" />
+        <StatCard label="Scheduled Posts"  value={schedules?.length ?? 0} sub={schedules?.length ? 'Auto-posting' : 'Nothing scheduled'} />
         <StatCard label="Posts Published"  value={publishedCount}         sub="All time" />
-        <StatCard label="Accounts Linked"  value={accounts?.length ?? 0}  sub="Instagram &amp; Facebook" />
-        <StatCard label="Posts Pending"    value={pendingCount}           sub="In queue" />
-        <StatCard label="Posts Failed"     value={failedCount}            sub="Needs attention" />
-        <StatCard label="Engagement Rate"  value="—"                      sub="Connect analytics" />
+        <StatCard label="Posts Failed"     value={failedCount}            sub={failedCount > 0 ? 'Needs attention' : 'All good'} />
       </div>
 
       {/* ── Two-column: Calendar + Quick Actions ── */}
