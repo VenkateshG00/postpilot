@@ -5,6 +5,8 @@ import Sidebar from '@/components/layout/Sidebar'
 import MobileNav from '@/components/layout/MobileNav'
 import { getPlan } from '@/lib/plans-db'
 import { getActiveAccountId } from '@/lib/active-account'
+import { ToastProvider } from '@/components/ui/Toast'
+import PostPublishNotifier from '@/components/ui/PostPublishNotifier'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -56,6 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const activeAccountId = await getActiveAccountId((accounts ?? []).map(a => a.id))
 
   return (
+    <ToastProvider>
     <div
       className="lg:grid h-screen overflow-hidden"
       style={{
@@ -86,6 +89,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 overflow-y-auto" style={{ padding: '24px 20px 40px' }}>
         {children}
       </main>
+
+      <PostPublishNotifier />
     </div>
+    </ToastProvider>
   )
 }

@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
+import NotificationBell from '@/components/ui/NotificationBell'
 
 /* ── Nav sections matching ReelDrop layout ── */
 const MAIN_NAV = [
@@ -133,18 +134,21 @@ export default function Sidebar({
         padding: '24px 16px',
       }}
     >
-      {/* ── Logo + Brand ── */}
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-1 mb-5" onClick={onNavigate}>
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--accent-brand)' }}
-        >
-          <Zap size={18} className="text-white" />
-        </div>
-        <span className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          {brand?.name || 'PostPilot'}
-        </span>
-      </Link>
+      {/* ── Logo + Brand + Notification Bell ── */}
+      <div className="flex items-center justify-between mb-5">
+        <Link href="/dashboard" className="flex items-center gap-2.5 px-1" onClick={onNavigate}>
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'var(--accent-brand)' }}
+          >
+            <Zap size={18} className="text-white" />
+          </div>
+          <span className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {brand?.name || 'PostPilot'}
+          </span>
+        </Link>
+        <NotificationBell />
+      </div>
 
       {/* ── Account selector dropdown ── */}
       {accounts && accounts.length > 0 && (

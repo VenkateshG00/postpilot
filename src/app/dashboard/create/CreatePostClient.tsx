@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useCallback } from "react"
 import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot } from "lucide-react"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
+import { useToast } from "@/components/ui/Toast"
 
 interface Acct { id: string; account_name: string }
 interface Preview { caption: string; image_url: string; topic: string }
@@ -37,6 +38,7 @@ export default function CreatePostClient({
   aiImageProvider: string
   aiImageCredits: number
 }) {
+  const { addToast } = useToast()
   const [activeTab, setActiveTab] = useState<ContentTab>("post")
   const [accountId, setAccountId] = useState(accounts[0]?.id || "")
   const [brief, setBrief] = useState("")
@@ -157,10 +159,12 @@ export default function CreatePostClient({
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed")
       setPosted(data.scheduled ? "scheduled" : "now")
+      addToast(data.scheduled ? "Post scheduled successfully!" : "Post sent! It will appear on your account shortly.", "success", 5000)
       setPreview(null); setBrief(""); setScheduledFor(""); setCaption("")
       clearUpload()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Publish failed")
+      addToast(e instanceof Error ? e.message : "Publish failed", "error", 6000)
     } finally { setPosting(false) }
   }
 

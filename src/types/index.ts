@@ -1,6 +1,6 @@
 export type Plan = 'free' | 'starter' | 'pro' | 'agency'
 export type Platform = 'instagram' | 'facebook'
-export type PostStatus = 'pending' | 'generating' | 'published' | 'failed'
+export type PostStatus = 'pending' | 'generating' | 'scheduled' | 'published' | 'failed' | 'pending_approval'
 export type ContentType = 'post' | 'reel' | 'story' | 'carousel'
 export type BrandVoice = 'professional' | 'casual' | 'witty' | 'inspirational'
 export type Frequency = 'daily' | 'weekly' | 'custom'
