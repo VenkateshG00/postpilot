@@ -310,7 +310,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Stats — 2×3 grid (matching ReelDrop layout) ── */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <StatCard
           label="Total Followers"
           value={igStats ? fmt(igStats.followers) : '—'}
