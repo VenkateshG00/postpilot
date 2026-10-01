@@ -305,10 +305,10 @@ export default function SettingsClient({
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+    <div className="">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
+        <h1 className="page-heading"><em>Settings</em>.</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage your account, scheduling preferences, and notifications
         </p>
@@ -326,7 +326,7 @@ export default function SettingsClient({
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-1 justify-center"
+              className="btn-secondary flex items-center gap-2 text-sm transition-all flex-1 justify-center"
               style={{
                 background: active ? (t.id === 'danger' ? 'rgba(239,68,68,0.08)' : 'var(--accent-subtle)') : 'transparent',
                 color: active
@@ -348,8 +348,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Account info card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -381,8 +380,7 @@ export default function SettingsClient({
 
           {/* Business profile card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -487,8 +485,7 @@ export default function SettingsClient({
 
           {/* Language & Timezone card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -531,8 +528,7 @@ export default function SettingsClient({
             <button
               onClick={save}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               Save changes
@@ -548,8 +544,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Active schedules summary */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -619,8 +614,7 @@ export default function SettingsClient({
 
           {/* Default posting preferences */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -694,8 +688,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Email notifications */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -760,8 +753,7 @@ export default function SettingsClient({
 
           {/* Push notifications */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -824,8 +816,7 @@ export default function SettingsClient({
 
           {/* In-app notifications */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -888,8 +879,7 @@ export default function SettingsClient({
             <button
               onClick={saveNotificationPrefs}
               disabled={notifSaving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
             >
               {notifSaving && <Loader2 size={14} className="animate-spin" />}
               {notifSaved ? 'Saved!' : 'Save Preferences'}
@@ -905,8 +895,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Colors card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -963,8 +952,7 @@ export default function SettingsClient({
 
           {/* Fonts card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -1014,8 +1002,7 @@ export default function SettingsClient({
 
           {/* Logo card */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-5">
               <div
@@ -1059,8 +1046,7 @@ export default function SettingsClient({
             <button
               onClick={saveBrandKit}
               disabled={brandSaving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
             >
               {brandSaving ? <Loader2 size={14} className="animate-spin" /> : brandSaved ? <CheckCircle2 size={14} /> : null}
               {brandSaved ? 'Saved!' : brandSaving ? 'Saving...' : 'Save Brand Kit'}
@@ -1076,7 +1062,7 @@ export default function SettingsClient({
       {tab === 'ai_assistants' && (
         <div className="space-y-6">
           {/* Tone Presets */}
-          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <Bot size={20} style={{ color: 'var(--accent)' }} />
@@ -1112,7 +1098,7 @@ export default function SettingsClient({
           </div>
 
           {/* Custom Instructions */}
-          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <MessageSquare size={20} style={{ color: 'var(--accent)' }} />
@@ -1134,7 +1120,7 @@ export default function SettingsClient({
           </div>
 
           {/* Response Length */}
-          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <Settings size={20} style={{ color: 'var(--accent)' }} />
@@ -1187,7 +1173,7 @@ export default function SettingsClient({
       {tab === 'hookphoto' && (
         <div className="space-y-6">
           {/* Hook Image Upload */}
-          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <ImagePlus size={20} style={{ color: 'var(--accent)' }} />
@@ -1235,7 +1221,7 @@ export default function SettingsClient({
           </div>
 
           {/* Tips */}
-          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="card p-6">
             <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Tips for a Great Hook Photo</h3>
             <div className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
               <p>• Use a 9:16 aspect ratio (1080×1920px) for best results</p>
@@ -1268,8 +1254,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Export data */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="card p-6"
           >
             <div className="flex items-center gap-3 mb-4">
               <div
@@ -1303,7 +1288,7 @@ export default function SettingsClient({
 
           {/* Disconnect all accounts */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
+            className="card p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1352,7 +1337,7 @@ export default function SettingsClient({
 
           {/* Delete all posts */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
+            className="card p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1404,7 +1389,7 @@ export default function SettingsClient({
 
           {/* Transfer workspace ownership */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
+            className="card p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1475,7 +1460,7 @@ export default function SettingsClient({
 
           {/* Delete account */}
           <div
-            className="rounded-2xl p-4 sm:p-6"
+            className="card p-6"
             style={{
               background: 'rgba(239,68,68,0.04)',
               border: '1px solid rgba(239,68,68,0.2)',
@@ -1524,8 +1509,8 @@ export default function SettingsClient({
               <button
                 onClick={handleDelete}
                 disabled={deleteConfirm !== 'DELETE' || deleting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-30 transition-opacity hover:opacity-90"
-                style={{ background: '#ef4444' }}
+                className="btn-primary flex items-center gap-2 text-sm disabled:opacity-30"
+              style={{ background: '#ef4444' }}
               >
                 {deleting && <Loader2 size={14} className="animate-spin" />}
                 <Trash2 size={14} />

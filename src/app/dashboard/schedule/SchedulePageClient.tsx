@@ -219,12 +219,12 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
     }, 0)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Posting Schedules
+          <h1 className="page-heading">
+            Create <em>schedule</em>
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Define when PostPilot auto-publishes content for you
@@ -232,8 +232,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true) }}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80 shrink-0"
-          style={{ background: 'var(--accent)' }}
+          className="btn-primary flex items-center justify-center gap-2 shrink-0"
         >
           <Plus size={14} /> New schedule
         </button>
@@ -242,8 +241,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
         <div
-          className="rounded-xl p-4"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6"
         >
           <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
             Active Schedules
@@ -251,8 +249,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{activeCount}</p>
         </div>
         <div
-          className="rounded-xl p-4"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6"
         >
           <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
             Posts / Week
@@ -272,8 +269,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
 
       {/* Best times suggestion */}
       <div
-        className="rounded-2xl p-4 sm:p-5 mb-6"
-        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        className="card p-6 mb-6"
       >
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={14} style={{ color: 'var(--accent)' }} />
@@ -309,8 +305,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       {/* ── Create / Edit form ── */}
       {showForm && (
         <div
-          className="rounded-2xl p-4 sm:p-6 mb-6"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 mb-6"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -444,16 +439,14 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           >
             <button
               onClick={() => { setShowForm(false); resetForm() }}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors text-center"
-              style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+              className="btn-secondary text-center"
             >
               Cancel
             </button>
             <button
               onClick={saveSchedule}
               disabled={saving}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               {editingId ? 'Update schedule' : 'Save schedule'}
@@ -465,8 +458,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       {/* ── Weekly overview grid ── */}
       {schedules.length > 0 && !showForm && (
         <div
-          className="rounded-2xl overflow-hidden mb-6"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card overflow-hidden mb-6"
         >
           <div className="px-4 sm:px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
             <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -512,8 +504,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
       {/* ── Schedule list ── */}
       {schedules.length === 0 && !showForm ? (
         <div
-          className="rounded-2xl p-10 sm:p-14 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 text-center"
         >
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -529,8 +520,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
           </p>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary inline-flex items-center gap-2"
           >
             <Plus size={14} /> Create schedule
           </button>
@@ -549,8 +539,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
             return (
               <div
                 key={s.id}
-                className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                className="card p-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
               >
                 {/* Status dot */}
                 <div

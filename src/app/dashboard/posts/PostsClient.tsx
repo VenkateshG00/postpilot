@@ -42,8 +42,7 @@ function dateLabel(log: any) {
 function GridCard({ log }: { log: any }) {
   return (
     <div
-      className="rounded-2xl overflow-hidden group relative"
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+      className="card overflow-hidden group relative"
     >
       {/* Thumbnail */}
       <div className="aspect-square relative overflow-hidden" style={{ background: 'var(--bg)' }}>
@@ -187,11 +186,11 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
   const countFor = (s: Status) => s === 'all' ? allLogs.length : allLogs.filter(l => l.status === s).length
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Post History</h1>
+          <h1 className="page-heading">Your <em>posts</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Every post PostPilot has created or attempted
           </p>
@@ -199,8 +198,7 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
 
         {/* View toggle */}
         <div
-          className="flex items-center p-1 rounded-xl gap-0.5"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card flex items-center p-1 gap-0.5"
         >
           <button
             onClick={() => setViewMode('grid')}
@@ -259,8 +257,7 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
       {/* Content */}
       {filtered.length === 0 ? (
         <div
-          className="rounded-2xl p-16 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 text-center"
         >
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -281,8 +278,7 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
         </div>
       ) : (
         <div
-          className="rounded-2xl overflow-hidden overflow-x-auto"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card overflow-hidden overflow-x-auto"
         >
           {/* List header */}
           <div

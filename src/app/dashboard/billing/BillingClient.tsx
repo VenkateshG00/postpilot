@@ -38,11 +38,7 @@ function loadRazorpay(): Promise<boolean> {
   })
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-}
+
 
 export default function BillingClient(props: Props) {
   const router = useRouter()
@@ -106,10 +102,10 @@ export default function BillingClient(props: Props) {
     : 0
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Billing &amp; plans</h1>
+        <h1 className="page-heading"><em>Billing</em></h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Upgrade your plan and see your usage</p>
       </div>
 
@@ -130,7 +126,7 @@ export default function BillingClient(props: Props) {
       )}
 
       {/* Current plan + usage */}
-      <div className="rounded-2xl p-4 sm:p-6 mb-8" style={cardStyle}>
+      <div className="card p-6 mb-8">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <span
@@ -207,7 +203,7 @@ export default function BillingClient(props: Props) {
           return (
             <div
               key={p.key}
-              className="rounded-2xl p-5 flex flex-col"
+              className="card p-6 flex flex-col"
               style={{
                 background: 'var(--bg-card)',
                 border: isCurrent ? '2px solid var(--accent)' : '1px solid var(--border)',

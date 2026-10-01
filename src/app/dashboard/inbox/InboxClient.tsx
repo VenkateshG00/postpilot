@@ -179,14 +179,13 @@ export default function InboxClient({
   /* No accounts */
   if (!hasAccounts) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+      <div>
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
+          <h1 className="page-heading"><em>Inbox</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your Instagram conversations</p>
         </div>
         <div
-          className="rounded-2xl p-8 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 text-center"
         >
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'rgba(245,158,11,0.1)' }}>
@@ -197,8 +196,7 @@ export default function InboxClient({
             Connect your Instagram account to view and manage your conversations.
           </p>
           <a href="/dashboard/connect"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90"
-            style={{ background: 'var(--accent)' }}>
+            className="btn-primary inline-flex items-center gap-2">
             <Instagram size={15} /> Connect Instagram
           </a>
         </div>
@@ -207,10 +205,10 @@ export default function InboxClient({
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
+        <h1 className="page-heading"><em>Inbox</em></h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage your Instagram conversations and leads
         </p>
@@ -218,10 +216,8 @@ export default function InboxClient({
 
       {/* Split pane */}
       <div
-        className="rounded-2xl overflow-hidden flex"
+        className="card overflow-hidden flex"
         style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
           height: 'calc(100vh - 200px)',
           minHeight: 500,
         }}

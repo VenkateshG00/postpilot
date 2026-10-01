@@ -57,11 +57,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
-      style={{ background: 'var(--bg)' }}
+      className="md:grid h-screen overflow-hidden"
+      style={{
+        background: 'var(--bg)',
+        gridTemplateColumns: '72px 1fr',
+      }}
     >
-      {/* Desktop sidebar — hidden on mobile */}
-      <div className="hidden md:flex md:shrink-0">
+      {/* Desktop sidebar — 72px icon rail */}
+      <div className="hidden md:block">
         <Sidebar
           profile={profile}
           brand={brand}
@@ -71,7 +74,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
       </div>
 
-      {/* Mobile nav (hamburger + slide-in drawer) */}
+      {/* Mobile bottom nav */}
       <MobileNav
         profile={profile}
         brand={brand}
@@ -79,8 +82,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         activeAccountId={activeAccountId}
       />
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto w-0">
+      {/* Main content — full width, no max-w constraint */}
+      <main className="flex-1 overflow-y-auto" style={{ padding: '24px 20px 40px' }}>
         {children}
       </main>
     </div>

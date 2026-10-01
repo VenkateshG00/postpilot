@@ -132,11 +132,11 @@ export default function AutomationsClient({
   const hasAccounts = accounts.length > 0
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Automations</h1>
+          <h1 className="page-heading"><em>Automations</em>.</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Auto-reply to comments and DMs with custom rules
           </p>
@@ -144,8 +144,7 @@ export default function AutomationsClient({
         {hasAccounts && (
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary flex items-center gap-2"
           >
             <Plus size={15} />
             <span className="hidden sm:inline">New Rule</span>
@@ -156,8 +155,7 @@ export default function AutomationsClient({
       {/* No accounts warning */}
       {!hasAccounts && (
         <div
-          className="rounded-2xl p-8 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 text-center"
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -173,8 +171,7 @@ export default function AutomationsClient({
           </p>
           <a
             href="/dashboard/connect"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary inline-flex items-center gap-2"
           >
             <Instagram size={15} />
             Connect Instagram
@@ -185,8 +182,7 @@ export default function AutomationsClient({
       {/* Empty state */}
       {hasAccounts && automations.length === 0 && !creating && (
         <div
-          className="rounded-2xl p-8 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 text-center"
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
@@ -202,8 +198,7 @@ export default function AutomationsClient({
           </p>
           <button
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary inline-flex items-center gap-2"
           >
             <Plus size={15} />
             Create first automation
@@ -214,8 +209,7 @@ export default function AutomationsClient({
       {/* Create form */}
       {creating && (
         <div
-          className="rounded-2xl p-4 sm:p-6 mb-6"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          className="card p-6 mb-6"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -340,8 +334,7 @@ export default function AutomationsClient({
               <button
                 onClick={handleCreate}
                 disabled={saving || !form.name.trim() || !form.reply_template.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                style={{ background: 'var(--accent)' }}
+                className="btn-primary flex items-center gap-2 disabled:opacity-40"
               >
                 {saving && <Loader2 size={14} className="animate-spin" />}
                 Create Rule
@@ -359,10 +352,8 @@ export default function AutomationsClient({
             return (
               <div
                 key={a.id}
-                className="rounded-2xl p-4 sm:p-5 transition-all"
+                className="card p-6 transition-all"
                 style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
                   opacity: a.is_active ? 1 : 0.6,
                 }}
               >

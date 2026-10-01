@@ -154,13 +154,13 @@ export default function TeamClient({
   /* ── No workspace yet ────────────────────────────── */
   if (!workspace) {
     return (
-      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="">
         <div className="mb-8">
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
+          <h1 className="page-heading"><em>Team</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Create a workspace to start inviting team members</p>
         </div>
 
-        <div className="rounded-2xl p-6 sm:p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="card p-6 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--accent-subtle)' }}>
             <Users size={32} style={{ color: 'var(--accent)' }} />
           </div>
@@ -179,8 +179,7 @@ export default function TeamClient({
             <button
               onClick={createWorkspace}
               disabled={creatingWs || !wsName.trim()}
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary shrink-0 flex items-center gap-2 text-sm disabled:opacity-50"
             >
               {creatingWs ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
               Create
@@ -193,11 +192,11 @@ export default function TeamClient({
 
   /* ── Main team view ──────────────────────────────── */
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
+          <h1 className="page-heading"><em>Team</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             {workspace.name} • {members.length} member{members.length !== 1 ? 's' : ''} invited
           </p>
@@ -205,7 +204,7 @@ export default function TeamClient({
       </div>
 
       {/* Invite Card */}
-      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="card p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
             <UserPlus size={20} style={{ color: 'var(--accent)' }} />
@@ -250,8 +249,7 @@ export default function TeamClient({
           <button
             onClick={inviteMember}
             disabled={inviting || !inviteEmail.trim()}
-            className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary shrink-0 flex items-center gap-2 text-sm disabled:opacity-50"
           >
             {inviting ? <Loader2 size={14} className="animate-spin" /> : invited ? <CheckCircle2 size={14} /> : <Mail size={14} />}
             {invited ? 'Invited!' : 'Send Invite'}
@@ -260,7 +258,7 @@ export default function TeamClient({
       </div>
 
       {/* Owner Card */}
-      <div className="rounded-2xl p-4 mb-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="card p-6 mb-3">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: 'var(--accent)' }}>
             {userEmail.charAt(0).toUpperCase()}
@@ -278,7 +276,7 @@ export default function TeamClient({
 
       {/* Members List */}
       {members.length === 0 ? (
-        <div className="rounded-2xl p-6 sm:p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="card p-6 text-center">
           <Users size={40} style={{ color: 'var(--text-muted)', opacity: 0.3 }} className="mx-auto mb-3" />
           <p className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>No team members yet</p>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>Invite your first team member above to get started</p>
@@ -290,8 +288,7 @@ export default function TeamClient({
             return (
               <div
                 key={m.id}
-                className="rounded-2xl p-4 flex items-center gap-4"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                className="card p-6 flex items-center gap-4"
               >
                 {/* Avatar */}
                 <div
@@ -353,7 +350,7 @@ export default function TeamClient({
       )}
 
       {/* Role Permissions Info */}
-      <div className="rounded-2xl p-4 sm:p-6 mt-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="card p-6 mt-6">
         <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Role Permissions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {ROLES.map(r => (

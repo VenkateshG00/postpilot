@@ -91,11 +91,7 @@ function statusColors(status: string) {
   return { bg: 'rgba(234,179,8,0.12)', color: '#eab308', ring: 'rgba(234,179,8,0.4)', dot: '#eab308' }
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-}
+const cardStyle: React.CSSProperties = {}
 
 /* ── Helper: get the week's date objects (Sun–Sat) containing a given date ── */
 function getWeekDates(anchor: Date): Date[] {
@@ -197,28 +193,25 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
   const weekLabel = `${fmtShortDate(weekDates[0])} – ${fmtShortDate(weekDates[6])}, ${weekDates[6].getFullYear()}`
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Content Calendar
-          </h1>
+          <h1 className="page-heading">Content <em>calendar</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Your scheduled and published posts at a glance
           </p>
         </div>
         <Link
           href="/dashboard/create"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold text-white hover:opacity-90 transition-opacity shrink-0"
-          style={{ background: 'var(--accent)' }}
+          className="btn-primary flex items-center gap-2 shrink-0"
         >
           <Plus size={14} /> New post
         </Link>
       </div>
 
       {/* Calendar card */}
-      <div className="overflow-hidden" style={cardStyle}>
+      <div className="card overflow-hidden">
         {/* Top bar: nav + view toggle */}
         <div
           className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 gap-3 flex-wrap"
@@ -345,9 +338,9 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
                         onClick={() => setSelectedDay(isSelected ? null : dayKey)}
                         className="relative p-1.5 sm:p-2 text-left h-full min-h-[70px] sm:min-h-[90px] transition-colors group"
                         style={{
-                          background: isSelected ? 'rgba(255,77,77,0.06)' : 'transparent',
+                          background: isSelected ? 'rgba(10,10,10,0.04)' : 'transparent',
                           borderRight: di < 6 ? '1px solid var(--border)' : undefined,
-                          outline: isSelected ? '2px solid rgba(255,77,77,0.3)' : 'none',
+                          outline: isSelected ? '2px solid rgba(10,10,10,0.15)' : 'none',
                           outlineOffset: '-2px',
                         }}
                       >
@@ -413,7 +406,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
                     className="py-3 text-center"
                     style={{
                       borderLeft: '1px solid var(--border)',
-                      background: isToday ? 'rgba(255,77,77,0.04)' : 'transparent',
+                      background: isToday ? 'rgba(10,10,10,0.03)' : 'transparent',
                     }}
                   >
                     <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
@@ -475,7 +468,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
                         className="relative p-1"
                         style={{
                           borderLeft: '1px solid var(--border)',
-                          background: isToday ? 'rgba(255,77,77,0.03)' : 'transparent',
+                          background: isToday ? 'rgba(10,10,10,0.02)' : 'transparent',
                         }}
                       >
                         {slotPosts.map(p => {
@@ -544,7 +537,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
 
       {/* Day detail panel */}
       {selectedDay && (
-        <div className="mt-4 overflow-hidden" style={cardStyle}>
+        <div className="card mt-4 overflow-hidden">
           <div
             className="flex items-center justify-between px-4 sm:px-5 py-3"
             style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}

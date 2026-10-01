@@ -46,18 +46,17 @@ async function fetchInstagramStats(accountId: string, token: string) {
 /* ── Stat card ─────────────────────────────────────── */
 function StatCard({ label, value, sub, icon: Icon }: { label: string; value: string | number; sub?: string; icon?: React.ElementType }) {
   return (
-    <div
-      className="rounded-2xl p-4 sm:p-5"
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-    >
-      <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-        <p className="text-[11px] sm:text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
-        {Icon && <Icon size={14} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />}
+    <div className="stat-card flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{label}</p>
+        {Icon && <Icon size={16} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />}
       </div>
-      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
-      {sub && (
-        <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>
-      )}
+      <div>
+        <p className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{value}</p>
+        {sub && (
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{sub}</p>
+        )}
+      </div>
     </div>
   )
 }
@@ -207,16 +206,16 @@ export default async function DashboardPage() {
   const displayName = biz?.business_name ?? user?.email?.split('@')[0] ?? 'there'
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+    <div>
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl sm:text-[26px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="page-heading" style={{ color: 'var(--text-primary)' }}>
             {allDone ? (
-              <>Welcome back, <span style={{ color: 'var(--accent)' }}>{displayName}</span></>
+              <>Welcome back, <em>{displayName}</em></>
             ) : (
-              <>Hi <span style={{ color: 'var(--accent)' }}>{displayName}</span>, let&apos;s get your first post scheduled</>
+              <>Hi <em>{displayName}</em>, let&apos;s get your first post scheduled</>
             )}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -228,8 +227,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/dashboard/create"
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80 shrink-0"
-          style={{ background: 'var(--accent)' }}
+          className="btn-primary flex items-center justify-center gap-2 shrink-0"
         >
           <Plus size={14} />
           Create post
@@ -312,7 +310,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Stats — Row 1: Instagram live stats (like ReelDrop) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-3">
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <StatCard
           label="Total Followers"
           value={igStats ? fmt(igStats.followers) : '—'}
@@ -332,14 +330,14 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Stats — Row 2: PostPilot delivery stats ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <StatCard label="Scheduled Posts"  value={schedules?.length ?? 0} sub={schedules?.length ? 'Auto-posting' : 'Nothing scheduled'} />
         <StatCard label="Posts Published"  value={publishedCount}         sub="All time" />
         <StatCard label="Posts Failed"     value={failedCount}            sub={failedCount > 0 ? 'Needs attention' : 'All good'} />
       </div>
 
       {/* ── Two-column: Calendar + Quick Actions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* Content Calendar (2 cols on lg) */}
         <div
@@ -513,8 +511,7 @@ export default async function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/connect"
-                className="block text-center py-2 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
-                style={{ background: 'var(--accent)' }}
+                className="btn-primary block text-center"
               >
                 Connect account
               </Link>

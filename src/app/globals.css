@@ -1,37 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* ── Light mode tokens ── */
+  /* ── Light mode tokens (ReelDrop-style) ── */
   :root {
-    --bg:           #FAF7F2;
+    --bg:           #FAFAF7;
     --bg-card:      #FFFFFF;
-    --bg-sidebar:   #111111;
-    --border:       #EEEBE5;
+    --bg-sidebar:   #FFFFFF;
+    --border:       #DBDBDB;
     --border-dark:  rgba(255,255,255,0.07);
-    --text-primary: #1A1A1A;
-    --text-muted:   #888888;
-    --accent:       #FF4D4D;
-    --accent-hover: #E63E3E;
-    --accent-subtle:rgba(255,77,77,0.08);
-    --selection-bg: #FFE0E0;
-    --selection-fg: #CC2E2E;
+    --text-primary: #0A0A0A;
+    --text-muted:   #737373;
+    --accent:       #0A0A0A;
+    --accent-hover: #333333;
+    --accent-subtle:rgba(10,10,10,0.06);
+    --accent-brand: #E8503A;
+    --accent-brand-hover: #D14530;
+    --selection-bg: #E0E0E0;
+    --selection-fg: #0A0A0A;
+    --card-radius:  16px;
+    --card-padding: 24px;
+    --card-border:  1px solid var(--border);
   }
 
   /* ── Dark mode tokens ── */
   [data-theme="dark"] {
     --bg:           #0F0F0F;
     --bg-card:      #1C1C1C;
-    --bg-sidebar:   #0A0A0A;
-    --border:       rgba(255,255,255,0.07);
+    --bg-sidebar:   #141414;
+    --border:       rgba(255,255,255,0.10);
     --border-dark:  rgba(255,255,255,0.07);
     --text-primary: #FFFFFF;
-    --text-muted:   #666666;
-    --accent:       #FF4D4D;
-    --accent-hover: #FF6B6B;
-    --accent-subtle:rgba(255,77,77,0.10);
-    --selection-bg: #CC2E2E;
+    --text-muted:   #737373;
+    --accent:       #FFFFFF;
+    --accent-hover: #E0E0E0;
+    --accent-subtle:rgba(255,255,255,0.08);
+    --accent-brand: #E8503A;
+    --accent-brand-hover: #D14530;
+    --selection-bg: #333333;
     --selection-fg: #FFFFFF;
   }
 
@@ -43,7 +52,7 @@
   }
 
   body {
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: 'DM Sans', var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     background: var(--bg);
     color: var(--text-primary);
@@ -75,17 +84,28 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           text-white text-sm font-semibold transition-all
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
+           text-sm font-semibold transition-all
            disabled:opacity-50 disabled:cursor-not-allowed;
     background: var(--accent);
+    color: var(--bg);
   }
   .btn-primary:hover:not(:disabled) {
     background: var(--accent-hover);
   }
 
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
+           text-white text-sm font-semibold transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    background: var(--accent-brand);
+  }
+  .btn-brand:hover:not(:disabled) {
+    background: var(--accent-brand-hover);
+  }
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
            text-sm font-semibold transition-all
            disabled:opacity-50 disabled:cursor-not-allowed;
     background: var(--bg-card);
@@ -97,9 +117,30 @@
   }
 
   .card {
-    @apply rounded-2xl;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: var(--card-border);
+    border-radius: var(--card-radius);
+  }
+
+  /* ReelDrop-style page heading */
+  .page-heading {
+    font-size: 36px;
+    font-weight: 700;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+  }
+  .page-heading em, .page-heading i {
+    font-style: italic;
+  }
+
+  /* ReelDrop-style stat card */
+  .stat-card {
+    background: var(--bg-card);
+    border: var(--card-border);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    min-height: 148px;
   }
 
   .label {
@@ -109,7 +150,7 @@
 
   .error-text {
     @apply text-xs mt-1;
-    color: var(--accent);
+    color: var(--accent-brand);
   }
 }
 

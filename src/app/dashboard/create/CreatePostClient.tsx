@@ -18,11 +18,7 @@ const inputStyle: React.CSSProperties = {
   color: 'var(--text-primary)',
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-}
+
 
 export default function CreatePostClient({
   accounts,
@@ -122,11 +118,11 @@ export default function CreatePostClient({
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Create a post</h1>
+          <h1 className="page-heading">Create <em>post</em></h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Write a one-off post — a festival wish, an offer, an announcement.
           </p>
@@ -162,7 +158,7 @@ export default function CreatePostClient({
 
       {/* Festivals */}
       {upcoming.length > 0 && (
-        <div className="rounded-2xl p-4 sm:p-5 mb-5" style={cardStyle}>
+        <div className="card p-6 mb-5">
           <div className="flex items-center gap-2 mb-1">
             <PartyPopper size={16} style={{ color: 'var(--accent)' }} />
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Upcoming festivals &amp; occasions</p>
@@ -201,7 +197,7 @@ export default function CreatePostClient({
       )}
 
       {/* Main form */}
-      <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
+      <div className="card p-6 space-y-4">
         <div>
           <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
             Instagram account
@@ -232,8 +228,7 @@ export default function CreatePostClient({
         <button
           onClick={() => generate()}
           disabled={gen || !accountId}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
-          style={{ background: 'var(--accent)' }}
+          className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50"
         >
           {gen
             ? <><Loader2 size={16} className="animate-spin" /> Generating…</>
@@ -243,7 +238,7 @@ export default function CreatePostClient({
 
       {/* Preview */}
       {preview && (
-        <div className="rounded-2xl p-4 sm:p-5 mt-5 space-y-4" style={cardStyle}>
+        <div className="card p-6 mt-5 space-y-4">
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Preview</p>
 
           {/* Image area */}
@@ -303,8 +298,7 @@ export default function CreatePostClient({
             <button
               onClick={() => generate()}
               disabled={gen || genImg}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 hover:opacity-80 transition-opacity"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
             >
               {gen ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               Regenerate <span className="text-xs" style={{ color: 'var(--text-muted)' }}>(1 credit)</span>
@@ -312,8 +306,7 @@ export default function CreatePostClient({
             <button
               onClick={() => publish()}
               disabled={posting || genImg}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 hover:opacity-90 transition-opacity"
-              style={{ background: 'var(--accent)' }}
+              className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
               {posting
                 ? <><Loader2 size={16} className="animate-spin" /> Posting…</>
@@ -338,8 +331,7 @@ export default function CreatePostClient({
             <button
               onClick={() => publish(scheduledFor)}
               disabled={posting || !scheduledFor || genImg}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap disabled:opacity-50 hover:opacity-80 transition-opacity"
-              style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50"
             >
               Schedule
             </button>

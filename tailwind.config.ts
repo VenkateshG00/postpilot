@@ -4,25 +4,23 @@ const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
-      // Legacy brand scale remapped to accent red — keeps existing dashboard
-      // pages from breaking while we upgrade them page by page
       colors: {
         brand: {
-          50:  '#FFF0F0',
-          100: '#FFE0E0',
-          200: '#FFBDBD',
-          300: '#FF9999',
-          400: '#FF7070',
-          500: '#FF4D4D',
-          600: '#E63E3E',
-          700: '#CC2E2E',
-          800: '#B01F1F',
-          900: '#8A1515',
-          950: '#5C0A0A',
+          50:  '#FEF2F0',
+          100: '#FDE5E1',
+          200: '#FBCBC3',
+          300: '#F7A99C',
+          400: '#F08070',
+          500: '#E8503A',
+          600: '#D14530',
+          700: '#B23826',
+          800: '#8E2D1F',
+          900: '#6E2318',
+          950: '#3D120C',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '1rem',

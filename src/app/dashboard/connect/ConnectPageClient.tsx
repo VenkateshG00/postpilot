@@ -9,11 +9,7 @@ function getMetaOAuthURL() {
   return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1745129453437379&redirect_uri=https://postpilot-1ia.pages.dev/api/meta/callback&response_type=code&scope=instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments`
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-}
+
 
 export default function ConnectPageClient({ accounts, eligible }: { accounts: SocialAccount[]; eligible: boolean }) {
   const [approval, setApproval] = useState<Record<string, boolean>>(
@@ -57,10 +53,10 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+    <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Connected accounts</h1>
+        <h1 className="page-heading">Connect <em>accounts</em></h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage the Instagram accounts PostPilot posts to.
         </p>
@@ -83,7 +79,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
       )}
 
       {/* Connect button card */}
-      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={cardStyle}>
+      <div className="card p-6 mb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: 'linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCAF45 100%)' }}>
@@ -98,8 +94,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
           <button
             onClick={connectInstagram}
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0 disabled:opacity-50 hover:opacity-90 transition-opacity"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary flex items-center gap-1.5 text-sm shrink-0 disabled:opacity-50"
           >
             <Plus size={14} /> {loading ? 'Redirecting…' : 'Connect'}
           </button>
@@ -108,7 +103,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
 
       {/* Accounts list */}
       {accounts.length === 0 ? (
-        <div className="rounded-2xl p-10 text-center" style={cardStyle}>
+        <div className="card p-6 text-center">
           <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
             style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
             <Instagram size={22} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
@@ -124,7 +119,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
             Your accounts
           </h2>
           {accounts.map(account => (
-            <div key={account.id} className="rounded-2xl p-4 flex items-center gap-4" style={cardStyle}>
+            <div key={account.id} className="card p-6 flex items-center gap-4">
               {/* Avatar */}
               {account.account_picture_url
                 ? <img src={account.account_picture_url} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />

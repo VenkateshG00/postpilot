@@ -4,44 +4,35 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, Calendar, Image, Settings, LogOut, Instagram,
-  CreditCard, BarChart3, Sparkles, ClipboardCheck, Film, Grid3X3, Layers, ChevronDown,
-  MoreHorizontal, Zap, Palette, Moon, Sun, MessageSquare, Inbox, Users, Building2, Gift, FileText, PlayCircle,
+  LayoutDashboard, Calendar, Image, Settings, LogOut,
+  BarChart3, Sparkles, Film, Grid3X3, Layers, Zap,
+  Inbox, PlayCircle, Gift, MoreHorizontal, Moon, Sun,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 
 /* ── Nav config ──────────────────────────────────────── */
-const MAIN_NAV = [
-  { href: '/dashboard',           label: 'Overview',   icon: LayoutDashboard },
-  { href: '/dashboard/analytics', label: 'Analytics',  icon: BarChart3 },
-  { href: '/dashboard/schedule',  label: 'Schedule',   icon: Calendar },
-  { href: '/dashboard/posts',     label: 'Posts',      icon: Image },
-]
-
-const AI_TOOLS_NAV = [
-  { href: '/dashboard/create',    label: 'Create Post', icon: Sparkles },
-  { href: '/dashboard/reels',     label: 'Reels & Stories', icon: Film },
-  { href: '/dashboard/carousel',  label: 'Carousel',    icon: Layers },
-  { href: '/dashboard/grid',      label: 'Grid Planner', icon: Grid3X3 },
-  { href: '/dashboard/approvals', label: 'Approvals',   icon: ClipboardCheck },
-  { href: '/dashboard/automations', label: 'Automations',  icon: Zap },
+const TOP_NAV = [
+  { href: '/dashboard',             label: 'Dashboard',     icon: LayoutDashboard },
+  { href: '/dashboard/schedule',    label: 'Create',        icon: Sparkles },
+  { href: '/dashboard/calendar',    label: 'Calendar',      icon: Calendar },
+  { href: '/dashboard/grid',        label: 'Grid',          icon: Grid3X3 },
+  { href: '/dashboard/automations', label: 'Automations',   icon: Zap },
   { href: '/dashboard/inbox',       label: 'Inbox',         icon: Inbox },
-  { href: '/dashboard/trial-reels',  label: 'Trial Reels',   icon: PlayCircle },
+  { href: '/dashboard/analytics',   label: 'Analytics',     icon: BarChart3 },
+  { href: '/dashboard/carousel',    label: 'Carousel',      icon: Layers },
+  { href: '/dashboard/reels',       label: 'Reels',         icon: Film },
+  { href: '/dashboard/trial-reels', label: 'Trial Reels',   icon: PlayCircle },
 ]
 
-const MANAGE_NAV = [
-  { href: '/dashboard/connect',  label: 'Accounts',  icon: Instagram },
-  { href: '/dashboard/billing',  label: 'Billing',   icon: CreditCard },
-  { href: '/dashboard/referral',  label: 'Referral',   icon: Gift },
-  { href: '/dashboard/media-kit',  label: 'Media Kit',  icon: FileText },
-  { href: '/dashboard/team',     label: 'Team',      icon: Users },
-  { href: '/dashboard/settings', label: 'Settings',  icon: Settings },
+const BOTTOM_NAV = [
+  { href: '/dashboard/referral',  label: 'Referral',  icon: Gift },
+  { href: '/dashboard/settings',  label: 'Settings',  icon: Settings },
 ]
 
-/* ── Sub-components ──────────────────────────────────── */
-function NavItem({ href, label, icon: Icon, active, onClick }: {
+/* ── Icon button (single nav item) ── */
+function NavIcon({ href, label, icon: Icon, active, onClick }: {
   href: string; label: string; icon: React.ElementType; active: boolean; onClick?: () => void
 }) {
   return (
@@ -49,51 +40,46 @@ function NavItem({ href, label, icon: Icon, active, onClick }: {
       href={href}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all font-medium',
-        active ? 'text-white' : 'text-gray-500 hover:text-white hover:bg-white/5'
+        'group relative flex items-center justify-center w-[44px] h-[38px] rounded-[10px] transition-all',
+        active
+          ? 'bg-[var(--accent)] text-[var(--bg)]'
+          : 'text-[var(--text-muted)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text-primary)]'
       )}
-      style={active ? { backgroundColor: 'var(--accent)' } : {}}
     >
-      <Icon size={15} />
-      {label}
+      <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+      {/* Tooltip */}
+      <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap
+        bg-[var(--accent)] text-[var(--bg)] opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+        {label}
+      </span>
     </Link>
   )
 }
 
-function SectionLabel({ children }: { children: string }) {
-  return (
-    <p className="px-3 pt-5 pb-1 text-[10px] font-bold tracking-widest uppercase text-gray-600">
-      {children}
-    </p>
-  )
-}
-
-/* ── Dark mode toggle (reads / sets data-theme on <html>) ── */
+/* ── Dark mode toggle ── */
 function DarkModeToggle() {
   const [dark, setDark] = useState(() => {
     if (typeof document === 'undefined') return false
     return document.documentElement.getAttribute('data-theme') === 'dark'
   })
-
   function toggle() {
     const next = !dark
     setDark(next)
     document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
     localStorage.setItem('theme', next ? 'dark' : 'light')
   }
-
   return (
     <button
       onClick={toggle}
-      className="flex items-center justify-center w-7 h-7 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+      className="flex items-center justify-center w-[44px] h-[38px] rounded-[10px] text-[var(--text-muted)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text-primary)] transition-all"
       title={dark ? 'Switch to light' : 'Switch to dark'}
     >
-      {dark ? <Sun size={14} /> : <Moon size={14} />}
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   )
 }
 
-/* ── Main Sidebar ─────────────────────────────────────── */
+/* ── Main Sidebar (72px icon rail) ── */
 export default function Sidebar({
   profile,
   brand,
@@ -112,10 +98,6 @@ export default function Sidebar({
   const pathname = usePathname()
   const router = useRouter()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [acctMenuOpen, setAcctMenuOpen] = useState(false)
-  const [wsMenuOpen, setWsMenuOpen] = useState(false)
-
-  const activeAccount = accounts?.find(a => a.id === activeAccountId) ?? accounts?.[0]
 
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === href : pathname.startsWith(href)
@@ -127,203 +109,105 @@ export default function Sidebar({
     router.refresh()
   }
 
-  const allAiTools = brand?.eligible
-    ? [...AI_TOOLS_NAV, { href: '/dashboard/white-label', label: 'White-label', icon: Palette }]
-    : AI_TOOLS_NAV
-
   return (
     <aside
-      className="w-56 shrink-0 flex flex-col h-full"
+      className="w-[72px] shrink-0 flex flex-col h-screen sticky top-0 items-center py-4 px-2 gap-1"
       style={{
         background: 'var(--bg-sidebar)',
-        borderRight: '1px solid var(--border-dark)',
+        borderRight: '1px solid var(--border)',
       }}
     >
       {/* ── Logo ── */}
-      <div className="px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'var(--accent)' }}
-          >
-            <Zap size={14} className="text-white" />
-          </div>
-          <span className="font-bold text-white text-sm tracking-tight">
-            {brand?.eligible && brand.name ? brand.name : 'PostPilot'}
-          </span>
+      <Link href="/dashboard" className="mb-3 flex items-center justify-center">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'var(--accent-brand)' }}
+        >
+          <Zap size={18} className="text-white" />
         </div>
-        <DarkModeToggle />
-      </div>
+      </Link>
 
-      {/* ── Workspace selector ── */}
-      {workspaces && workspaces.length > 0 && (
-        <div className="px-3 mb-1 relative">
-          <button
-            onClick={() => setWsMenuOpen(o => !o)}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/5 transition-colors"
-          >
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--accent)', opacity: 0.8 }}>
-              <Building2 size={12} className="text-white" />
-            </div>
-            <span className="flex-1 text-left text-xs font-medium text-white truncate">
-              {workspaces.find(w => {
-                try { const c = document.cookie.match(/active_workspace_id=([^;]+)/); return c && w.id === c[1] } catch { return false }
-              })?.name ?? workspaces[0]?.name ?? 'Workspace'}
-            </span>
-            <ChevronDown size={12} className={cn('text-gray-500 transition-transform', wsMenuOpen && 'rotate-180')} />
-          </button>
-
-          {wsMenuOpen && (
-            <div
-              className="absolute left-3 right-3 top-full mt-1 rounded-xl overflow-hidden shadow-xl z-50"
-              style={{ background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              {workspaces.map(w => (
-                <button
-                  key={w.id}
-                  onClick={() => {
-                    document.cookie = `active_workspace_id=${w.id}; path=/`
-                    setWsMenuOpen(false)
-                    router.refresh()
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs hover:bg-white/5 transition-colors"
-                  style={{ color: '#d1d5db' }}
-                >
-                  <Building2 size={12} />
-                  <span className="truncate">{w.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Account selector ── */}
+      {/* ── Account avatar / workspace switcher ── */}
       {accounts && accounts.length > 0 && (
-        <div className="px-3 mb-1 relative">
-          <button
-            onClick={() => setAcctMenuOpen(o => !o)}
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/5 transition-colors"
-          >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-              {activeAccount?.account_name?.[0]?.toUpperCase() ?? 'I'}
-            </div>
-            <span className="flex-1 text-left text-xs font-medium text-white truncate">
-              {activeAccount?.account_name ?? 'My Account'}
-            </span>
-            <ChevronDown size={12} className={cn('text-gray-500 transition-transform', acctMenuOpen && 'rotate-180')} />
-          </button>
-
-          {acctMenuOpen && accounts.length > 1 && (
-            <div
-              className="absolute left-3 right-3 top-full mt-1 rounded-xl overflow-hidden shadow-xl z-50"
-              style={{ background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              {accounts.map(a => (
-                <button
-                  key={a.id}
-                  onClick={() => {
-                    document.cookie = `active_account_id=${a.id}; path=/`
-                    setAcctMenuOpen(false)
-                    router.refresh()
-                  }}
-                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-gray-300 hover:bg-white/5 transition-colors"
-                >
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[9px] font-bold text-white shrink-0">
-                    {a.account_name?.[0]?.toUpperCase() ?? 'I'}
-                  </div>
-                  {a.account_name ?? 'Account'}
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="mb-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[11px] font-bold text-white">
+            {accounts.find(a => a.id === activeAccountId)?.account_name?.[0]?.toUpperCase() ?? 'P'}
+          </div>
         </div>
       )}
 
-      {/* ── Navigation ── */}
-      <nav className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5">
-        {MAIN_NAV.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
-        ))}
-
-        <SectionLabel>AI Tools</SectionLabel>
-        {allAiTools.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
-        ))}
-
-        <SectionLabel>Manage</SectionLabel>
-        {MANAGE_NAV.map(item => (
-          <NavItem key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
+      {/* ── Top nav icons ── */}
+      <nav className="flex-1 flex flex-col items-center gap-0.5 overflow-y-auto">
+        {TOP_NAV.map(item => (
+          <NavIcon key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
         ))}
       </nav>
 
-      {/* ── Upgrade CTA ── */}
-      <div className="px-3 pb-2">
-        {(!profile?.plan || profile.plan === 'free') && (
-          <div
-            className="rounded-2xl p-4 mb-2"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255,77,77,0.18) 0%, rgba(255,77,77,0.08) 100%)',
-              border: '1px solid rgba(255,77,77,0.25)',
-            }}
-          >
-            <p className="text-xs font-bold text-white mb-0.5">Upgrade to Pro</p>
-            <p className="text-[11px] text-gray-400 mb-3 leading-relaxed">
-              Unlimited posts &amp; AI features
-            </p>
-            <Link
-              href="/dashboard/billing"
-              className="block text-center text-xs font-bold py-2 rounded-xl text-white transition-opacity hover:opacity-90"
-              style={{ background: 'var(--accent)' }}
-            >
-              Upgrade now →
-            </Link>
-          </div>
-        )}
+      {/* ── Bottom icons ── */}
+      <div className="flex flex-col items-center gap-0.5 mt-auto pt-2">
+        {BOTTOM_NAV.map(item => (
+          <NavIcon key={item.href} {...item} active={isActive(item.href)} onClick={onNavigate} />
+        ))}
+        <DarkModeToggle />
 
-        {/* ── User row ── */}
-        <div className="relative">
+        {/* ── User avatar / menu ── */}
+        <div className="relative mt-1">
           <button
             onClick={() => setUserMenuOpen(o => !o)}
-            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-xl hover:bg-white/5 transition-colors group"
+            className="group relative w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden"
+            style={{ background: 'var(--accent-brand)' }}
           >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-              style={{ background: 'var(--accent)' }}
-            >
-              {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'}
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-xs font-semibold text-white truncate">{profile?.full_name || 'User'}</p>
-              <p className="text-[10px] text-gray-500 capitalize">{profile?.plan ?? 'free'} plan</p>
-            </div>
-            <MoreHorizontal size={14} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || '?'
+            )}
           </button>
 
           {userMenuOpen && (
-            <div
-              className="absolute bottom-full left-0 right-0 mb-1 rounded-xl overflow-hidden shadow-xl z-50"
-              style={{ background: '#1C1C1C', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <Link
-                href="/dashboard/settings"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-gray-300 hover:bg-white/5 transition-colors"
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+              <div
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-xl overflow-hidden shadow-xl z-50 min-w-[160px]"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
               >
-                <Settings size={13} className="text-gray-500" />
-                Settings
-              </Link>
-              <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-gray-300 hover:bg-white/5 transition-colors"
-              >
-                <LogOut size={13} className="text-gray-500" />
-                Sign out
-              </button>
-            </div>
+                <div className="px-3 py-2.5 border-b" style={{ borderColor: 'var(--border)' }}>
+                  <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                    {profile?.full_name || 'User'}
+                  </p>
+                  <p className="text-[10px] capitalize" style={{ color: 'var(--text-muted)' }}>
+                    {profile?.plan ?? 'free'} plan
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs transition-colors hover:bg-[var(--accent-subtle)]"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <Settings size={13} style={{ color: 'var(--text-muted)' }} />
+                  Settings
+                </Link>
+                <div style={{ height: '1px', background: 'var(--border)' }} />
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs transition-colors hover:bg-[var(--accent-subtle)]"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <LogOut size={13} style={{ color: 'var(--text-muted)' }} />
+                  Sign out
+                </button>
+              </div>
+            </>
           )}
         </div>
+
+        {/* ── More options ── */}
+        <button
+          className="flex items-center justify-center w-[44px] h-[38px] rounded-[10px] text-[var(--text-muted)] hover:bg-[var(--accent-subtle)] hover:text-[var(--text-primary)] transition-all mt-0.5"
+        >
+          <MoreHorizontal size={18} />
+        </button>
       </div>
     </aside>
   )
