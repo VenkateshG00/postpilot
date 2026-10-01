@@ -65,7 +65,7 @@ export default function MobileNav({ profile, brand, accounts, activeAccountId }:
     <>
       {/* ── Bottom tab bar (mobile) ── */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 h-16 safe-area-pb"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 h-16 safe-area-pb"
         style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}
       >
         {BOTTOM_TABS.map(item => (
@@ -97,12 +97,12 @@ export default function MobileNav({ profile, brand, accounts, activeAccountId }:
       </div>
 
       {/* ── Mobile bottom spacer ── */}
-      <div className="md:hidden h-16 shrink-0" />
+      <div className="lg:hidden h-16 shrink-0" />
 
       {/* ── Backdrop ── */}
       {open && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         />
       )}
@@ -110,7 +110,7 @@ export default function MobileNav({ profile, brand, accounts, activeAccountId }:
       {/* ── Slide-up drawer ── */}
       <div
         className={cn(
-          'md:hidden fixed left-0 right-0 bottom-16 z-50 transition-transform duration-300 rounded-t-2xl max-h-[70vh] overflow-y-auto',
+          'lg:hidden fixed left-0 right-0 bottom-16 z-50 transition-transform duration-300 rounded-t-2xl max-h-[70vh] overflow-y-auto',
           open ? 'translate-y-0' : 'translate-y-full'
         )}
         style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}

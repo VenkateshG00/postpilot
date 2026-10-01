@@ -57,14 +57,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div
-      className="md:grid h-screen overflow-hidden"
+      className="lg:grid h-screen overflow-hidden"
       style={{
         background: 'var(--bg)',
         gridTemplateColumns: '72px 1fr',
       }}
     >
       {/* Desktop sidebar — 72px icon rail */}
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Sidebar
           profile={profile}
           brand={brand}

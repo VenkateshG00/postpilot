@@ -309,8 +309,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── Stats — Row 1: Instagram live stats (like ReelDrop) ── */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      {/* ── Stats — 2×3 grid (matching ReelDrop layout) ── */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6">
         <StatCard
           label="Total Followers"
           value={igStats ? fmt(igStats.followers) : '—'}
@@ -327,10 +327,6 @@ export default async function DashboardPage() {
           sub={igStats ? undefined : 'Connect analytics'}
           icon={TrendingUp}
         />
-      </div>
-
-      {/* ── Stats — Row 2: PostPilot delivery stats ── */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
         <StatCard label="Scheduled Posts"  value={schedules?.length ?? 0} sub={schedules?.length ? 'Auto-posting' : 'Nothing scheduled'} />
         <StatCard label="Posts Published"  value={publishedCount}         sub="All time" />
         <StatCard label="Posts Failed"     value={failedCount}            sub={failedCount > 0 ? 'Needs attention' : 'All good'} />
