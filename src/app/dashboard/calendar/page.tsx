@@ -24,9 +24,9 @@ export default async function CalendarPage() {
 
   let q = supabase
     .from('post_logs')
-    .select('id, caption, image_url, topic_used, status, scheduled_for, published_at, created_at, ig_permalink, social_account_id')
+    .select('id, caption, image_url, topic_used, status, content_type, scheduled_for, published_at, created_at, ig_permalink, social_account_id')
     .eq('user_id', user!.id)
-    .in('status', ['published', 'scheduled', 'pending'])
+    .in('status', ['published', 'scheduled', 'pending', 'failed'])
 
   if (activeId) q = q.eq('social_account_id', activeId)
 
