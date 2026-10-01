@@ -111,7 +111,7 @@ export default function TrialReelsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Trial Reels</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Trial Reels</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Test reel performance before publishing to your main feed
           </p>
@@ -127,7 +127,7 @@ export default function TrialReelsClient({
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Trial Views', value: formatNum(totalViews), icon: Eye, color: '#8b5cf6' },
           { label: 'Total Likes',       value: formatNum(totalLikes), icon: Heart, color: '#ef4444' },

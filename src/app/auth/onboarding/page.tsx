@@ -172,7 +172,7 @@ export default function OnboardingPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-lg">
         <div
-          className="rounded-2xl p-8"
+          className="rounded-2xl p-6 sm:p-8"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
 
@@ -225,7 +225,7 @@ export default function OnboardingPage() {
                 {errors.target_audience && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.target_audience.message}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Language</label>
                   <select {...register('language')} style={{ ...inputStyle, appearance: 'none' }}>
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
                 <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Choose your brand voice</h2>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>How should PostPilot sound when it writes for you?</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {BRAND_VOICES.map(v => (
                   <button
                     key={v.value}

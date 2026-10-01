@@ -32,9 +32,9 @@ export default function PostsClient({ posts }: { posts: Row[] }) {
   const shown = posts.filter(p => (filter === 'all' || p.status === filter) && (userFilter === 'all' || p.email === userFilter))
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Posts</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Posts</h1>
         <p className="text-sm text-gray-500 mt-1">Latest 200 posts across all users</p>
       </div>
 
@@ -55,7 +55,7 @@ export default function PostsClient({ posts }: { posts: Row[] }) {
         </select>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-xs">
             <tr>

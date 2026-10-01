@@ -112,3 +112,29 @@
     color: var(--accent);
   }
 }
+
+/* ── Responsive helpers ─── */
+@layer utilities {
+  /* Prevent iOS Safari zoom on focus for inputs under 16px */
+  @media screen and (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Smooth horizontal scroll containers */
+  .scroll-x {
+    @apply overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* Hide scrollbar but keep scroll */
+  .scroll-x::-webkit-scrollbar {
+    height: 4px;
+  }
+  .scroll-x::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: var(--border);
+  }
+}

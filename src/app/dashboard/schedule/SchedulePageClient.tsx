@@ -38,9 +38,9 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       onClick={onToggle}
       className="relative flex items-center shrink-0 transition-all"
       style={{
-        width: 40,
-        height: 22,
-        borderRadius: 11,
+        width: 44,
+        height: 24,
+        borderRadius: 12,
         background: on ? 'var(--accent)' : 'var(--border)',
         transition: 'background 0.2s',
       }}
@@ -48,9 +48,9 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       <span
         className="absolute rounded-full bg-white shadow-sm"
         style={{
-          width: 16,
-          height: 16,
-          left: on ? 20 : 3,
+          width: 18,
+          height: 18,
+          left: on ? 22 : 3,
           transition: 'left 0.2s',
         }}
       />
@@ -318,7 +318,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
             </h2>
             <button
               onClick={() => { setShowForm(false); resetForm() }}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
               style={{ color: 'var(--text-muted)' }}
             >
               <X size={15} />
@@ -410,13 +410,13 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
             <Field label="Posting times">
               <div className="space-y-2">
                 {form.post_times.map((t, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                  <div key={i} className="flex items-center gap-2 flex-wrap">
                     <Input type="time" value={t} onChange={e => updateTime(i, e.target.value)} style={{ maxWidth: 160 }} />
                     {form.post_times.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeTime(i)}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/10 transition-colors"
                         style={{ color: 'var(--text-muted)' }}
                       >
                         <X size={13} />
@@ -473,7 +473,8 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
               Weekly Posting Overview
             </h3>
           </div>
-          <div className="grid grid-cols-7 text-center">
+          <div className="overflow-x-auto">
+          <div className="grid grid-cols-7 text-center min-w-[420px]">
             {DAYS.map((day, di) => {
               const count = schedules
                 .filter(s => s.is_active)
@@ -503,6 +504,7 @@ export default function SchedulePageClient({ schedules: initial, accounts, indus
                 </div>
               )
             })}
+          </div>
           </div>
         </div>
       )}

@@ -61,7 +61,7 @@ export default function ApprovalsClient({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Approvals</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Approvals</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Posts waiting for your review before they publish.
           </p>
@@ -101,7 +101,7 @@ export default function ApprovalsClient({
       ) : (
         <div className="space-y-4">
           {posts.map(p => (
-            <div key={p.id} className="rounded-2xl p-5" style={cardStyle}>
+            <div key={p.id} className="rounded-2xl p-4 sm:p-5" style={cardStyle}>
               {/* Meta */}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>

@@ -145,7 +145,7 @@ export default function MediaKitClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Media Kit</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Media Kit</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Auto-generated media kit from your real Instagram analytics
           </p>
@@ -171,20 +171,20 @@ export default function MediaKitClient({
       </div>
 
       {/* Media Kit Content */}
-      <div ref={kitRef} className="space-y-6">
+      <div ref={kitRef} className="space-y-4 sm:space-y-6">
         {/* Profile Hero */}
         <div
-          className="rounded-2xl p-8 text-center"
+          className="rounded-2xl p-6 sm:p-8 text-center"
           style={{ background: 'linear-gradient(135deg, var(--accent), #8b5cf6)', border: 'none' }}
         >
           {igProfile?.profile_picture ? (
             <img src={igProfile.profile_picture} alt="" className="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-2 border-white/30" />
           ) : (
-            <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white" style={{ background: 'rgba(255,255,255,0.2)' }}>
+            <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-xl sm:text-2xl font-bold text-white" style={{ background: 'rgba(255,255,255,0.2)' }}>
               {(biz?.business_name ?? profile?.full_name ?? 'P').charAt(0).toUpperCase()}
             </div>
           )}
-          <h2 className="text-2xl font-bold text-white">{biz?.business_name || profile?.full_name || 'My Brand'}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white">{biz?.business_name || profile?.full_name || 'My Brand'}</h2>
           {igProfile && (
             <p className="text-sm text-white/80 mt-1">@{igProfile.username}</p>
           )}
@@ -227,20 +227,20 @@ export default function MediaKitClient({
             { label: 'Total Engagement',  value: fmt(totalReach),      icon: TrendingUp, color: '#22c55e' },
             { label: 'Avg Posts/Week',    value: postsPerWeek,         icon: Calendar,   color: '#0ea5e9' },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <div key={s.label} className="rounded-2xl p-4 sm:p-5 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: s.color + '15' }}>
                 <s.icon size={20} style={{ color: s.color }} />
               </div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
+              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Content Breakdown + Engagement Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Content type split */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Content Breakdown</h3>
             <div className="space-y-3">
               {Object.entries(typeBreakdown).map(([type, count]) => {
@@ -269,7 +269,7 @@ export default function MediaKitClient({
           </div>
 
           {/* Engagement summary */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Engagement Summary</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
@@ -292,7 +292,7 @@ export default function MediaKitClient({
 
         {/* Top Content */}
         {topPosts.length > 0 && (
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Top Performing Content</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {topPosts.map((p, i) => (
@@ -326,7 +326,7 @@ export default function MediaKitClient({
 
         {/* Brand Topics */}
         {biz?.topics && biz.topics.length > 0 && (
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Content Topics</h3>
             <div className="flex flex-wrap gap-2">
               {biz.topics.map((t: string) => (
@@ -339,7 +339,7 @@ export default function MediaKitClient({
         )}
 
         {/* Collab CTA */}
-        <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="rounded-2xl p-4 sm:p-6 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
           <Sparkles size={24} style={{ color: 'var(--accent)' }} className="mx-auto mb-3" />
           <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>Interested in Collaborating?</h3>
           <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>

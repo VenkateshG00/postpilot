@@ -365,7 +365,7 @@ export default async function DashboardPage() {
 
           {/* Day headers */}
           <div
-            className="grid grid-cols-7 text-center py-2 px-1 sm:px-2"
+            className="grid grid-cols-7 text-center py-2 px-1 sm:px-2 min-w-[320px]"
             style={{ borderBottom: '1px solid var(--border)' }}
           >
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => {
@@ -431,7 +431,7 @@ export default async function DashboardPage() {
                     ) : (
                       <Link
                         href="/dashboard/schedule"
-                        className="flex items-center justify-center w-full h-full opacity-0 hover:opacity-100 transition-opacity"
+                        className="flex items-center justify-center w-full h-full opacity-100 sm:opacity-0 sm:hover:opacity-100 transition-opacity"
                         title="Add post"
                       >
                         <Plus size={12} style={{ color: 'var(--text-muted)' }} />

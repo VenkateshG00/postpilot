@@ -29,13 +29,13 @@ export default async function AdminAccounts() {
   const rows = accounts ?? []
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Accounts</h1>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Accounts</h1>
         <p className="text-sm text-gray-500 mt-1">Every connected channel across all users ({rows.length})</p>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-xs">
             <tr>

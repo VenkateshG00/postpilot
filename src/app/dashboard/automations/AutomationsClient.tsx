@@ -136,7 +136,7 @@ export default function AutomationsClient({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Automations</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Automations</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Auto-reply to comments and DMs with custom rules
           </p>
@@ -214,7 +214,7 @@ export default function AutomationsClient({
       {/* Create form */}
       {creating && (
         <div
-          className="rounded-2xl p-6 mb-6"
+          className="rounded-2xl p-4 sm:p-6 mb-6"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
           <div className="flex items-center justify-between mb-5">
@@ -359,7 +359,7 @@ export default function AutomationsClient({
             return (
               <div
                 key={a.id}
-                className="rounded-2xl p-5 transition-all"
+                className="rounded-2xl p-4 sm:p-5 transition-all"
                 style={{
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border)',

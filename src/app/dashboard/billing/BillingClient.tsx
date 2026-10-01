@@ -109,7 +109,7 @@ export default function BillingClient(props: Props) {
     <div className="p-4 sm:p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Billing &amp; plans</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Billing &amp; plans</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Upgrade your plan and see your usage</p>
       </div>
 
@@ -130,7 +130,7 @@ export default function BillingClient(props: Props) {
       )}
 
       {/* Current plan + usage */}
-      <div className="rounded-2xl p-6 mb-8" style={cardStyle}>
+      <div className="rounded-2xl p-4 sm:p-6 mb-8" style={cardStyle}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <span
@@ -228,7 +228,7 @@ export default function BillingClient(props: Props) {
               </div>
 
               <div className="mb-1">
-                <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                <span className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                   {p.priceInr === 0 ? 'Free' : `₹${p.priceInr.toLocaleString('en-IN')}`}
                 </span>
                 {p.priceInr > 0 && (

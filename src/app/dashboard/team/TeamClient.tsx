@@ -156,11 +156,11 @@ export default function TeamClient({
     return (
       <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Create a workspace to start inviting team members</p>
         </div>
 
-        <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="rounded-2xl p-6 sm:p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--accent-subtle)' }}>
             <Users size={32} style={{ color: 'var(--accent)' }} />
           </div>
@@ -197,7 +197,7 @@ export default function TeamClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Team Management</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             {workspace.name} • {members.length} member{members.length !== 1 ? 's' : ''} invited
           </p>
@@ -205,7 +205,7 @@ export default function TeamClient({
       </div>
 
       {/* Invite Card */}
-      <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
             <UserPlus size={20} style={{ color: 'var(--accent)' }} />
@@ -229,7 +229,7 @@ export default function TeamClient({
           </div>
 
           {/* Role selector */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto">
             {ROLES.map(r => (
               <button
                 key={r.id}
@@ -278,7 +278,7 @@ export default function TeamClient({
 
       {/* Members List */}
       {members.length === 0 ? (
-        <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="rounded-2xl p-6 sm:p-8 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
           <Users size={40} style={{ color: 'var(--text-muted)', opacity: 0.3 }} className="mx-auto mb-3" />
           <p className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>No team members yet</p>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>Invite your first team member above to get started</p>
@@ -353,7 +353,7 @@ export default function TeamClient({
       )}
 
       {/* Role Permissions Info */}
-      <div className="rounded-2xl p-6 mt-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl p-4 sm:p-6 mt-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Role Permissions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {ROLES.map(r => (

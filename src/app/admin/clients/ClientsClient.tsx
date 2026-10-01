@@ -70,9 +70,9 @@ export default function ClientsClient({ clients: initial, planKeys }: { clients:
   const shown = filter === 'all' ? clients : clients.filter(c => c.plan === filter)
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Clients</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Clients</h1>
         <p className="text-sm text-gray-500 mt-1">Subscribers by plan ({clients.length})</p>
       </div>
 
@@ -99,7 +99,7 @@ export default function ClientsClient({ clients: initial, planKeys }: { clients:
               <div className="flex items-center gap-2">{statusOf(c)}</div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-4 items-end">
               <div>
                 <label className="label">Plan</label>
                 <select className="input-base" value={c.plan} disabled={busy === c.id}

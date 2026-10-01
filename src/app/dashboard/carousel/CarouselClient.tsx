@@ -213,7 +213,7 @@ export default function CarouselClient({
 
       {/* Generate form */}
       {slides.length === 0 && (
-        <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+        <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
           <div>
             <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
               Instagram account
@@ -271,7 +271,7 @@ export default function CarouselClient({
 
       {/* Carousel editor */}
       {slides.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
 
           {/* Left: Slide list + editor (3 cols) */}
           <div className="lg:col-span-3 space-y-4">
@@ -329,7 +329,7 @@ export default function CarouselClient({
 
             {/* Active slide editor */}
             {activeSlide && (
-              <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+              <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     Slide {activeSlideIdx + 1}
@@ -338,7 +338,7 @@ export default function CarouselClient({
                     <button
                       onClick={() => moveSlide(activeSlideIdx, -1)}
                       disabled={activeSlideIdx === 0}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
                       style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
                       title="Move up"
                     >
@@ -347,7 +347,7 @@ export default function CarouselClient({
                     <button
                       onClick={() => moveSlide(activeSlideIdx, 1)}
                       disabled={activeSlideIdx === slides.length - 1}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
                       style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
                       title="Move down"
                     >
@@ -356,7 +356,7 @@ export default function CarouselClient({
                     <button
                       onClick={() => removeSlide(activeSlideIdx)}
                       disabled={slides.length <= 2}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30 transition-opacity hover:opacity-70"
                       style={{ border: '1px solid var(--border)', color: '#ef4444' }}
                       title="Remove slide"
                     >
@@ -401,7 +401,7 @@ export default function CarouselClient({
             )}
 
             {/* Main caption + actions */}
-            <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+            <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
               <div>
                 <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
                   Main caption (appears below the carousel)

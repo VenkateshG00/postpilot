@@ -71,17 +71,17 @@ export default function PlansEditorClient({ initialPlans }: { initialPlans: Plan
   )
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Plans</h1>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Plans</h1>
         <p className="text-sm text-gray-500 mt-1">
           Edit subscription plans. Changes save to the database and go live immediately — no code deploy.
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {plans.map((p, i) => (
-          <div key={i} className="card p-6 space-y-4">
+          <div key={i} className="card p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {p._isNew ? (
@@ -110,7 +110,7 @@ export default function PlansEditorClient({ initialPlans }: { initialPlans: Plan
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <div>
                 <label className="label">Name</label>
                 <input className="input-base" value={p.name} onChange={e => update(i, 'name', e.target.value)} />

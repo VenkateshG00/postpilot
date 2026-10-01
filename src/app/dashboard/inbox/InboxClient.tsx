@@ -181,7 +181,7 @@ export default function InboxClient({
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your Instagram conversations</p>
         </div>
         <div
@@ -210,7 +210,7 @@ export default function InboxClient({
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Inbox</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage your Instagram conversations and leads
         </p>
@@ -235,7 +235,7 @@ export default function InboxClient({
           }}
         >
           {/* Tabs */}
-          <div className="flex border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex overflow-x-auto border-b" style={{ borderColor: 'var(--border)' }}>
             {TABS.map(t => (
               <button
                 key={t.id}
@@ -288,7 +288,7 @@ export default function InboxClient({
           {/* Conversation items */}
           <div className="flex-1 overflow-y-auto">
             {filtered.length === 0 && (
-              <div className="p-6 text-center">
+              <div className="p-4 sm:p-6 text-center">
                 <Inbox size={28} className="mx-auto mb-2" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   {conversations.length === 0

@@ -64,14 +64,14 @@ export default function ReferralClient({
     <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Referral Program</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Referral Program</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Invite friends, earn rewards for every successful referral
         </p>
       </div>
 
       {/* Referral Link Card */}
-      <div className="rounded-2xl p-6 mb-6" style={{ background: 'linear-gradient(135deg, var(--accent), #8b5cf6)', border: 'none' }}>
+      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={{ background: 'linear-gradient(135deg, var(--accent), #8b5cf6)', border: 'none' }}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.2)' }}>
             <Gift size={24} className="text-white" />
@@ -118,7 +118,7 @@ export default function ReferralClient({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Invites',  value: totalReferred.toString(), icon: Users,      color: '#6366f1' },
           { label: 'Signed Up',      value: signedUp.toString(),      icon: UserPlus,   color: '#3b82f6' },
@@ -138,7 +138,7 @@ export default function ReferralClient({
       </div>
 
       {/* How it works */}
-      <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <h3 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>How It Works</h3>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[

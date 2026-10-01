@@ -126,7 +126,7 @@ export default function CreatePostClient({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Create a post</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Create a post</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Write a one-off post — a festival wish, an offer, an announcement.
           </p>
@@ -162,7 +162,7 @@ export default function CreatePostClient({
 
       {/* Festivals */}
       {upcoming.length > 0 && (
-        <div className="rounded-2xl p-5 mb-5" style={cardStyle}>
+        <div className="rounded-2xl p-4 sm:p-5 mb-5" style={cardStyle}>
           <div className="flex items-center gap-2 mb-1">
             <PartyPopper size={16} style={{ color: 'var(--accent)' }} />
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Upcoming festivals &amp; occasions</p>
@@ -201,7 +201,7 @@ export default function CreatePostClient({
       )}
 
       {/* Main form */}
-      <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+      <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
         <div>
           <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
             Instagram account
@@ -243,7 +243,7 @@ export default function CreatePostClient({
 
       {/* Preview */}
       {preview && (
-        <div className="rounded-2xl p-5 mt-5 space-y-4" style={cardStyle}>
+        <div className="rounded-2xl p-4 sm:p-5 mt-5 space-y-4" style={cardStyle}>
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Preview</p>
 
           {/* Image area */}
@@ -323,7 +323,7 @@ export default function CreatePostClient({
 
           {/* Schedule row */}
           <div
-            className="flex items-center gap-2 pt-3 flex-wrap"
+            className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 flex-wrap"
             style={{ borderTop: '1px solid var(--border)' }}
           >
             <Clock size={14} style={{ color: 'var(--text-muted)' }} />

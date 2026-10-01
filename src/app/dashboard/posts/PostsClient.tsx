@@ -75,7 +75,7 @@ function GridCard({ log }: { log: any }) {
             href={log.ig_permalink}
             target="_blank"
             rel="noreferrer"
-            className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}
           >
             <ExternalLink size={10} />
@@ -187,11 +187,11 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
   const countFor = (s: Status) => s === 'all' ? allLogs.length : allLogs.filter(l => l.status === s).length
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Post History</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Post History</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Every post PostPilot has created or attempted
           </p>
@@ -281,7 +281,7 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
         </div>
       ) : (
         <div
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden overflow-x-auto"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
           {/* List header */}

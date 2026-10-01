@@ -188,12 +188,12 @@ export default function ReelsClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
         {/* ── Left: Controls (3 cols) ── */}
         <div className="lg:col-span-3 space-y-5">
 
           {/* Content type toggle */}
-          <div className="rounded-2xl p-5" style={cardStyle}>
+          <div className="rounded-2xl p-4 sm:p-5" style={cardStyle}>
             <label className="block text-xs font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>
               Content Type
             </label>
@@ -228,7 +228,7 @@ export default function ReelsClient({
           </div>
 
           {/* Account + Brief */}
-          <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+          <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
             <div>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>
                 Instagram account
@@ -267,7 +267,7 @@ export default function ReelsClient({
 
           {/* Text overlay editor */}
           {preview && (
-            <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+            <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 <Type size={14} className="inline mr-1.5" />
                 Text Overlay
@@ -309,7 +309,7 @@ export default function ReelsClient({
                     <button
                       key={c}
                       onClick={() => setTextColor(c)}
-                      className="w-6 h-6 rounded-full transition-all"
+                      className="w-8 h-8 rounded-full transition-all"
                       style={{
                         background: c,
                         border: textColor === c ? '2px solid var(--accent)' : '1px solid var(--border)',
@@ -354,7 +354,7 @@ export default function ReelsClient({
 
           {/* Caption + actions */}
           {preview && (
-            <div className="rounded-2xl p-5 space-y-4" style={cardStyle}>
+            <div className="rounded-2xl p-4 sm:p-5 space-y-4" style={cardStyle}>
               <div>
                 <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Caption</label>
                 <textarea

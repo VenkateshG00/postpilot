@@ -71,7 +71,7 @@ function RegisterForm() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
         <div
-          className="w-full max-w-sm rounded-2xl p-10 text-center"
+          className="w-full max-w-sm rounded-2xl p-6 sm:p-10 text-center"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         >
           <div
@@ -100,7 +100,7 @@ function RegisterForm() {
       </Link>
 
       <div
-        className="w-full max-w-sm rounded-2xl p-8"
+        className="w-full max-w-sm rounded-2xl p-6 sm:p-8"
         style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
       >
         <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Create your account</h1>

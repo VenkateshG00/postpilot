@@ -171,7 +171,7 @@ function Section({ children, className = '', bg = false, id }: {
   return (
     <section
       id={id}
-      className={`px-6 ${className}`}
+      className={`px-4 sm:px-6 ${className}`}
       style={{ background: bg ? 'var(--bg-card)' : undefined }}
     >
       <div className="max-w-[1080px] mx-auto">{children}</div>
@@ -182,7 +182,7 @@ function Section({ children, className = '', bg = false, id }: {
 /* ── Section heading ────────────────────────────────── */
 function SectionHeading({ tag, title, sub }: { tag: string; title: React.ReactNode; sub?: string }) {
   return (
-    <div className="text-center mb-14">
+    <div className="text-center mb-10 sm:mb-14">
       <p
         className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-4"
         style={{ color: 'var(--accent)' }}
@@ -190,7 +190,7 @@ function SectionHeading({ tag, title, sub }: { tag: string; title: React.ReactNo
         {tag}
       </p>
       <h2
-        className="text-[clamp(28px,4vw,42px)] font-bold tracking-tight leading-[1.1] mb-3"
+        className="text-[clamp(24px,6vw,42px)] font-bold tracking-tight leading-[1.1] mb-3"
         style={{ color: 'var(--text-primary)' }}
       >
         {title}
@@ -227,7 +227,7 @@ export default function LandingPage() {
           backdropFilter: scrolled ? 'blur(16px)' : 'none',
         }}
       >
-        <div className="max-w-[1080px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1080px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div
@@ -242,7 +242,7 @@ export default function LandingPage() {
           </Link>
 
           {/* Right */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="#pricing"
               className="text-sm font-medium hidden sm:inline hover:opacity-70 transition-opacity"
@@ -259,7 +259,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth/register"
-              className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+              className="px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-[13px] sm:text-sm font-bold text-white transition-opacity hover:opacity-90"
               style={{ background: 'var(--accent)' }}
             >
               Start free trial
@@ -267,7 +267,7 @@ export default function LandingPage() {
             <button
               onClick={toggle}
               aria-label="Toggle dark mode"
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+              className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-colors"
               style={{
                 border: '1px solid var(--border)',
                 background: 'var(--bg-card)',
@@ -281,7 +281,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="pt-36 pb-24 px-6 text-center">
+      <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 text-center">
         <div className="max-w-[720px] mx-auto">
           {/* Badge */}
           <div
@@ -294,7 +294,7 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1
-            className="text-[clamp(40px,6vw,64px)] font-bold tracking-tight leading-[1.05] mb-6"
+            className="text-[clamp(32px,8vw,64px)] font-bold tracking-tight leading-[1.05] mb-6"
             style={{ color: 'var(--text-primary)' }}
           >
             Your business posts itself{' '}
@@ -305,7 +305,7 @@ export default function LandingPage() {
 
           {/* Subtitle */}
           <p
-            className="text-lg leading-relaxed max-w-[540px] mx-auto mb-10"
+            className="text-base sm:text-lg leading-relaxed max-w-[540px] mx-auto mb-10"
             style={{ color: 'var(--text-muted)' }}
           >
             Connect your Instagram, describe your business, and PostPilot generates
@@ -316,7 +316,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-3">
             <Link
               href="/auth/register"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[15px] font-bold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3.5 rounded-xl text-[15px] w-full sm:w-auto max-w-[360px] font-bold text-white transition-opacity hover:opacity-90"
               style={{ background: 'var(--accent)' }}
             >
               Start your 7-day free trial
@@ -330,14 +330,14 @@ export default function LandingPage() {
 
         {/* Hero visual */}
         <div
-          className="max-w-[900px] mx-auto mt-16 rounded-2xl overflow-hidden"
+          className="max-w-[900px] mx-auto mt-10 sm:mt-16 rounded-2xl overflow-hidden"
           style={{
             border: '1px solid var(--border)',
             boxShadow: '0 24px 80px rgba(0,0,0,0.08)',
           }}
         >
           <div
-            className="h-[420px] flex flex-col items-center justify-center gap-4"
+            className="h-[240px] sm:h-[340px] md:h-[420px] flex flex-col items-center justify-center gap-4"
             style={{
               background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg) 60%, var(--accent-subtle) 100%)',
             }}
@@ -357,10 +357,10 @@ export default function LandingPage() {
 
       {/* ── Trust strip ── */}
       <section
-        className="py-8 px-6"
+        className="py-8 px-4 sm:px-6"
         style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}
       >
-        <div className="max-w-[900px] mx-auto flex items-center justify-center gap-[clamp(28px,6vw,72px)] flex-wrap">
+        <div className="max-w-[900px] mx-auto grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-6 sm:gap-[clamp(28px,6vw,72px)]">
           {[
             { value: '500+', label: 'Businesses' },
             { value: '12K+', label: 'Posts / month' },
@@ -369,7 +369,7 @@ export default function LandingPage() {
           ].map(({ value, label }) => (
             <div key={label} className="text-center">
               <div
-                className="text-[28px] font-bold tracking-tight"
+                className="text-2xl sm:text-[28px] font-bold tracking-tight"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {value}
@@ -383,7 +383,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works ── */}
-      <Section className="py-24" bg>
+      <Section className="py-16 md:py-24" bg>
         <SectionHeading
           tag="HOW IT WORKS"
           title={<>Up and running in <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>3 steps</em></>}
@@ -397,7 +397,7 @@ export default function LandingPage() {
           ].map(({ icon: Icon, step, title, desc }) => (
             <div
               key={step}
-              className="rounded-2xl p-7"
+              className="rounded-2xl p-5 sm:p-7"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
             >
               <div
@@ -427,7 +427,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Features grid ── */}
-      <Section className="py-24">
+      <Section className="py-16 md:py-24">
         <SectionHeading
           tag="FEATURES"
           title="Everything your social media needs"
@@ -460,7 +460,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Testimonials ── */}
-      <Section className="py-24" bg>
+      <Section className="py-16 md:py-24" bg>
         <SectionHeading
           tag="TESTIMONIALS"
           title="Loved by Indian businesses"
@@ -469,7 +469,7 @@ export default function LandingPage() {
           {TESTIMONIALS.map(({ name, role, avatar, text, stars }) => (
             <div
               key={name}
-              className="rounded-2xl p-7"
+              className="rounded-2xl p-5 sm:p-7"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
             >
               <div className="flex gap-1 mb-4">
@@ -508,7 +508,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Pricing ── */}
-      <Section className="py-24" id="pricing">
+      <Section className="py-16 md:py-24" id="pricing">
         <SectionHeading
           tag="PRICING"
           title="Simple, honest pricing"
@@ -516,7 +516,7 @@ export default function LandingPage() {
         />
 
         {/* Toggle */}
-        <div className="flex items-center justify-center gap-3 mb-12">
+        <div className="flex items-center justify-center gap-3 mb-12 flex-wrap">
           <span
             className="text-sm"
             style={{
@@ -571,12 +571,12 @@ export default function LandingPage() {
             return (
               <div
                 key={plan.name}
-                className="rounded-2xl p-7 flex flex-col"
+                className={`rounded-2xl p-5 sm:p-7 flex flex-col ${hl ? "md:scale-[1.02]" : ""}`}
                 style={{
                   background: hl ? 'var(--text-primary)' : 'var(--bg-card)',
                   border: hl ? 'none' : '1px solid var(--border)',
                   boxShadow: hl ? '0 20px 60px rgba(0,0,0,0.15)' : undefined,
-                  transform: hl ? 'scale(1.02)' : undefined,
+                  transform: undefined, // scale handled via className below
                 }}
               >
                 {hl && (
@@ -595,7 +595,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-end gap-1.5 mb-1">
                   <span
-                    className="text-[42px] font-bold tracking-tight leading-none"
+                    className="text-[34px] sm:text-[42px] font-bold tracking-tight leading-none"
                     style={{ color: hl ? '#ffffff' : 'var(--text-primary)' }}
                   >
                     {yearly ? plan.yearly : plan.monthly}
@@ -649,7 +649,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── FAQ ── */}
-      <Section className="py-24" bg>
+      <Section className="py-16 md:py-24" bg>
         <div className="max-w-[680px] mx-auto">
           <SectionHeading tag="FAQ" title="Questions? Answered." />
           <div className="space-y-2">
@@ -696,20 +696,20 @@ export default function LandingPage() {
       </Section>
 
       {/* ── CTA Band ── */}
-      <Section className="py-24">
+      <Section className="py-16 md:py-24">
         <div
-          className="rounded-3xl px-8 py-16 md:px-16 text-center"
+          className="rounded-3xl px-5 py-12 sm:px-8 md:px-16 sm:py-16 text-center"
           style={{ background: 'var(--text-primary)' }}
         >
           <div
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full mb-6"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full mb-6 max-w-full text-center"
             style={{ color: 'var(--accent)', background: 'rgba(255,77,77,0.15)' }}
           >
             <Users size={11} />
             Join 500+ businesses automating their social media
           </div>
           <h2 className="text-[clamp(28px,4vw,44px)] font-bold tracking-tight leading-[1.1] mb-5 text-white">
-            Start posting consistently,<br />
+            Start posting consistently,<br className="hidden sm:block" />
             <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>starting today</em>
           </h2>
           <p className="text-[16px] leading-relaxed mb-9" style={{ color: '#aaaaaa' }}>
@@ -717,7 +717,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/auth/register"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[15px] font-bold text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3.5 rounded-xl text-[15px] w-full sm:w-auto max-w-[360px] font-bold text-white transition-opacity hover:opacity-90"
             style={{ background: 'var(--accent)' }}
           >
             Get started free
@@ -727,7 +727,7 @@ export default function LandingPage() {
       </Section>
 
       {/* ── Footer ── */}
-      <footer className="px-6 py-10" style={{ borderTop: '1px solid var(--border)' }}>
+      <footer className="px-4 sm:px-6 py-10" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="max-w-[1080px] mx-auto space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <Link href="/" className="flex items-center gap-2">

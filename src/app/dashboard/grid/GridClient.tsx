@@ -80,7 +80,7 @@ export default function GridClient({ posts, accountName }: Props) {
       </div>
 
       {/* Profile header mock */}
-      <div className="rounded-2xl p-5 mb-5" style={cardStyle}>
+      <div className="rounded-2xl p-4 sm:p-5 mb-5" style={cardStyle}>
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center text-white text-xl sm:text-2xl font-bold shrink-0">
             {accountName[0]?.toUpperCase()}
@@ -257,7 +257,7 @@ export default function GridClient({ posts, accountName }: Props) {
       )}
 
       {/* Tips */}
-      <div className="mt-5 rounded-2xl p-5" style={cardStyle}>
+      <div className="mt-5 rounded-2xl p-4 sm:p-5" style={cardStyle}>
         <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
           Grid Planning Tips
         </h3>

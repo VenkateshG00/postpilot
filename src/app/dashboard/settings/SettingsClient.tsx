@@ -308,7 +308,7 @@ export default function SettingsClient({
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage your account, scheduling preferences, and notifications
         </p>
@@ -316,7 +316,7 @@ export default function SettingsClient({
 
       {/* Tab bar */}
       <div
-        className="flex gap-1 p-1 rounded-xl mb-6"
+        className="flex gap-1 p-1 rounded-xl mb-6 overflow-x-auto"
         style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
       >
         {TABS.map(t => {
@@ -348,7 +348,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Account info card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -381,7 +381,7 @@ export default function SettingsClient({
 
           {/* Business profile card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -487,7 +487,7 @@ export default function SettingsClient({
 
           {/* Language & Timezone card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -548,7 +548,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Active schedules summary */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -619,7 +619,7 @@ export default function SettingsClient({
 
           {/* Default posting preferences */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -677,7 +677,7 @@ export default function SettingsClient({
                 <label className="relative inline-flex cursor-pointer">
                   <input type="checkbox" className="sr-only peer" defaultChecked />
                   <div
-                    className="w-10 h-5 rounded-full peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"
+                    className="w-[44px] h-[24px] rounded-full peer-checked:after:translate-x-[20px] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
                     style={{ background: 'var(--accent)' }}
                   />
                 </label>
@@ -694,7 +694,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Email notifications */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -745,7 +745,7 @@ export default function SettingsClient({
                       }
                     />
                     <div
-                      className="w-10 h-5 rounded-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
+                      className="w-[44px] h-[24px] rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-[20px]"
                       style={{
                         background: notifs[item.key as keyof typeof notifs]
                           ? 'var(--accent)'
@@ -760,7 +760,7 @@ export default function SettingsClient({
 
           {/* Push notifications */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -809,7 +809,7 @@ export default function SettingsClient({
                       }
                     />
                     <div
-                      className="w-10 h-5 rounded-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
+                      className="w-[44px] h-[24px] rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-[20px]"
                       style={{
                         background: notifs[item.key as keyof typeof notifs]
                           ? 'var(--accent)'
@@ -824,7 +824,7 @@ export default function SettingsClient({
 
           {/* In-app notifications */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -865,7 +865,7 @@ export default function SettingsClient({
                   }
                 />
                 <div
-                  className="w-10 h-5 rounded-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
+                  className="w-[44px] h-[24px] rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-[20px]"
                   style={{
                     background: notifs.in_app_all
                       ? 'var(--accent)'
@@ -905,7 +905,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Colors card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -963,7 +963,7 @@ export default function SettingsClient({
 
           {/* Fonts card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -1014,7 +1014,7 @@ export default function SettingsClient({
 
           {/* Logo card */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-5">
@@ -1076,7 +1076,7 @@ export default function SettingsClient({
       {tab === 'ai_assistants' && (
         <div className="space-y-6">
           {/* Tone Presets */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <Bot size={20} style={{ color: 'var(--accent)' }} />
@@ -1112,7 +1112,7 @@ export default function SettingsClient({
           </div>
 
           {/* Custom Instructions */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <MessageSquare size={20} style={{ color: 'var(--accent)' }} />
@@ -1134,7 +1134,7 @@ export default function SettingsClient({
           </div>
 
           {/* Response Length */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <Settings size={20} style={{ color: 'var(--accent)' }} />
@@ -1144,7 +1144,7 @@ export default function SettingsClient({
                 <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Control how long AI-generated captions and replies should be</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { id: 'short',  label: 'Short',  desc: '1-2 sentences' },
                 { id: 'medium', label: 'Medium', desc: '3-5 sentences' },
@@ -1187,7 +1187,7 @@ export default function SettingsClient({
       {tab === 'hookphoto' && (
         <div className="space-y-6">
           {/* Hook Image Upload */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)' }}>
                 <ImagePlus size={20} style={{ color: 'var(--accent)' }} />
@@ -1214,8 +1214,8 @@ export default function SettingsClient({
               <div className="mt-4">
                 <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>Preview</p>
                 <div
-                  className="rounded-xl overflow-hidden relative"
-                  style={{ width: 200, height: 356, background: 'var(--bg)', border: '1px solid var(--border)' }}
+                  className="rounded-xl overflow-hidden relative w-full max-w-[200px]"
+                  style={{ maxWidth: 200, background: 'var(--bg)', border: '1px solid var(--border)', aspectRatio: '9/16' }}
                 >
                   <img
                     src={hookPhotoUrl}
@@ -1235,7 +1235,7 @@ export default function SettingsClient({
           </div>
 
           {/* Tips */}
-          <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
             <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Tips for a Great Hook Photo</h3>
             <div className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
               <p>• Use a 9:16 aspect ratio (1080×1920px) for best results</p>
@@ -1268,7 +1268,7 @@ export default function SettingsClient({
         <div className="space-y-6">
           {/* Export data */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -1303,7 +1303,7 @@ export default function SettingsClient({
 
           {/* Disconnect all accounts */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1352,7 +1352,7 @@ export default function SettingsClient({
 
           {/* Delete all posts */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1404,7 +1404,7 @@ export default function SettingsClient({
 
           {/* Transfer workspace ownership */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{
               background: 'rgba(249,115,22,0.04)',
               border: '1px solid rgba(249,115,22,0.2)',
@@ -1426,7 +1426,7 @@ export default function SettingsClient({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Input
                 id="transfer-email"
                 placeholder="new-owner@example.com"
@@ -1475,7 +1475,7 @@ export default function SettingsClient({
 
           {/* Delete account */}
           <div
-            className="rounded-2xl p-6"
+            className="rounded-2xl p-4 sm:p-6"
             style={{
               background: 'rgba(239,68,68,0.04)',
               border: '1px solid rgba(239,68,68,0.2)',

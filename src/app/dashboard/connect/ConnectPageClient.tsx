@@ -60,7 +60,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Connected accounts</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Connected accounts</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Manage the Instagram accounts PostPilot posts to.
         </p>
@@ -83,7 +83,7 @@ export default function ConnectPageClient({ accounts, eligible }: { accounts: So
       )}
 
       {/* Connect button card */}
-      <div className="rounded-2xl p-6 mb-6" style={cardStyle}>
+      <div className="rounded-2xl p-4 sm:p-6 mb-6" style={cardStyle}>
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: 'linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCAF45 100%)' }}>

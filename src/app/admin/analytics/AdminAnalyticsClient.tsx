@@ -47,25 +47,25 @@ export default function AdminAnalyticsClient(props: Props) {
   const clientMax = Math.max(1, ...topClients.map(c => c.count))
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Analytics</h1>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Analytics</h1>
         <p className="text-sm text-gray-500 mt-1">Platform-wide performance across all users</p>
       </div>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {tiles.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="card p-5">
+          <div key={label} className="card p-4 sm:p-5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}><Icon size={16} /></div>
-            <div className="text-2xl font-semibold text-gray-900">{value}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-gray-900">{value}</div>
             <div className="text-xs text-gray-500 mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
       {/* User growth */}
-      <div className="card p-6 mb-6">
+      <div className="card p-4 sm:p-6 mb-4 sm:mb-6">
         <h2 className="font-medium text-gray-900 text-sm mb-1">New users — last 30 days</h2>
         <div className="flex items-end gap-[3px] h-36 mt-4">
           {signups.map(s => (
@@ -83,8 +83,8 @@ export default function AdminAnalyticsClient(props: Props) {
       </div>
 
       {/* Posts over time */}
-      <div className="card p-6 mb-6">
-        <div className="flex items-center justify-between mb-1">
+      <div className="card p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
           <h2 className="font-medium text-gray-900 text-sm">Posts — last 30 days</h2>
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: EMERALD }} /> Published</span>
@@ -114,14 +114,14 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         {/* Delivery donut */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="font-medium text-gray-900 text-sm mb-4">Delivery outcome</h2>
           {delivery.published + delivery.failed === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">No completed posts yet.</p>
           ) : (
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
               <Donut published={delivery.published} failed={delivery.failed} rate={delivery.successRate} />
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /><span className="text-gray-600">Published</span><span className="font-medium text-gray-900 ml-auto">{delivery.published}</span></div>
@@ -133,7 +133,7 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
 
         {/* Best posting times */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-medium text-gray-900 text-sm">Best posting times (IST)</h2>
             {peakHour.count > 0 && <span className="text-xs text-gray-400">Peak: {hourLabel(peakHour.hour)}</span>}
@@ -154,9 +154,9 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         {/* Plan distribution */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="font-medium text-gray-900 text-sm mb-4">Subscribers by plan</h2>
           <div className="space-y-3">
             {PLAN_ORDER.map(k => (
@@ -172,7 +172,7 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
 
         {/* MRR by plan */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="font-medium text-gray-900 text-sm mb-4">Est. MRR by plan</h2>
           <div className="space-y-3">
             {PLAN_ORDER.filter(k => k !== 'free').map(k => (
@@ -188,9 +188,9 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Platform mix */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="font-medium text-gray-900 text-sm mb-4">Posts by platform</h2>
           {platforms.length === 0 ? <p className="text-sm text-gray-400 py-6 text-center">No posts yet.</p> : (
             <div className="space-y-3">
@@ -208,7 +208,7 @@ export default function AdminAnalyticsClient(props: Props) {
         </div>
 
         {/* Top clients */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h2 className="font-medium text-gray-900 text-sm mb-4">Top clients by published posts</h2>
           {topClients.length === 0 ? <p className="text-sm text-gray-400 py-6 text-center">No published posts yet.</p> : (
             <div className="space-y-3">

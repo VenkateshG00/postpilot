@@ -228,7 +228,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={view === 'month' ? prevMonth : prevWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors hover:opacity-80"
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors hover:opacity-80"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
               aria-label="Previous"
             >
@@ -239,7 +239,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
             </h2>
             <button
               onClick={view === 'month' ? nextMonth : nextWeek}
-              className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors hover:opacity-80"
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors hover:opacity-80"
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
               aria-label="Next"
             >
@@ -284,7 +284,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
 
         {/* Legend */}
         <div
-          className="flex items-center gap-4 px-4 sm:px-5 py-2.5 text-xs"
+          className="flex items-center gap-4 px-4 sm:px-5 py-2.5 text-xs flex-wrap"
           style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}
         >
           <span className="flex items-center gap-1.5">
@@ -529,7 +529,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
 
         {/* No posts empty state (month view only) */}
         {view === 'month' && !posts.length && (
-          <div className="px-6 py-10 text-center">
+          <div className="px-4 sm:px-6 py-10 text-center">
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No posts yet this month.</p>
             <Link
               href="/dashboard/schedule"
@@ -556,7 +556,7 @@ export default function CalendarClient({ posts, initialMonth, initialYear }: Pro
             </h3>
             <button
               onClick={() => setSelectedDay(null)}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:opacity-70 transition-opacity"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:opacity-70 transition-opacity"
               style={{ color: 'var(--text-muted)' }}
             >
               <X size={14} />

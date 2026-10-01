@@ -89,7 +89,7 @@ export default function LoginForm() {
       </Link>
 
       <div
-        className="w-full max-w-sm rounded-2xl p-8"
+        className="w-full max-w-sm rounded-2xl p-6 sm:p-8"
         style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
       >
         <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Welcome back</h1>

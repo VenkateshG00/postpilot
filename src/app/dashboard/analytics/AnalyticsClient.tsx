@@ -102,7 +102,7 @@ function Tile({ label, value, icon: Icon, accent, subtext, trend }: {
   subtext?: string; trend?: { value: number; positive: boolean }
 }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+    <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
       <div className="flex items-start justify-between">
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
@@ -117,7 +117,7 @@ function Tile({ label, value, icon: Icon, accent, subtext, trend }: {
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
+      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
       <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
       {subtext && <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>{subtext}</p>}
     </div>
@@ -223,7 +223,7 @@ function DateRangePicker({ dateRange, setDateRange, customStart, customEnd, setC
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-2xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', width: 480 }}>
+        <div className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-2xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', width: 480, maxWidth: 'calc(100vw - 2rem)' }}>
           {/* Quick ranges */}
           <div className="flex gap-2 mb-4">
             {QUICK.map(q => (
@@ -623,7 +623,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
       {/* Header */}
       <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Analytics</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Analytics</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             {igProfile ? (
               <>@{igProfile.username} · {fmt(igProfile.followers_count)} followers · {igPosts.length} posts loaded</>
@@ -748,7 +748,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
               <div className="grid lg:grid-cols-2 gap-4">
                 {/* Format performance bar chart */}
                 {formatPerformance.length > 0 && (
-                  <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                  <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                     <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Format performance</h2>
                     <div className="space-y-4">
                       {formatPerformance.map(f => {
@@ -774,7 +774,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                 )}
 
                 {/* Best times to post */}
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Best times to post</h2>
                   {bestTimes.length > 0 ? (
                     <div className="space-y-3">
@@ -801,7 +801,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Hashtag performance */}
               {hashtagPerf.length > 0 && (
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Hashtag performance</h2>
                   <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Ranked by average engagement rate (hashtags used in 2+ posts)</p>
                   <div className="space-y-3">
@@ -826,7 +826,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Posting patterns heatmap */}
               {igPosts.length > 0 && (
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <h2 className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>Posting patterns</h2>
                   <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Your posting activity over the last 6 months</p>
                   <PostingHeatmap posts={igPosts} months={6} />
@@ -835,7 +835,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Posts over time bar chart */}
               {kpis.total > 0 && (
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center justify-between mb-5">
                     <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>PostPilot delivery</h2>
                     <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -880,7 +880,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
             <div className="space-y-6">
 
               {/* This week's game plan */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}>
                     <Target size={18} />
@@ -939,9 +939,9 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
               </div>
 
               {/* Last week vs plan comparison */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Last week vs plan</h2>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { label: 'Posts', value: postsThisWeek, goal: 5 },
                     { label: 'Reach', value: engagement.totalReach > 0 ? fmt(engagement.totalReach) : '—', goal: null },
@@ -990,7 +990,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
               </div>
 
               {/* Keep the streak alive */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <Flame size={20} style={{ color: streak >= 7 ? '#f59e0b' : 'var(--text-muted)' }} />
@@ -1000,7 +1000,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold" style={{ color: streak >= 7 ? '#f59e0b' : 'var(--text-primary)' }}>{streak}</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: streak >= 7 ? '#f59e0b' : 'var(--text-primary)' }}>{streak}</p>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>day streak</p>
                   </div>
                 </div>
@@ -1008,7 +1008,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
               </div>
 
               {/* Badges */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <Award size={18} style={{ color: '#f59e0b' }} />
                   <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Badges</h2>
@@ -1024,7 +1024,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
               </div>
 
               {/* What's working, what's not — AI insights */}
-              <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <Lightbulb size={18} style={{ color: '#f59e0b' }} />
                   <h2 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>What&apos;s working, what&apos;s not</h2>
@@ -1162,7 +1162,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                                 <div className="absolute top-2 left-2">
                                   <PerfBadge value={mult} />
                                 </div>
-                                <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
+                                <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4 sm:gap-6 text-white">
                                   <span className="flex items-center gap-1.5 text-sm font-bold"><Heart size={16} fill="white" /> {fmt(p.like_count)}</span>
                                   <span className="flex items-center gap-1.5 text-sm font-bold"><MessageCircle size={16} fill="white" /> {fmt(p.comments_count)}</span>
                                 </div>
@@ -1199,6 +1199,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                   ) : (
                     /* List view */
                     <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                      <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
@@ -1244,6 +1245,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   )}
                 </>
@@ -1304,7 +1306,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
           {tab === 'trial-reels' && (
             <div className="space-y-6">
               {/* Info banner */}
-              <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, var(--accent-subtle), var(--bg-card))', border: '1px solid var(--border)' }}>
+              <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'linear-gradient(135deg, var(--accent-subtle), var(--bg-card))', border: '1px solid var(--border)' }}>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent)', color: '#fff' }}>
                     <Play size={20} />
@@ -1395,7 +1397,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Instagram profile card */}
               {igProfile && (
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <div className="flex items-center gap-4 mb-5">
                     {igProfile.profile_picture && (
                       <img src={igProfile.profile_picture} alt="" className="w-16 h-16 rounded-full object-cover" />
@@ -1407,15 +1409,15 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.media_count)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.media_count)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Posts</p>
                     </div>
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.followers_count)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.followers_count)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Followers</p>
                     </div>
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.follows_count)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.follows_count)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Following</p>
                     </div>
                   </div>
@@ -1447,9 +1449,9 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                 ]
 
                 return (
-                  <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                  <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                     <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Recent vs previous period</h2>
-                    <div className="grid grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                       {metrics.map(m => (
                         <div key={m.label} className="text-center p-3 rounded-xl" style={{ background: 'var(--bg)' }}>
                           <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(m.recent)}</p>
@@ -1524,7 +1526,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
                 }
 
                 return (
-                  <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                  <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                     <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Reach</h2>
                     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                       <defs>
@@ -1559,7 +1561,7 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Follower growth note */}
               {igProfile && igProfile.followers_count < 100 && (
-                <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <div className="flex items-start gap-3">
                     <Users size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--text-muted)' }} />
                     <div>
@@ -1639,23 +1641,23 @@ export default function AnalyticsClient({ kpis, engagement, daily, byHour, perAc
 
               {/* Quick stats summary for media kit */}
               {igProfile && igSummary && (
-                <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="rounded-2xl p-4 sm:p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
                   <h2 className="font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Quick stats for brands</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.followers_count)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.followers_count)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Followers</p>
                     </div>
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmtPct(avgER)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmtPct(avgER)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Avg Engagement</p>
                     </div>
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.media_count)}</p>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(igProfile.media_count)}</p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Total Posts</p>
                     </div>
                     <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg)' }}>
-                      <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                      <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                         {formatPerformance.length > 0 ? formatPerformance[0].label : '—'}
                       </p>
                       <p className="text-[10px] font-semibold mt-1" style={{ color: 'var(--text-muted)' }}>Best Format</p>

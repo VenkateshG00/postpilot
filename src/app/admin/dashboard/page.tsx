@@ -43,24 +43,24 @@ export default async function AdminDashboard() {
   ]
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Platform overview</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {tiles.map(t => (
-          <div key={t.label} className="card p-5">
-            <p className="text-2xl font-semibold text-gray-900">{t.value}</p>
+          <div key={t.label} className="card p-4 sm:p-5">
+            <p className="text-xl sm:text-2xl font-semibold text-gray-900">{t.value}</p>
             <p className="text-xs text-gray-500 mt-1">{t.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="card p-6">
+      <div className="card p-4 sm:p-6">
         <h2 className="font-medium text-gray-900 mb-4">Subscribers by plan</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {(['free', 'starter', 'pro', 'agency'] as const).map(k => (
             <div key={k}>
               <p className="text-xl font-semibold text-gray-900">{counts[k] ?? 0}</p>

@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, BarChart3, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap } from 'lucide-react'
+import { LayoutDashboard, BarChart3, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -20,6 +21,7 @@ const NAV = [
 export default function AdminSidebar({ profile }: { profile: Profile | null }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [open, setOpen] = useState(false)
 
   async function signOut() {
     const supabase = createClient()
@@ -28,8 +30,8 @@ export default function AdminSidebar({ profile }: { profile: Profile | null }) {
     router.refresh()
   }
 
-  return (
-    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-full">
+  const sidebar = (
+    <>
       <div className="px-5 h-16 flex items-center border-b border-gray-100">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
@@ -42,15 +44,19 @@ export default function AdminSidebar({ profile }: { profile: Profile | null }) {
             Admin
           </span>
         </div>
+        <button onClick={() => setOpen(false)} className="ml-auto md:hidden p-1 text-gray-400 hover:text-gray-600">
+          <X size={20} />
+        </button>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
+              onClick={() => setOpen(false)}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
                 active
@@ -83,6 +89,34 @@ export default function AdminSidebar({ profile }: { profile: Profile | null }) {
           Sign out
         </button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setOpen(true)}
+        className="fixed top-3 left-3 z-40 md:hidden p-2 bg-white rounded-lg shadow-md border border-gray-200 text-gray-600 hover:text-gray-900"
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile overlay */}
+      {open && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
+          <aside className="relative w-64 max-w-[80vw] bg-white flex flex-col h-full shadow-xl">
+            {sidebar}
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 shrink-0 bg-white border-r border-gray-100 flex-col h-full">
+        {sidebar}
+      </aside>
+    </>
   )
 }

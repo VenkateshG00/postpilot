@@ -89,7 +89,7 @@ export default function CreditsClient({
     <div className="p-4 sm:p-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Credits</h1>
+        <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Credits</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Buy extra credits for regenerations and AI images. Purchased credits never expire.
         </p>
@@ -116,7 +116,7 @@ export default function CreditsClient({
       )}
 
       {/* Balance card */}
-      <div className="rounded-2xl p-5 mb-6 flex items-center gap-4" style={cardStyle}>
+      <div className="rounded-2xl p-4 sm:p-5 mb-6 flex items-center gap-4" style={cardStyle}>
         <div
           className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: 'rgba(255,77,77,0.1)' }}
@@ -124,7 +124,7 @@ export default function CreditsClient({
           <Coins size={22} style={{ color: 'var(--accent)' }} />
         </div>
         <div>
-          <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             {balance}{' '}
             <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>credits available</span>
           </p>
@@ -137,7 +137,7 @@ export default function CreditsClient({
       {/* Pack grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {packs.map(p => (
-          <div key={p.name} className="rounded-2xl p-5 flex flex-col" style={cardStyle}>
+          <div key={p.name} className="rounded-2xl p-4 sm:p-5 flex flex-col" style={cardStyle}>
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
               style={{ background: 'rgba(255,77,77,0.1)' }}
