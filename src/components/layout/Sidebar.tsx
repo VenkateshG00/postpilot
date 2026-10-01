@@ -6,29 +6,40 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Grid3X3, Zap, Inbox, BarChart3,
   Layers, Settings, LogOut, Sparkles, Gift, ChevronDown,
-  CreditCard, Moon, Sun, Star,
+  CreditCard, Moon, Sun, Star, Image, Film, ClipboardCheck,
+  PlayCircle, Instagram, FileText, Users, Palette, Coins,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
 import NotificationBell from '@/components/ui/NotificationBell'
 
-/* ── Nav sections matching ReelDrop layout ── */
+/* ── Nav sections ── */
 const MAIN_NAV = [
-  { href: '/dashboard/schedule',    label: 'Create',        icon: Sparkles },
-  { href: '/dashboard/calendar',    label: 'Calendar',      icon: Calendar },
-  { href: '/dashboard/grid',        label: 'Grid',          icon: Grid3X3, badge: 'NEW' },
-  { href: '/dashboard/automations', label: 'Automations',   icon: Zap },
-  { href: '/dashboard/inbox',       label: 'Inbox',         icon: Inbox },
-  { href: '/dashboard/analytics',   label: 'Analytics',     icon: BarChart3 },
+  { href: '/dashboard/schedule',    label: 'Create',           icon: Sparkles },
+  { href: '/dashboard/posts',       label: 'Posts',            icon: Image },
+  { href: '/dashboard/reels',       label: 'Reels & Stories',  icon: Film },
+  { href: '/dashboard/calendar',    label: 'Calendar',         icon: Calendar },
+  { href: '/dashboard/grid',        label: 'Grid',             icon: Grid3X3, badge: 'NEW' },
+  { href: '/dashboard/approvals',   label: 'Approvals',        icon: ClipboardCheck },
+  { href: '/dashboard/automations', label: 'Automations',      icon: Zap },
+  { href: '/dashboard/inbox',       label: 'Inbox',            icon: Inbox },
+  { href: '/dashboard/analytics',   label: 'Analytics',        icon: BarChart3 },
 ]
 
 const AI_TOOLS_NAV = [
-  { href: '/dashboard/carousel',    label: 'Carousel lab',  icon: Layers },
+  { href: '/dashboard/carousel',     label: 'Carousel lab',   icon: Layers },
+  { href: '/dashboard/trial-reels',  label: 'Trial Reels',    icon: PlayCircle },
+]
+
+const MANAGE_NAV = [
+  { href: '/dashboard/connect',    label: 'Accounts',    icon: Instagram },
+  { href: '/dashboard/team',       label: 'Team',         icon: Users },
+  { href: '/dashboard/media-kit',  label: 'Media Kit',    icon: FileText },
 ]
 
 const EARN_NAV = [
-  { href: '/dashboard/referral',    label: 'Rewards',       icon: Gift },
+  { href: '/dashboard/referral',   label: 'Rewards',      icon: Gift },
 ]
 
 /* ── Single nav link (icon + text) ── */
@@ -57,7 +68,7 @@ function NavItem({ href, label, icon: Icon, active, badge, onClick }: {
   )
 }
 
-/* ── Section header (e.g. "AI TOOLS", "EARN") ── */
+/* ── Section header ── */
 function SectionHeader({ label }: { label: string }) {
   return (
     <div
@@ -92,7 +103,7 @@ function DarkModeToggle() {
   )
 }
 
-/* ── Main Sidebar (264px text sidebar matching ReelDrop) ── */
+/* ── Main Sidebar (264px text sidebar) ── */
 export default function Sidebar({
   profile,
   brand,
@@ -118,6 +129,11 @@ export default function Sidebar({
 
   const activeAccount = accounts?.find(a => a.id === activeAccountId)
 
+  /* White-label nav — only for eligible plans */
+  const managePlusWhiteLabel = brand?.eligible
+    ? [...MANAGE_NAV, { href: '/dashboard/white-label', label: 'White-label', icon: Palette }]
+    : MANAGE_NAV
+
   async function signOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -127,7 +143,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className="w-[264px] shrink-0 flex flex-col h-screen sticky top-0"
+      className="w-[264px] shrink-0 flex flex-col h-screen sticky top-0 overflow-y-auto"
       style={{
         background: 'var(--bg-sidebar)',
         borderRight: '1px solid var(--border)',
@@ -178,7 +194,6 @@ export default function Sidebar({
                     key={acc.id}
                     onClick={() => {
                       setAccountDropdownOpen(false)
-                      // Switch account logic
                       document.cookie = `active_account=${acc.id};path=/;max-age=31536000`
                       router.refresh()
                     }}
@@ -237,6 +252,19 @@ export default function Sidebar({
         ))}
       </nav>
 
+      {/* ── Manage section ── */}
+      <SectionHeader label="Manage" />
+      <nav className="flex flex-col gap-0.5">
+        {managePlusWhiteLabel.map(item => (
+          <NavItem
+            key={item.href}
+            {...item}
+            active={isActive(item.href)}
+            onClick={onNavigate}
+          />
+        ))}
+      </nav>
+
       {/* ── Earn section ── */}
       <SectionHeader label="Earn" />
       <nav className="flex flex-col gap-0.5">
@@ -271,7 +299,7 @@ export default function Sidebar({
 
         {/* Upgrade CTA */}
         <Link
-          href="/dashboard/settings?tab=billing"
+          href="/dashboard/billing"
           onClick={onNavigate}
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-sm transition-all hover:bg-[var(--accent-subtle)]"
           style={{ color: 'var(--accent-brand)' }}
@@ -282,11 +310,11 @@ export default function Sidebar({
 
         {/* Buy credits */}
         <Link
-          href="/dashboard/settings?tab=credits"
+          href="/dashboard/credits"
           onClick={onNavigate}
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-sm transition-all text-[var(--text-primary)] hover:bg-[var(--accent-subtle)]"
         >
-          <CreditCard size={16} strokeWidth={1.6} className="shrink-0" />
+          <Coins size={16} strokeWidth={1.6} className="shrink-0" />
           Buy image credits
         </Link>
 
