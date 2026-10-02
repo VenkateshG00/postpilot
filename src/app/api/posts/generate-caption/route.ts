@@ -33,6 +33,38 @@ function boldify(text: string): string {
   }).replace(/[*_`]/g, '').replace(/\n{3,}/g, '\n\n').trim()
 }
 
+/* Fetch image from URL and convert to base64 data URI */
+async function imageToBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const ct = res.headers.get('content-type') || 'image/jpeg'
+    const buf = await res.arrayBuffer()
+    const bytes = new Uint8Array(buf)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    const b64 = btoa(binary)
+    return `data:${ct};base64,${b64}`
+  } catch {
+    return null
+  }
+}
+
+/* Extract JSON from AI response that might have extra text around it */
+function extractJSON(text: string): any {
+  // Strip markdown code fences
+  let s = text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
+  // Try direct parse first
+  try { return JSON.parse(s) } catch {}
+  // Try to find JSON object in the text
+  const start = s.indexOf('{')
+  const end = s.lastIndexOf('}')
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(s.slice(start, end + 1)) } catch {}
+  }
+  return null
+}
+
 export async function POST(req: NextRequest) {
   if (!GROQ_API_KEY) return NextResponse.json({ error: 'AI is not configured' }, { status: 500 })
 
@@ -106,7 +138,7 @@ export async function POST(req: NextRequest) {
 
   const contentLabel = contentType === 'reel' ? 'Reel (video)' : contentType === 'story' ? 'Story' : 'Post (image)'
 
-  const jsonFormat = `Respond with ONLY a valid JSON object, no extra text:
+  const jsonFormat = `You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no extra text before or after. Just the JSON:
 {
   "caption": "Full Instagram caption with emojis and line breaks. Start with one emoji + a bold hook in **double asterisks**, then 2-3 engaging sentences, end with a strong call to action. Keep it under 200 words.",
   "hashtags": [
@@ -130,7 +162,7 @@ Rules:
 - The caption MUST be about what is visually shown in the image. Do NOT write about unrelated topics.`
 
   /* Business context is secondary — only used to adjust voice, never to override image content */
-  const bizContext = biz?.brand_voice
+  const bizVoice = biz?.brand_voice
     ? `Adjust the writing voice to match: ${biz.brand_voice}. But the caption topic MUST be about the image content, not the business category.`
     : ''
   const audienceHint = biz?.target_audience
@@ -139,17 +171,19 @@ Rules:
 
   let raw = '{}'
   try {
-    let messages: any[]
-
     if (useVision) {
-      /* ── Vision model: send image for AI to analyze ── */
-      const prompt = `STEP 1: Look at this image very carefully. Describe in detail EXACTLY what you see — objects, people, colors, setting, mood, action happening.
+      /* ── Convert image to base64 so the vision model can actually see it ── */
+      const base64Img = await imageToBase64(mediaUrl)
+
+      if (base64Img) {
+        /* ── Vision model with base64 image ── */
+        const prompt = `STEP 1: Look at this image very carefully. Describe in detail EXACTLY what you see — objects, people, colors, setting, mood, action happening.
 
 STEP 2: Based ONLY on what you described in Step 1, write a perfect Instagram ${contentLabel} caption about THIS specific image.
 
 ${toneInstruction}
 ${angleInstruction}
-${bizContext}
+${bizVoice}
 ${audienceHint}
 
 CRITICAL RULES:
@@ -159,34 +193,43 @@ CRITICAL RULES:
 
 ${jsonFormat}`
 
-      messages = [{
-        role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: mediaUrl } },
-        ],
-      }]
+        const messages = [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: base64Img } },
+          ],
+        }]
 
-      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({
-          model: VISION_MODEL,
-          max_tokens: 1200,
-          temperature: 0.9,
-          top_p: 0.95,
-          messages,
-        }),
-      })
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
+          body: JSON.stringify({
+            model: VISION_MODEL,
+            max_tokens: 1200,
+            temperature: 0.8,
+            messages,
+          }),
+        })
 
-      if (!r.ok) {
-        // Vision model failed — fall back to text model
-        console.error('Vision model error:', r.status, await r.text())
-        const fallbackPrompt = `The user has uploaded an image for an Instagram ${contentLabel}. Write an engaging, generic caption that could work for a variety of visual content.
+        if (r.ok) {
+          const d = await r.json()
+          raw = d?.choices?.[0]?.message?.content ?? '{}'
+        } else {
+          console.error('Vision model error:', r.status, await r.text())
+          // Fall through to text fallback below
+        }
+      }
+
+      /* If vision failed or image couldn't be fetched, fall back to text model */
+      if (raw === '{}') {
+        const fallbackPrompt = `The user has uploaded an image for an Instagram ${contentLabel}. The image URL is: ${mediaUrl}
+
+Write an engaging caption. Since I cannot show you the image directly, write a versatile, engaging caption.
 
 ${toneInstruction}
 ${angleInstruction}
-${bizContext}
+${bizVoice}
 ${audienceHint}
 
 ${jsonFormat}`
@@ -197,8 +240,7 @@ ${jsonFormat}`
           body: JSON.stringify({
             model: TEXT_MODEL,
             max_tokens: 1200,
-            temperature: 0.9,
-            top_p: 0.95,
+            temperature: 0.8,
             messages: [{ role: 'user', content: fallbackPrompt }],
           }),
         })
@@ -209,9 +251,6 @@ ${jsonFormat}`
         }
         const d2 = await r2.json()
         raw = d2?.choices?.[0]?.message?.content ?? '{}'
-      } else {
-        const d = await r.json()
-        raw = d?.choices?.[0]?.message?.content ?? '{}'
       }
 
     } else {
@@ -220,7 +259,7 @@ ${jsonFormat}`
 
 ${toneInstruction}
 ${angleInstruction}
-${bizContext}
+${bizVoice}
 ${audienceHint}
 
 ${jsonFormat}`
@@ -231,8 +270,7 @@ ${jsonFormat}`
         body: JSON.stringify({
           model: TEXT_MODEL,
           max_tokens: 1200,
-          temperature: 0.9,
-          top_p: 0.95,
+          temperature: 0.8,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -250,12 +288,9 @@ ${jsonFormat}`
     return NextResponse.json({ error: 'Generation failed, try again' }, { status: 502 })
   }
 
-  /* ── Parse response ── */
-  let parsed: any = {}
-  try {
-    const cleaned = raw.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/i, '').trim()
-    parsed = JSON.parse(cleaned)
-  } catch (e) {
+  /* ── Parse response — use robust JSON extraction ── */
+  const parsed = extractJSON(raw)
+  if (!parsed) {
     console.error('JSON parse error. Raw:', raw.slice(0, 500))
     return NextResponse.json({ error: 'AI returned invalid response, try again' }, { status: 502 })
   }
