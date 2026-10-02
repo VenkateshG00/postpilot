@@ -1,12 +1,19 @@
 "use client"
 
 import { useMemo, useState, useRef, useCallback } from "react"
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot } from "lucide-react"
+import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap } from "lucide-react"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
 import { useToast } from "@/components/ui/Toast"
 
 interface Acct { id: string; account_name: string }
 interface Preview { caption: string; image_url: string; topic: string }
+interface GeneratedCaption {
+  caption: string
+  hashtags: { tag: string; relevance: number }[]
+  tones: { label: string; score: number }[]
+  generations_used: number
+  generations_limit: number
+}
 
 type ContentTab = "post" | "reel" | "story"
 
@@ -15,6 +22,28 @@ const TAB_CONFIG: { value: ContentTab; label: string; icon: typeof Image; title:
   { value: "reel",  label: "Reel",  icon: Film,      title: "Create reel",  desc: "Upload a video or use AI to create your reel.",      accept: "image/*,video/*",     formats: "MP4, MOV · or image",   dropLabel: "video" },
   { value: "story", label: "Story", icon: CircleDot,  title: "Create story", desc: "Upload an image or video for your story.",            accept: "image/*,video/*",     formats: "JPG, PNG, MP4, MOV",    dropLabel: "image or video" },
 ]
+
+/* Tone indicator color based on score */
+function toneColor(score: number): string {
+  if (score >= 90) return "#22c55e"
+  if (score >= 80) return "#3b82f6"
+  if (score >= 70) return "#f59e0b"
+  return "#94a3b8"
+}
+
+/* Hashtag relevance color */
+function hashColor(relevance: number): string {
+  if (relevance >= 90) return "rgba(34,197,94,0.15)"
+  if (relevance >= 80) return "rgba(59,130,246,0.15)"
+  if (relevance >= 70) return "rgba(245,158,11,0.15)"
+  return "rgba(148,163,184,0.15)"
+}
+function hashTextColor(relevance: number): string {
+  if (relevance >= 90) return "#16a34a"
+  if (relevance >= 80) return "#2563eb"
+  if (relevance >= 70) return "#d97706"
+  return "#64748b"
+}
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -60,12 +89,17 @@ export default function CreatePostClient({
   // Caption editing
   const [caption, setCaption] = useState("")
   const [mode, setMode] = useState<"upload" | "ai">("upload")
+  // Generate caption state (for upload mode)
+  const [angle, setAngle] = useState("")
+  const [generatingCaption, setGeneratingCaption] = useState(false)
+  const [generatedCaption, setGeneratedCaption] = useState<GeneratedCaption | null>(null)
+  const [captionLimitError, setCaptionLimitError] = useState<{ message: string; generations_used: number; generations_limit: number; reset_date: string } | null>(null)
 
   const upcoming = useMemo(() => upcomingFestivals(45, 8), [])
   const tabConfig = TAB_CONFIG.find(t => t.value === activeTab)!
 
   /* -- Step indicator -- */
-  const currentStep = !uploadedFile && !preview ? 1 : (!preview && !caption) ? 2 : 3
+  const currentStep = !uploadedFile && !preview ? 1 : (!preview && !caption && !generatedCaption) ? 2 : 3
   const steps = [
     { num: 1, label: "Upload" },
     { num: 2, label: "Autogenerate" },
@@ -81,7 +115,7 @@ export default function CreatePostClient({
     if (activeTab === "reel" && !isVideo && !isImage) { setError("Please upload a video for reels"); return }
     setUploadedFile(file)
     setUploadPreview(URL.createObjectURL(file))
-    setUploadedUrl(null) // Reset — will upload on publish
+    setUploadedUrl(null)
     setError("")
   }
 
@@ -96,6 +130,9 @@ export default function CreatePostClient({
     if (uploadPreview) URL.revokeObjectURL(uploadPreview)
     setUploadPreview(null)
     setUploadedUrl(null)
+    setGeneratedCaption(null)
+    setCaptionLimitError(null)
+    setAngle("")
   }
 
   /* -- Upload file to Supabase via API -- */
@@ -108,7 +145,63 @@ export default function CreatePostClient({
     return data.url
   }
 
-  /* -- AI generation -- */
+  /* -- Generate caption from uploaded media -- */
+  async function generateCaption() {
+    if (!uploadedFile) return
+    setGeneratingCaption(true); setError(""); setCaptionLimitError(null)
+
+    try {
+      // Upload media first if not already uploaded
+      let mediaUrl = uploadedUrl
+      if (!mediaUrl) {
+        setUploading(true)
+        try {
+          mediaUrl = await uploadMedia(uploadedFile)
+          setUploadedUrl(mediaUrl)
+        } finally {
+          setUploading(false)
+        }
+      }
+
+      const res = await fetch("/api/posts/generate-caption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          media_url: mediaUrl,
+          angle: angle.trim() || undefined,
+          content_type: activeTab,
+        }),
+      })
+      const data = await res.json()
+
+      if (res.status === 429 && data.error === "caption_limit_reached") {
+        setCaptionLimitError({
+          message: data.message,
+          generations_used: data.generations_used,
+          generations_limit: data.generations_limit,
+          reset_date: data.reset_date,
+        })
+        return
+      }
+
+      if (!res.ok) throw new Error(data.error || "Failed")
+
+      setGeneratedCaption({
+        caption: data.caption,
+        hashtags: data.hashtags,
+        tones: data.tones,
+        generations_used: data.generations_used,
+        generations_limit: data.generations_limit,
+      })
+      setCaption(data.caption)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Caption generation failed")
+    } finally {
+      setGeneratingCaption(false)
+    }
+  }
+
+  /* -- AI generation (existing) -- */
   async function generate(briefText?: string) {
     const text = (briefText ?? brief).trim()
     if (!text) { setError("Tell us what the post is about"); return }
@@ -156,7 +249,6 @@ export default function CreatePostClient({
     if (!accountId) return
     setPosting(true); setError("")
     try {
-      // If user uploaded a file, upload it to Supabase first
       let mediaUrl = uploadedUrl || preview?.image_url || null
       if (uploadedFile && !uploadedUrl) {
         setUploading(true)
@@ -167,17 +259,22 @@ export default function CreatePostClient({
           setUploading(false)
         }
       }
-      const capText = caption || preview?.caption
-      if (!mediaUrl && !capText) { setError("Add media or generate content first"); setPosting(false); return }
+      // Build full caption with hashtags if generated
+      let fullCaption = caption || preview?.caption || ""
+      if (generatedCaption && generatedCaption.hashtags.length > 0 && !fullCaption.includes("#")) {
+        const hashtagStr = generatedCaption.hashtags.map(h => h.tag).join(" ")
+        fullCaption = `${fullCaption}\n\n${hashtagStr}`
+      }
+      if (!mediaUrl && !fullCaption) { setError("Add media or generate content first"); setPosting(false); return }
 
       const res = await fetch("/api/posts/custom/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           account_id: accountId,
-          caption: capText,
+          caption: fullCaption,
           image_url: mediaUrl,
-          topic: preview?.topic || brief,
+          topic: preview?.topic || brief || angle || "manual upload",
           content_type: activeTab,
           scheduled_for: scheduleAt ? new Date(scheduleAt).toISOString() : undefined,
         }),
@@ -188,6 +285,7 @@ export default function CreatePostClient({
       const typeLabel = activeTab === "reel" ? "Reel" : activeTab === "story" ? "Story" : "Post"
       addToast(data.scheduled ? `${typeLabel} scheduled successfully!` : `${typeLabel} sent! It will appear on your account shortly.`, "success", 5000)
       setPreview(null); setBrief(""); setScheduledFor(""); setCaption("")
+      setGeneratedCaption(null); setCaptionLimitError(null); setAngle("")
       clearUpload()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Publish failed")
@@ -218,7 +316,7 @@ export default function CreatePostClient({
           return (
             <button
               key={tab.value}
-              onClick={() => { setActiveTab(tab.value); setPreview(null); setError(""); setCaption(""); clearUpload() }}
+              onClick={() => { setActiveTab(tab.value); setPreview(null); setError(""); setCaption(""); setGeneratedCaption(null); setCaptionLimitError(null); setAngle(""); clearUpload() }}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={{
                 background: active ? "var(--accent)" : "transparent",
@@ -365,17 +463,153 @@ export default function CreatePostClient({
             </div>
           )}
 
-          {/* Caption */}
-          <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>Caption</label>
-            <textarea
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-              rows={3}
-              placeholder={`Write your ${activeTab} caption here...`}
-              style={{ ...inputStyle, resize: "none" }}
-            />
-          </div>
+          {/* ── Generate Caption Section (shown after media upload) ── */}
+          {uploadedFile && !generatedCaption && !captionLimitError && (
+            <div className="rounded-2xl p-5 space-y-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+              <div className="flex items-start gap-2">
+                <Zap size={16} className="shrink-0 mt-0.5" style={{ color: "var(--accent-brand)" }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Generate caption</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    Tell us the angle you want, or just hit Generate and we'll read your {activeTab === "reel" ? "video" : "photo"} and write one.
+                  </p>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={angle}
+                onChange={e => setAngle(e.target.value)}
+                placeholder="e.g. motivational, behind the scenes, product showcase..."
+                style={inputStyle}
+              />
+              <button
+                onClick={generateCaption}
+                disabled={generatingCaption || !uploadedFile}
+                className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+              >
+                {generatingCaption ? (
+                  <><Loader2 size={16} className="animate-spin" /> {uploading ? "Uploading media..." : "Generating caption..."}</>
+                ) : (
+                  <><Sparkles size={16} /> Generate</>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* ── Caption Limit Reached ── */}
+          {captionLimitError && (
+            <div className="rounded-2xl p-5 space-y-3" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <div className="flex items-start gap-2">
+                <Zap size={16} className="shrink-0 mt-0.5" style={{ color: "#d97706" }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#d97706" }}>You've hit your caption limit</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    {captionLimitError.generations_limit} caption generations / month on Free
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm" style={{ color: "var(--text-primary)" }}>
+                You've used all {captionLimitError.generations_limit} caption generations this month. Resets {captionLimitError.reset_date} or upgrade to Pro for more.
+              </p>
+              <a
+                href="/dashboard/billing"
+                className="btn-primary w-full flex items-center justify-center gap-2 text-sm"
+                style={{ textDecoration: "none" }}
+              >
+                <ArrowUpRight size={16} /> Upgrade to Pro
+              </a>
+              <button
+                onClick={() => setCaptionLimitError(null)}
+                className="w-full text-center text-xs py-1"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Maybe later
+              </button>
+            </div>
+          )}
+
+          {/* ── Generated Caption Result ── */}
+          {generatedCaption && (
+            <div className="space-y-4">
+              {/* Tone indicators */}
+              <div className="flex flex-wrap gap-2">
+                {generatedCaption.tones.map((tone, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{ background: `${toneColor(tone.score)}15`, color: toneColor(tone.score) }}
+                  >
+                    {tone.label} {tone.score}%
+                  </span>
+                ))}
+              </div>
+
+              {/* CAPTION section */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Caption</label>
+                  <span className="text-xs" style={{ color: caption.length > 2200 ? "#ef4444" : "var(--text-muted)" }}>
+                    {caption.length} / 2,200
+                  </span>
+                </div>
+                <textarea
+                  value={caption}
+                  onChange={e => setCaption(e.target.value)}
+                  rows={5}
+                  style={{ ...inputStyle, resize: "none" }}
+                />
+              </div>
+
+              {/* HASHTAGS section */}
+              {generatedCaption.hashtags.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+                    <Hash size={12} className="inline mr-1" />Hashtags
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {generatedCaption.hashtags.map((h, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                        style={{ background: hashColor(h.relevance), color: hashTextColor(h.relevance) }}
+                      >
+                        {h.tag}
+                        <span className="text-[10px] opacity-70">{h.relevance}%</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Generation count */}
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {generatedCaption.generations_used} / {generatedCaption.generations_limit} caption generations used this month
+              </p>
+
+              {/* Regenerate */}
+              <button
+                onClick={generateCaption}
+                disabled={generatingCaption}
+                className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
+              >
+                {generatingCaption ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Regenerate caption
+              </button>
+            </div>
+          )}
+
+          {/* Caption (manual entry or editing — only show if no generated caption yet) */}
+          {!generatedCaption && (
+            <div>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>Caption</label>
+              <textarea
+                value={caption}
+                onChange={e => setCaption(e.target.value)}
+                rows={3}
+                placeholder={`Write your ${activeTab} caption here...`}
+                style={{ ...inputStyle, resize: "none" }}
+              />
+            </div>
+          )}
 
           {/* Action row */}
           <div className="flex gap-2">

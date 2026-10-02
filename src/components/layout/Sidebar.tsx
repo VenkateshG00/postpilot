@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Calendar, Grid3X3, Zap, Inbox, BarChart3,
   Layers, Settings, LogOut, Sparkles, Gift, ChevronDown,
   CreditCard, Moon, Sun, Star, Image, Film, ClipboardCheck,
-  PlayCircle, Instagram, FileText, Users, Palette, Coins,
+  Clock, PlayCircle, Instagram, FileText, Users, Palette, Coins,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +16,8 @@ import NotificationBell from '@/components/ui/NotificationBell'
 
 /* ── Nav sections ── */
 const MAIN_NAV = [
-  { href: '/dashboard/schedule',    label: 'Create',           icon: Sparkles },
+  { href: '/dashboard/create',      label: 'Create',           icon: Sparkles },
+  { href: '/dashboard/schedule',    label: 'Schedule',         icon: Clock },
   { href: '/dashboard/posts',       label: 'Posts',            icon: Image },
   { href: '/dashboard/reels',       label: 'Reels & Stories',  icon: Film },
   { href: '/dashboard/calendar',    label: 'Calendar',         icon: Calendar },

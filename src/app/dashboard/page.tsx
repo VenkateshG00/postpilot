@@ -424,7 +424,7 @@ export default async function DashboardPage() {
                       </div>
                     ) : (
                       <Link
-                        href="/dashboard/schedule"
+                        href="/dashboard/create"
                         className="flex items-center justify-center w-full h-full opacity-100 sm:opacity-0 sm:hover:opacity-100 transition-opacity"
                         title="Add post"
                       >

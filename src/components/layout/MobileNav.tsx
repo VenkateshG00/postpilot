@@ -5,7 +5,7 @@ import { Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, Sparkles, Calendar, Zap, BarChart3,
+  LayoutDashboard, Sparkles, Clock, Calendar, Zap, BarChart3,
   Grid3X3, Inbox, Layers, Film, PlayCircle, Gift, Settings,
   Moon, Sun, LogOut, Image,
 } from 'lucide-react'
@@ -16,7 +16,7 @@ import type { Profile } from '@/types'
 /* Bottom tab items (show 5 most important) */
 const BOTTOM_TABS = [
   { href: '/dashboard',             label: 'Home',        icon: LayoutDashboard },
-  { href: '/dashboard/schedule',    label: 'Create',      icon: Sparkles },
+  { href: '/dashboard/create',      label: 'Create',      icon: Sparkles },
   { href: '/dashboard/calendar',    label: 'Calendar',    icon: Calendar },
   { href: '/dashboard/automations', label: 'Auto',        icon: Zap },
 ]
@@ -24,7 +24,8 @@ const BOTTOM_TABS = [
 /* Full nav for drawer */
 const FULL_NAV = [
   { href: '/dashboard',             label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/dashboard/schedule',    label: 'Create',      icon: Sparkles },
+  { href: '/dashboard/create',      label: 'Create',      icon: Sparkles },
+  { href: '/dashboard/schedule',    label: 'Schedule',    icon: Clock },
   { href: '/dashboard/calendar',    label: 'Calendar',    icon: Calendar },
   { href: '/dashboard/grid',        label: 'Grid',        icon: Grid3X3 },
   { href: '/dashboard/automations', label: 'Automations', icon: Zap },
