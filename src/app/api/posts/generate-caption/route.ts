@@ -14,7 +14,6 @@ const CAPTION_LIMITS: Record<string, number> = {
   agency: 999,
 }
 
-/* Vision model for image analysis, text model for video/fallback */
 const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
 const TEXT_MODEL = 'openai/gpt-oss-120b'
 
@@ -33,36 +32,79 @@ function boldify(text: string): string {
   }).replace(/[*_`]/g, '').replace(/\n{3,}/g, '\n\n').trim()
 }
 
-/* Fetch image from URL and convert to base64 data URI */
-async function imageToBase64(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return null
-    const ct = res.headers.get('content-type') || 'image/jpeg'
-    const buf = await res.arrayBuffer()
-    const bytes = new Uint8Array(buf)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-    const b64 = btoa(binary)
-    return `data:${ct};base64,${b64}`
-  } catch {
-    return null
-  }
-}
+
 
 /* Extract JSON from AI response that might have extra text around it */
 function extractJSON(text: string): any {
-  // Strip markdown code fences
-  let s = text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
-  // Try direct parse first
+  const s = text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
   try { return JSON.parse(s) } catch {}
-  // Try to find JSON object in the text
   const start = s.indexOf('{')
   const end = s.lastIndexOf('}')
   if (start !== -1 && end > start) {
     try { return JSON.parse(s.slice(start, end + 1)) } catch {}
   }
   return null
+}
+
+/* Call Groq vision model */
+async function callVision(
+  model: string,
+  prompt: string,
+  imageContent: { type: string; image_url: { url: string } },
+  apiKey: string,
+): Promise<string | null> {
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1200,
+        temperature: 0.7,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            imageContent,
+          ],
+        }],
+      }),
+    })
+    if (!r.ok) {
+      console.error(`Vision call failed (${r.status}):`, await r.text().catch(() => ''))
+      return null
+    }
+    const d = await r.json()
+    return d?.choices?.[0]?.message?.content ?? null
+  } catch (e) {
+    console.error('Vision fetch error:', e)
+    return null
+  }
+}
+
+/* Call Groq text model */
+async function callText(prompt: string, apiKey: string): Promise<string | null> {
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: TEXT_MODEL,
+        max_tokens: 1200,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    if (!r.ok) {
+      console.error(`Text call failed (${r.status})`)
+      return null
+    }
+    const d = await r.json()
+    return d?.choices?.[0]?.message?.content ?? null
+  } catch (e) {
+    console.error('Text fetch error:', e)
+    return null
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -75,12 +117,12 @@ export async function POST(req: NextRequest) {
   let body: any = {}
   try { body = await req.json() } catch {}
 
-  const mediaUrl = String(body.media_url ?? '').trim()
+  const imageBase64 = String(body.image_base64 ?? '').trim()
   const angle = String(body.angle ?? '').trim()
   const contentType = String(body.content_type ?? 'post').trim()
   const tone = String(body.tone ?? '').trim()
 
-  if (!mediaUrl) return NextResponse.json({ error: 'No media provided' }, { status: 400 })
+  if (!imageBase64) return NextResponse.json({ error: 'No media provided' }, { status: 400 })
 
   /* ── Check caption generation limit ── */
   const { data: profile } = await supabase.from('profiles')
@@ -88,9 +130,7 @@ export async function POST(req: NextRequest) {
 
   const plan = profile?.plan ?? 'free'
   const limit = CAPTION_LIMITS[plan] ?? CAPTION_LIMITS.free
-
   const svc = await createServiceClient()
-
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
@@ -108,190 +148,132 @@ export async function POST(req: NextRequest) {
   if (used >= limit) {
     const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
     const resetStr = resetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
     return NextResponse.json({
       error: 'caption_limit_reached',
       message: `You've used all ${limit} caption generations this month. Resets ${resetStr} or upgrade for more.`,
-      generations_used: used,
-      generations_limit: limit,
-      reset_date: resetStr,
+      generations_used: used, generations_limit: limit, reset_date: resetStr,
     }, { status: 429 })
   }
 
-  /* ── Fetch business profile for context ── */
-  const { data: biz } = await supabase.from('business_profiles')
-    .select('business_name, industry, brand_voice, target_audience')
-    .eq('user_id', user.id).maybeSingle()
+  /* ── Determine content type ── */
+  const isVideoFile = !imageBase64.startsWith('data:image/')
+  const contentLabel = contentType === 'reel' ? 'Reel' : contentType === 'story' ? 'Story' : 'Post'
 
-  /* ── Determine if media is an image (use vision) or video (use text) ── */
-  const isVideo = contentType === 'reel' || contentType === 'story'
-  const isImage = !isVideo || mediaUrl.match(/\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?|$)/i)
-  const useVision = isImage && !mediaUrl.match(/\.(mp4|mov|avi|webm|mkv)(\?|$)/i)
-
-  const angleInstruction = angle
-    ? `The user wants this specific angle/approach: "${angle}".`
-    : 'Choose the best engaging angle based on what you see in the image.'
-
-  const toneInstruction = tone
-    ? `IMPORTANT: Write the caption in a "${tone}" tone/style. This is the PRIMARY writing style to use.`
+  const angleLine = angle
+    ? `Angle/approach the user wants: "${angle}".`
     : ''
 
-  const contentLabel = contentType === 'reel' ? 'Reel (video)' : contentType === 'story' ? 'Story' : 'Post (image)'
+  const toneLine = tone
+    ? `WRITING STYLE: Write the caption in a "${tone}" tone. This is the most important style instruction.`
+    : ''
 
-  const jsonFormat = `You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no extra text before or after. Just the JSON:
+  const jsonFormat = `Respond with ONLY valid JSON. No explanation before or after. No markdown fences.
+
 {
-  "caption": "Full Instagram caption with emojis and line breaks. Start with one emoji + a bold hook in **double asterisks**, then 2-3 engaging sentences, end with a strong call to action. Keep it under 200 words.",
+  "caption": "The Instagram caption text",
   "hashtags": [
-    {"tag": "#hashtag1", "relevance": 95},
-    {"tag": "#hashtag2", "relevance": 88},
-    {"tag": "#hashtag3", "relevance": 82},
-    {"tag": "#hashtag4", "relevance": 76},
-    {"tag": "#hashtag5", "relevance": 70}
+    {"tag": "#example1", "relevance": 95},
+    {"tag": "#example2", "relevance": 88},
+    {"tag": "#example3", "relevance": 82},
+    {"tag": "#example4", "relevance": 76},
+    {"tag": "#example5", "relevance": 70}
   ],
   "tones": [
     {"label": "relatable pov", "score": 95},
-    {"label": "contrarian", "score": 92},
-    {"label": "question led", "score": 88}
+    {"label": "contrarian", "score": 88},
+    {"label": "question led", "score": 82}
   ]
 }
 
-Rules:
-- "tones": ALWAYS return exactly these 3 tones with confidence scores (0-100): "relatable pov", "contrarian", "question led". Score them based on how well each style fits the image content.
-- "hashtags": exactly 5 relevant hashtags with relevance scores (0-100). Mix niche and broad. Hashtags MUST relate to what is shown in the image.
-- Caption must feel native to Instagram — authentic, not corporate.
-- The caption MUST be about what is visually shown in the image. Do NOT write about unrelated topics.`
+Caption rules:
+- Start with one emoji + a bold hook in **double asterisks**
+- Then 2-3 engaging sentences
+- End with a call to action
+- Under 200 words
+- Must feel native to Instagram
 
-  /* Business context is secondary — only used to adjust voice, never to override image content */
-  const bizVoice = biz?.brand_voice
-    ? `Adjust the writing voice to match: ${biz.brand_voice}. But the caption topic MUST be about the image content, not the business category.`
-    : ''
-  const audienceHint = biz?.target_audience
-    ? `Target audience: ${biz.target_audience}.`
-    : ''
+Tones: ALWAYS return exactly these 3: "relatable pov", "contrarian", "question led" with scores 0-100.
+Hashtags: exactly 5, with relevance scores 0-100.`
 
-  let raw = '{}'
-  try {
-    if (useVision) {
-      /* ── Convert image to base64 so the vision model can actually see it ── */
-      const base64Img = await imageToBase64(mediaUrl)
+  let raw: string | null = null
 
-      if (base64Img) {
-        /* ── Vision model with base64 image ── */
-        const prompt = `STEP 1: Look at this image very carefully. Describe in detail EXACTLY what you see — objects, people, colors, setting, mood, action happening.
+  /* ══════════════════════════════════════════════════════
+     IMAGE FLOW — Three attempts to get image-aware caption
+     ══════════════════════════════════════════════════════ */
+  if (!isVideoFile) {
+    /*
+     * VISION PROMPT — NO business profile context at all.
+     * The model must describe the image and caption THAT.
+     */
+    const visionPrompt = `You are an Instagram caption writer. I am showing you an image.
 
-STEP 2: Based ONLY on what you described in Step 1, write a perfect Instagram ${contentLabel} caption about THIS specific image.
+TASK:
+1. First, identify what is in this image (the main subject, objects, setting, colors, mood).
+2. Then write an Instagram ${contentLabel} caption that is specifically about what you see in this image.
 
-${toneInstruction}
-${angleInstruction}
-${bizVoice}
-${audienceHint}
+${toneLine}
+${angleLine}
 
-CRITICAL RULES:
-- The caption MUST be about what is IN this image. If you see a car, write about the car. If you see food, write about the food.
-- Do NOT ignore the image and write about something else.
-- Do NOT default to generic motivational or business content.
-
-${jsonFormat}`
-
-        const messages = [{
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: base64Img } },
-          ],
-        }]
-
-        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-          body: JSON.stringify({
-            model: VISION_MODEL,
-            max_tokens: 1200,
-            temperature: 0.8,
-            messages,
-          }),
-        })
-
-        if (r.ok) {
-          const d = await r.json()
-          raw = d?.choices?.[0]?.message?.content ?? '{}'
-        } else {
-          console.error('Vision model error:', r.status, await r.text())
-          // Fall through to text fallback below
-        }
-      }
-
-      /* If vision failed or image couldn't be fetched, fall back to text model */
-      if (raw === '{}') {
-        const fallbackPrompt = `The user has uploaded an image for an Instagram ${contentLabel}. The image URL is: ${mediaUrl}
-
-Write an engaging caption. Since I cannot show you the image directly, write a versatile, engaging caption.
-
-${toneInstruction}
-${angleInstruction}
-${bizVoice}
-${audienceHint}
+IMPORTANT: Your caption MUST describe or relate to what is visually in the image. For example:
+- If you see a car → write about the car
+- If you see food → write about the food  
+- If you see a person → write about them
+- If you see a landscape → write about the place
+Do NOT write about health, food, motivation, or any other topic unless that is what the image actually shows.
 
 ${jsonFormat}`
 
-        const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-          body: JSON.stringify({
-            model: TEXT_MODEL,
-            max_tokens: 1200,
-            temperature: 0.8,
-            messages: [{ role: 'user', content: fallbackPrompt }],
-          }),
-        })
+    /* ── Vision model with base64 from browser ── */
+    console.log('Vision call with browser base64')
+    raw = await callVision(
+      VISION_MODEL,
+      visionPrompt,
+      { type: 'image_url', image_url: { url: imageBase64 } },
+      GROQ_API_KEY,
+    )
 
-        if (!r2.ok) {
-          console.error('Text fallback error:', r2.status)
-          return NextResponse.json({ error: 'AI service error, try again' }, { status: 502 })
-        }
-        const d2 = await r2.json()
-        raw = d2?.choices?.[0]?.message?.content ?? '{}'
-      }
-
-    } else {
-      /* ── Text model: for videos or non-image media ── */
-      const prompt = `The user has uploaded media for an Instagram ${contentLabel}. Write an engaging caption for it.
-
-${toneInstruction}
-${angleInstruction}
-${bizVoice}
-${audienceHint}
-
-${jsonFormat}`
-
-      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({
-          model: TEXT_MODEL,
-          max_tokens: 1200,
-          temperature: 0.8,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      })
-
-      if (!r.ok) {
-        console.error('Text model error:', r.status)
-        return NextResponse.json({ error: 'AI service error, try again' }, { status: 502 })
-      }
-      const d = await r.json()
-      raw = d?.choices?.[0]?.message?.content ?? '{}'
+    if (raw && !extractJSON(raw)) {
+      console.error('Vision returned non-JSON:', raw.slice(0, 300))
+      raw = null
     }
 
-  } catch (e) {
-    console.error('Groq fetch error:', e)
-    return NextResponse.json({ error: 'Generation failed, try again' }, { status: 502 })
+    /* ── Text model fallback ── */
+    if (!raw) {
+      console.log('Fallback: Text model')
+      const textPrompt = `You are an Instagram caption writer. The user uploaded a photo for an Instagram ${contentLabel}. Since I cannot see the image, write a versatile, engaging caption that works for a visually striking photo.
+
+${toneLine}
+${angleLine}
+
+Do NOT assume what the image is about. Write something general but compelling like "This view hits different" or "Some things just speak for themselves."
+
+${jsonFormat}`
+
+      raw = await callText(textPrompt, GROQ_API_KEY)
+    }
+
+  } else {
+    /* ══════════════════════════════════════════════════════
+       VIDEO FLOW — Text model only
+       ══════════════════════════════════════════════════════ */
+    const videoPrompt = `You are an Instagram caption writer. The user uploaded a video for an Instagram ${contentLabel}. Write an engaging caption.
+
+${toneLine}
+${angleLine}
+
+${jsonFormat}`
+
+    raw = await callText(videoPrompt, GROQ_API_KEY)
   }
 
-  /* ── Parse response — use robust JSON extraction ── */
+  if (!raw) {
+    return NextResponse.json({ error: 'AI service error, try again' }, { status: 502 })
+  }
+
+  /* ── Parse response ── */
   const parsed = extractJSON(raw)
   if (!parsed) {
-    console.error('JSON parse error. Raw:', raw.slice(0, 500))
+    console.error('All attempts returned invalid JSON. Last raw:', raw.slice(0, 500))
     return NextResponse.json({ error: 'AI returned invalid response, try again' }, { status: 502 })
   }
 
@@ -318,7 +300,7 @@ ${jsonFormat}`
     return NextResponse.json({ error: 'Could not generate caption, try again' }, { status: 502 })
   }
 
-  /* ── Log the generation for rate limiting ── */
+  /* ── Log the generation ── */
   await svc.from('post_logs').insert({
     user_id: user.id,
     status: 'caption_generated',

@@ -146,21 +146,37 @@ export default function CreatePostClient({
     return data.url
   }
 
+  /* -- Convert file to base64 in browser -- */
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(new Error("Failed to read file"))
+      reader.readAsDataURL(file)
+    })
+  }
+
   /* -- Generate caption from uploaded media -- */
   async function generateCaption(toneOverride?: string) {
     if (!uploadedFile) return
     setGeneratingCaption(true); setError(""); setCaptionLimitError(null)
 
     try {
-      // Upload media first if not already uploaded
-      let mediaUrl = uploadedUrl
-      if (!mediaUrl) {
-        setUploading(true)
+      // Convert file to base64 in browser — no Supabase upload needed for caption gen
+      let base64Data: string | undefined
+      const isImage = uploadedFile.type.startsWith("image/")
+      if (isImage) {
+        if (uploadedFile.size > 4 * 1024 * 1024) {
+          setError("Image too large for AI analysis (max 4MB). Use a smaller image.")
+          setGeneratingCaption(false)
+          return
+        }
         try {
-          mediaUrl = await uploadMedia(uploadedFile)
-          setUploadedUrl(mediaUrl)
-        } finally {
-          setUploading(false)
+          base64Data = await fileToBase64(uploadedFile)
+        } catch {
+          setError("Could not read image file")
+          setGeneratingCaption(false)
+          return
         }
       }
 
@@ -168,7 +184,7 @@ export default function CreatePostClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          media_url: mediaUrl,
+          image_base64: base64Data,
           angle: angle.trim() || undefined,
           content_type: activeTab,
           tone: toneOverride || undefined,

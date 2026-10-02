@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, BarChart3, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap, Menu, X } from 'lucide-react'
+import { LayoutDashboard, BarChart3, CreditCard, Users, Image, Instagram, Settings, LogOut, Zap, Menu, X, HardDrive } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/admin/clients',   label: 'Clients',   icon: Users },
   { href: '/admin/posts',     label: 'Posts',     icon: Image },
   { href: '/admin/accounts',  label: 'Accounts',  icon: Instagram },
+  { href: '/admin/storage',   label: 'Storage',   icon: HardDrive },
   { href: '/admin/settings',  label: 'Settings',  icon: Settings },
 ]
 
