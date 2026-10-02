@@ -485,7 +485,7 @@ export default function CreatePostClient({
                 style={inputStyle}
               />
               <button
-                onClick={generateCaption}
+                onClick={() => generateCaption()}
                 disabled={generatingCaption || !uploadedFile}
                 className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50"
               >
