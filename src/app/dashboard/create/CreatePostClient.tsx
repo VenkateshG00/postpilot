@@ -10,10 +10,10 @@ interface Preview { caption: string; image_url: string; topic: string }
 
 type ContentTab = "post" | "reel" | "story"
 
-const TAB_CONFIG: { value: ContentTab; label: string; icon: typeof Image; title: string }[] = [
-  { value: "post", label: "Post", icon: Image, title: "Create post" },
-  { value: "reel", label: "Reel", icon: Film, title: "Create reel" },
-  { value: "story", label: "Story", icon: CircleDot, title: "Create story" },
+const TAB_CONFIG: { value: ContentTab; label: string; icon: typeof Image; title: string; desc: string; accept: string; formats: string; dropLabel: string }[] = [
+  { value: "post",  label: "Post",  icon: Image,     title: "Create post",  desc: "Upload an image or use AI to create your post.",     accept: "image/*",            formats: "JPG, PNG, WebP",        dropLabel: "image" },
+  { value: "reel",  label: "Reel",  icon: Film,      title: "Create reel",  desc: "Upload a video or use AI to create your reel.",      accept: "image/*,video/*",     formats: "MP4, MOV · or image",   dropLabel: "video" },
+  { value: "story", label: "Story", icon: CircleDot,  title: "Create story", desc: "Upload an image or video for your story.",            accept: "image/*,video/*",     formats: "JPG, PNG, MP4, MOV",    dropLabel: "image or video" },
 ]
 
 const inputStyle: React.CSSProperties = {
@@ -53,6 +53,8 @@ export default function CreatePostClient({
   // Media upload state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploadPreview, setUploadPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   // Caption editing
@@ -76,8 +78,10 @@ export default function CreatePostClient({
     const isImage = file.type.startsWith("image/")
     if (!isImage && !isVideo) { setError("Please upload an image or video file"); return }
     if (activeTab === "post" && isVideo) { setError("Posts only support images. Switch to Reel for video."); return }
+    if (activeTab === "reel" && !isVideo && !isImage) { setError("Please upload a video for reels"); return }
     setUploadedFile(file)
     setUploadPreview(URL.createObjectURL(file))
+    setUploadedUrl(null) // Reset — will upload on publish
     setError("")
   }
 
@@ -91,6 +95,17 @@ export default function CreatePostClient({
     setUploadedFile(null)
     if (uploadPreview) URL.revokeObjectURL(uploadPreview)
     setUploadPreview(null)
+    setUploadedUrl(null)
+  }
+
+  /* -- Upload file to Supabase via API -- */
+  async function uploadMedia(file: File): Promise<string> {
+    const fd = new FormData()
+    fd.append("file", file)
+    const res = await fetch("/api/upload/media", { method: "POST", body: fd })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "Upload failed")
+    return data.url
   }
 
   /* -- AI generation -- */
@@ -139,18 +154,29 @@ export default function CreatePostClient({
 
   async function publish(scheduleAt?: string) {
     if (!accountId) return
-    const imgUrl = uploadPreview || preview?.image_url
-    const capText = caption || preview?.caption
-    if (!imgUrl && !capText) { setError("Add media or generate content first"); return }
     setPosting(true); setError("")
     try {
+      // If user uploaded a file, upload it to Supabase first
+      let mediaUrl = uploadedUrl || preview?.image_url || null
+      if (uploadedFile && !uploadedUrl) {
+        setUploading(true)
+        try {
+          mediaUrl = await uploadMedia(uploadedFile)
+          setUploadedUrl(mediaUrl)
+        } finally {
+          setUploading(false)
+        }
+      }
+      const capText = caption || preview?.caption
+      if (!mediaUrl && !capText) { setError("Add media or generate content first"); setPosting(false); return }
+
       const res = await fetch("/api/posts/custom/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           account_id: accountId,
           caption: capText,
-          image_url: imgUrl,
+          image_url: mediaUrl,
           topic: preview?.topic || brief,
           content_type: activeTab,
           scheduled_for: scheduleAt ? new Date(scheduleAt).toISOString() : undefined,
@@ -159,7 +185,8 @@ export default function CreatePostClient({
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed")
       setPosted(data.scheduled ? "scheduled" : "now")
-      addToast(data.scheduled ? "Post scheduled successfully!" : "Post sent! It will appear on your account shortly.", "success", 5000)
+      const typeLabel = activeTab === "reel" ? "Reel" : activeTab === "story" ? "Story" : "Post"
+      addToast(data.scheduled ? `${typeLabel} scheduled successfully!` : `${typeLabel} sent! It will appear on your account shortly.`, "success", 5000)
       setPreview(null); setBrief(""); setScheduledFor(""); setCaption("")
       clearUpload()
     } catch (e: unknown) {
@@ -175,7 +202,7 @@ export default function CreatePostClient({
         <div>
           <h1 className="page-heading">{tabConfig.title.split(" ")[0]} <em>{tabConfig.title.split(" ")[1]}</em></h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-            Upload media or use AI to create your {activeTab}.
+            {tabConfig.desc}
           </p>
         </div>
         <span className="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shrink-0" style={{ background: "rgba(255,77,77,0.1)", color: "var(--accent)" }}>
@@ -191,7 +218,7 @@ export default function CreatePostClient({
           return (
             <button
               key={tab.value}
-              onClick={() => { setActiveTab(tab.value); setPreview(null); setError(""); setCaption("") }}
+              onClick={() => { setActiveTab(tab.value); setPreview(null); setError(""); setCaption(""); clearUpload() }}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={{
                 background: active ? "var(--accent)" : "transparent",
@@ -236,7 +263,9 @@ export default function CreatePostClient({
         <div className="rounded-2xl p-4 mb-5 flex items-center gap-2" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
           <CheckCircle2 size={16} color="#22c55e" />
           <span className="text-sm font-medium" style={{ color: "#22c55e" }}>
-            {posted === "scheduled" ? "Scheduled — it will publish automatically at the chosen time." : "Post sent — it will appear on your account shortly."}
+            {posted === "scheduled"
+              ? `${activeTab === "reel" ? "Reel" : activeTab === "story" ? "Story" : "Post"} scheduled — it will publish automatically at the chosen time.`
+              : `${activeTab === "reel" ? "Reel" : activeTab === "story" ? "Story" : "Post"} sent — it will appear on your account shortly.`}
           </span>
         </div>
       )}
@@ -302,16 +331,16 @@ export default function CreatePostClient({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={activeTab === "post" ? "image/*" : "image/*,video/*"}
+                accept={tabConfig.accept}
                 className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
               />
               <Upload size={32} className="mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                Drag & drop your {activeTab === "reel" ? "video" : "image"} here
+                Drop your {tabConfig.dropLabel} here
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                or click to browse {"·"} {activeTab === "post" ? "JPG, PNG, WebP" : "JPG, PNG, MP4, MOV"}
+                Or select a file {"·"} {tabConfig.formats}
               </p>
             </div>
           ) : (
@@ -328,6 +357,11 @@ export default function CreatePostClient({
               >
                 <X size={14} />
               </button>
+              {uploading && (
+                <div className="absolute inset-0 max-w-sm rounded-xl flex flex-col items-center justify-center gap-2 text-sm" style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
+                  <Loader2 size={20} className="animate-spin" style={{ color: "var(--accent)" }} /><span>Uploading media...</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -338,7 +372,7 @@ export default function CreatePostClient({
               value={caption}
               onChange={e => setCaption(e.target.value)}
               rows={3}
-              placeholder="Write your caption here..."
+              placeholder={`Write your ${activeTab} caption here...`}
               style={{ ...inputStyle, resize: "none" }}
             />
           </div>
@@ -347,10 +381,10 @@ export default function CreatePostClient({
           <div className="flex gap-2">
             <button
               onClick={() => publish()}
-              disabled={posting || (!uploadedFile && !caption)}
+              disabled={posting || uploading || (!uploadedFile && !caption)}
               className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
-              {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> Post now</>}
+              {posting ? <><Loader2 size={16} className="animate-spin" /> {uploading ? "Uploading..." : "Posting..."}</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
             </button>
           </div>
 
@@ -359,7 +393,7 @@ export default function CreatePostClient({
             <Clock size={14} style={{ color: "var(--text-muted)" }} />
             <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule for</span>
             <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm" style={inputStyle} />
-            <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor || (!uploadedFile && !caption)} className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50">Schedule</button>
+            <button onClick={() => publish(scheduledFor)} disabled={posting || uploading || !scheduledFor || (!uploadedFile && !caption)} className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50">Schedule</button>
           </div>
         </div>
       )}
@@ -426,7 +460,7 @@ export default function CreatePostClient({
                 )}
               </div>
               {aiImageProvider !== "none" && (
-                <p className="text-xs -mt-1" style={{ color: "var(--text-muted)" }}><ImagePlus size={11} className="inline mr-1" />Tap "AI image" to replace with a unique AI-generated image.</p>
+                <p className="text-xs -mt-1" style={{ color: "var(--text-muted)" }}><ImagePlus size={11} className="inline mr-1" />Tap &quot;AI image&quot; to replace with a unique AI-generated image.</p>
               )}
               <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-primary)" }}>{preview.caption}</p>
               <div className="flex gap-2">
@@ -434,7 +468,7 @@ export default function CreatePostClient({
                   {gen ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Regenerate <span className="text-xs" style={{ color: "var(--text-muted)" }}>(1 cr)</span>
                 </button>
                 <button onClick={() => publish()} disabled={posting || genImg} className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
-                  {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> Post now</>}
+                  {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
                 </button>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 flex-wrap" style={{ borderTop: "1px solid var(--border)" }}>
