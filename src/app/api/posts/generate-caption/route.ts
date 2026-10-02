@@ -14,6 +14,10 @@ const CAPTION_LIMITS: Record<string, number> = {
   agency: 999,
 }
 
+/* Vision model for image analysis, text model for video/fallback */
+const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+const TEXT_MODEL = 'openai/gpt-oss-120b'
+
 /* Converts **bold** markdown to Unicode bold for Instagram */
 function boldify(text: string): string {
   return text.replace(/\*\*([^*]+?)\*\*/g, (_m, p1: string) => {
@@ -54,7 +58,6 @@ export async function POST(req: NextRequest) {
 
   const svc = await createServiceClient()
 
-  // Count generations this month using post_logs with status='caption_generated'
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
@@ -70,7 +73,6 @@ export async function POST(req: NextRequest) {
   const used = usedCount ?? 0
 
   if (used >= limit) {
-    // Calculate reset date (first of next month)
     const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
     const resetStr = resetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
@@ -88,27 +90,20 @@ export async function POST(req: NextRequest) {
     .select('business_name, industry, brand_voice, target_audience')
     .eq('user_id', user.id).maybeSingle()
 
-  /* ── Build AI prompt ── */
+  /* ── Determine if media is an image (use vision) or video (use text) ── */
   const isVideo = contentType === 'reel' || contentType === 'story'
-  const mediaContext = isVideo
-    ? 'The user has uploaded a video/reel. Based on the content type and any angle provided, write an engaging caption.'
-    : `Analyze the image at this URL and write an engaging caption: ${mediaUrl}`
+  const isImage = !isVideo || mediaUrl.match(/\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?|$)/i)
+  const useVision = isImage && !mediaUrl.match(/\.(mp4|mov|avi|webm|mkv)(\?|$)/i)
 
   const angleInstruction = angle
     ? `The user wants this specific angle/approach: "${angle}".`
-    : 'Choose the best angle based on the media content.'
+    : 'Choose the best engaging angle — could be motivational, behind-the-scenes, product showcase, educational, or storytelling.'
 
-  const prompt = `You are a premium Instagram content strategist for ${biz?.business_name || 'a business'}${biz?.industry ? ` in the ${biz.industry} industry` : ''}. ${biz?.brand_voice ? `Brand voice: ${biz.brand_voice}.` : ''} Target audience: ${biz?.target_audience || 'general audience'}.
+  const contentLabel = contentType === 'reel' ? 'Reel (video)' : contentType === 'story' ? 'Story' : 'Post (image)'
 
-${mediaContext}
-
-${angleInstruction}
-
-Content type: Instagram ${contentType}.
-
-Respond with ONLY a valid JSON object, no extra text:
+  const jsonFormat = `Respond with ONLY a valid JSON object, no extra text:
 {
-  "caption": "Full Instagram caption with emojis and line breaks. Start with one emoji + a bold hook in **double asterisks**, then 2-3 engaging sentences, a call to action. Under 200 words.",
+  "caption": "Full Instagram caption with emojis and line breaks. Start with one emoji + a bold hook in **double asterisks**, then 2-3 engaging sentences, end with a strong call to action. Keep it under 200 words.",
   "hashtags": [
     {"tag": "#hashtag1", "relevance": 95},
     {"tag": "#hashtag2", "relevance": 88},
@@ -123,40 +118,113 @@ Respond with ONLY a valid JSON object, no extra text:
   ]
 }
 
-The "tones" array should contain 3 detected writing style indicators with confidence scores (0-100).
-The "hashtags" array should contain exactly 5 hashtags with relevance scores (0-100).
-The caption must be engaging, authentic, and optimized for Instagram ${contentType} engagement.`
+Rules:
+- "tones": exactly 3 writing style indicators with confidence scores (0-100). Pick from: question led, contrarian, relatable pov, storytelling, educational, motivational, humorous, behind the scenes, authority, vulnerable, controversial take.
+- "hashtags": exactly 5 relevant hashtags with relevance scores (0-100). Mix niche and broad.
+- Caption must feel native to Instagram — authentic, not corporate.`
 
-  /* ── Call Groq AI ── */
+  const bizContext = `You are a premium Instagram content strategist for ${biz?.business_name || 'a business'}${biz?.industry ? ` in the ${biz.industry} industry` : ''}. ${biz?.brand_voice ? `Brand voice: ${biz.brand_voice}.` : ''} Target audience: ${biz?.target_audience || 'general audience'}.`
+
   let raw = '{}'
   try {
-    const messages: any[] = [{ role: 'user', content: prompt }]
+    let messages: any[]
 
-    // For images, add the image URL in the message for vision models
-    if (!isVideo && mediaUrl) {
-      messages[0] = {
+    if (useVision) {
+      /* ── Vision model: send image for AI to analyze ── */
+      const prompt = `${bizContext}
+
+Look at this image carefully. Describe what you see, then write a perfect Instagram ${contentLabel} caption based on the image content.
+
+${angleInstruction}
+
+${jsonFormat}`
+
+      messages = [{
         role: 'user',
         content: [
           { type: 'text', text: prompt },
           { type: 'image_url', image_url: { url: mediaUrl } },
         ],
+      }]
+
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
+        body: JSON.stringify({
+          model: VISION_MODEL,
+          max_tokens: 1200,
+          temperature: 0.9,
+          top_p: 0.95,
+          messages,
+        }),
+      })
+
+      if (!r.ok) {
+        // Vision model failed — fall back to text model
+        console.error('Vision model error:', r.status, await r.text())
+        const fallbackPrompt = `${bizContext}
+
+The user has uploaded an image for an Instagram ${contentLabel}. Write an engaging caption for it.
+
+${angleInstruction}
+
+${jsonFormat}`
+
+        const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
+          body: JSON.stringify({
+            model: TEXT_MODEL,
+            max_tokens: 1200,
+            temperature: 0.9,
+            top_p: 0.95,
+            messages: [{ role: 'user', content: fallbackPrompt }],
+          }),
+        })
+
+        if (!r2.ok) {
+          console.error('Text fallback error:', r2.status)
+          return NextResponse.json({ error: 'AI service error, try again' }, { status: 502 })
+        }
+        const d2 = await r2.json()
+        raw = d2?.choices?.[0]?.message?.content ?? '{}'
+      } else {
+        const d = await r.json()
+        raw = d?.choices?.[0]?.message?.content ?? '{}'
       }
+
+    } else {
+      /* ── Text model: for videos or non-image media ── */
+      const prompt = `${bizContext}
+
+The user has uploaded media for an Instagram ${contentLabel}. Write an engaging caption for it.
+
+${angleInstruction}
+
+${jsonFormat}`
+
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
+        body: JSON.stringify({
+          model: TEXT_MODEL,
+          max_tokens: 1200,
+          temperature: 0.9,
+          top_p: 0.95,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+
+      if (!r.ok) {
+        console.error('Text model error:', r.status)
+        return NextResponse.json({ error: 'AI service error, try again' }, { status: 502 })
+      }
+      const d = await r.json()
+      raw = d?.choices?.[0]?.message?.content ?? '{}'
     }
 
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        max_tokens: 1200,
-        temperature: 0.9,
-        top_p: 0.95,
-        messages,
-      }),
-    })
-    const d = await r.json()
-    raw = d?.choices?.[0]?.message?.content ?? '{}'
-  } catch {
+  } catch (e) {
+    console.error('Groq fetch error:', e)
     return NextResponse.json({ error: 'Generation failed, try again' }, { status: 502 })
   }
 
@@ -165,7 +233,10 @@ The caption must be engaging, authentic, and optimized for Instagram ${contentTy
   try {
     const cleaned = raw.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/i, '').trim()
     parsed = JSON.parse(cleaned)
-  } catch {}
+  } catch (e) {
+    console.error('JSON parse error. Raw:', raw.slice(0, 500))
+    return NextResponse.json({ error: 'AI returned invalid response, try again' }, { status: 502 })
+  }
 
   const caption = boldify(String(parsed.caption ?? ''))
   const hashtags: { tag: string; relevance: number }[] = Array.isArray(parsed.hashtags)
