@@ -7,9 +7,12 @@ import { createClient } from '@/lib/supabase/client'
 interface Notification {
   id: string
   caption: string | null
-  published_at: string
+  published_at: string | null
+  created_at: string
   ig_permalink: string | null
   status: string
+  content_type: string | null
+  scheduled_for: string | null
 }
 
 function timeAgo(dateStr: string): string {
@@ -25,6 +28,86 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`
 }
 
+function getNotifMeta(n: Notification) {
+  const ct = n.content_type ?? 'post'
+
+  if (n.status === 'published') {
+    const label = ct === 'reel' ? 'Your reel is live'
+      : ct === 'carousel' ? 'Your carousel is live'
+      : ct === 'story' ? 'Your story is live'
+      : 'Your post is live'
+    return {
+      label,
+      iconBg: 'rgba(34, 197, 94, 0.1)',
+      iconColor: '#22C55E',
+      icon: 'check' as const,
+      action: n.ig_permalink ? { label: 'view', href: n.ig_permalink } : null,
+      time: n.published_at ?? n.created_at,
+    }
+  }
+
+  if (n.status === 'scheduled') {
+    return {
+      label: `${ct === 'reel' ? 'Reel' : ct === 'carousel' ? 'Carousel' : 'Post'} scheduled`,
+      iconBg: 'rgba(232, 80, 58, 0.1)',
+      iconColor: '#E8503A',
+      icon: 'clock' as const,
+      action: { label: 'schedule', href: '/dashboard/schedule' },
+      time: n.created_at,
+    }
+  }
+
+  if (n.status === 'failed') {
+    return {
+      label: 'Post failed to publish',
+      iconBg: 'rgba(239, 68, 68, 0.1)',
+      iconColor: '#EF4444',
+      icon: 'alert' as const,
+      action: { label: 'details', href: '/dashboard/posts' },
+      time: n.created_at,
+    }
+  }
+
+  return {
+    label: 'Post pending approval',
+    iconBg: 'rgba(234, 179, 8, 0.1)',
+    iconColor: '#EAB308',
+    icon: 'pending' as const,
+    action: { label: 'review', href: '/dashboard/approvals' },
+    time: n.created_at,
+  }
+}
+
+function NotifIcon({ type, color }: { type: string; color: string }) {
+  if (type === 'check') {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    )
+  }
+  if (type === 'clock') {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    )
+  }
+  if (type === 'alert') {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    )
+  }
+  // pending
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  )
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -38,13 +121,13 @@ export default function NotificationBell() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Fetch published + scheduled + failed + pending
       const { data } = await supabase
         .from('post_logs')
-        .select('id, caption, published_at, ig_permalink, status')
+        .select('id, caption, published_at, created_at, ig_permalink, status, content_type, scheduled_for')
         .eq('user_id', user.id)
-        .eq('status', 'published')
-        .not('published_at', 'is', null)
-        .order('published_at', { ascending: false })
+        .in('status', ['published', 'scheduled', 'failed', 'pending'])
+        .order('created_at', { ascending: false })
         .limit(20)
 
       if (!data) return
@@ -53,21 +136,19 @@ export default function NotificationBell() {
       // Count unread
       const lastSeen = lastSeenRef.current
       if (lastSeen) {
-        const newCount = data.filter(n => n.published_at > lastSeen).length
+        const newCount = data.filter(n => n.created_at > lastSeen).length
         setUnreadCount(newCount)
       } else {
-        // First load — read lastSeen from localStorage
         try {
           const stored = localStorage.getItem('pp_notif_last_seen')
           if (stored) {
             lastSeenRef.current = stored
-            const newCount = data.filter(n => n.published_at > stored).length
+            const newCount = data.filter(n => n.created_at > stored).length
             setUnreadCount(newCount)
           } else {
-            // First ever visit — mark all as seen
             if (data.length > 0) {
-              lastSeenRef.current = data[0].published_at
-              localStorage.setItem('pp_notif_last_seen', data[0].published_at)
+              lastSeenRef.current = data[0].created_at
+              localStorage.setItem('pp_notif_last_seen', data[0].created_at)
             }
             setUnreadCount(0)
           }
@@ -86,7 +167,7 @@ export default function NotificationBell() {
     return () => clearInterval(interval)
   }, [fetchNotifications])
 
-  // Close dropdown on outside click
+  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -100,8 +181,7 @@ export default function NotificationBell() {
   function handleOpen() {
     setOpen(o => !o)
     if (!open && notifications.length > 0) {
-      // Mark all as read
-      const latest = notifications[0].published_at
+      const latest = notifications[0].created_at
       lastSeenRef.current = latest
       try { localStorage.setItem('pp_notif_last_seen', latest) } catch {}
       setUnreadCount(0)
@@ -128,7 +208,7 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-2 w-[320px] rounded-xl overflow-hidden shadow-2xl z-50"
+          className="absolute left-0 top-full mt-2 w-[340px] rounded-xl overflow-hidden shadow-2xl z-50"
           style={{
             background: 'var(--bg-card, #fff)',
             border: '1px solid var(--border)',
@@ -146,7 +226,7 @@ export default function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-[360px] overflow-y-auto">
+          <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div
                 className="px-4 py-8 text-center text-sm"
@@ -155,52 +235,63 @@ export default function NotificationBell() {
                 No notifications yet
               </div>
             ) : (
-              notifications.map(n => (
-                <div
-                  key={n.id}
-                  className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--accent-subtle)] transition-colors"
-                  style={{ borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))' }}
-                >
-                  {/* Green check icon */}
+              notifications.map(n => {
+                const meta = getNotifMeta(n)
+                return (
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: 'rgba(34, 197, 94, 0.1)' }}
+                    key={n.id}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--accent-subtle)] transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))' }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5"/>
-                    </svg>
-                  </div>
+                    {/* Icon */}
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: meta.iconBg }}
+                    >
+                      <NotifIcon type={meta.icon} color={meta.iconColor} />
+                    </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        Your post is live
-                      </span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#22C55E">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {timeAgo(n.published_at)}
-                      </span>
-                      {n.ig_permalink && (
-                        <a
-                          href={n.ig_permalink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium flex items-center gap-0.5"
-                          style={{ color: 'var(--accent-brand, #E8503A)' }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          view <span className="text-[10px]">→</span>
-                        </a>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {meta.label}
+                        </span>
+                        {n.status === 'published' && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#22C55E">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Caption preview for published posts */}
+                      {n.status === 'published' && n.caption && (
+                        <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
+                          {n.caption.slice(0, 80)}
+                        </p>
                       )}
+
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {timeAgo(meta.time)}
+                        </span>
+                        {meta.action && (
+                          <a
+                            href={meta.action.href}
+                            target={meta.action.href.startsWith('http') ? '_blank' : undefined}
+                            rel={meta.action.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            className="text-xs font-medium flex items-center gap-0.5"
+                            style={{ color: 'var(--accent-brand, #E8503A)' }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {meta.action.label} <span className="text-[10px]">→</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

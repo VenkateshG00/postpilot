@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   title: 'PostPilot — Automated Social Media for Your Business',
   description: 'AI-powered Instagram & Facebook posts published automatically on your schedule.',
+  icons: {
+    icon: '/icon.svg',
+  },
   openGraph: {
     title: 'PostPilot',
     description: 'AI-powered social media automation for local businesses.',

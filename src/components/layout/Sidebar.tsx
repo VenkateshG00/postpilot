@@ -39,9 +39,7 @@ const MANAGE_NAV = [
   { href: '/dashboard/media-kit',  label: 'Media Kit',    icon: FileText },
 ]
 
-const EARN_NAV = [
-  { href: '/dashboard/referral',   label: 'Rewards',      icon: Gift },
-]
+/* Removed EARN_NAV — Refer & Earn CTA at bottom already covers it */
 
 /* ── Single nav link (icon + text) ── */
 function NavItem({ href, label, icon: Icon, active, badge, onClick }: {
@@ -266,18 +264,7 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* ── Earn section ── */}
-      <SectionHeader label="Earn" />
-      <nav className="flex flex-col gap-0.5">
-        {EARN_NAV.map(item => (
-          <NavItem
-            key={item.href}
-            {...item}
-            active={isActive(item.href)}
-            onClick={onNavigate}
-          />
-        ))}
-      </nav>
+
 
       {/* ── Spacer ── */}
       <div className="flex-1 min-h-4" />
