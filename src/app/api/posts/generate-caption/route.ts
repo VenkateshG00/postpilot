@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
   const mediaUrl = String(body.media_url ?? '').trim()
   const angle = String(body.angle ?? '').trim()
   const contentType = String(body.content_type ?? 'post').trim()
+  const tone = String(body.tone ?? '').trim()
 
   if (!mediaUrl) return NextResponse.json({ error: 'No media provided' }, { status: 400 })
 
@@ -97,7 +98,11 @@ export async function POST(req: NextRequest) {
 
   const angleInstruction = angle
     ? `The user wants this specific angle/approach: "${angle}".`
-    : 'Choose the best engaging angle — could be motivational, behind-the-scenes, product showcase, educational, or storytelling.'
+    : 'Choose the best engaging angle based on what you see in the image.'
+
+  const toneInstruction = tone
+    ? `IMPORTANT: Write the caption in a "${tone}" tone/style. This is the PRIMARY writing style to use.`
+    : ''
 
   const contentLabel = contentType === 'reel' ? 'Reel (video)' : contentType === 'story' ? 'Story' : 'Post (image)'
 
@@ -112,18 +117,25 @@ export async function POST(req: NextRequest) {
     {"tag": "#hashtag5", "relevance": 70}
   ],
   "tones": [
-    {"label": "question led", "score": 95},
+    {"label": "relatable pov", "score": 95},
     {"label": "contrarian", "score": 92},
-    {"label": "relatable pov", "score": 88}
+    {"label": "question led", "score": 88}
   ]
 }
 
 Rules:
-- "tones": exactly 3 writing style indicators with confidence scores (0-100). Pick from: question led, contrarian, relatable pov, storytelling, educational, motivational, humorous, behind the scenes, authority, vulnerable, controversial take.
-- "hashtags": exactly 5 relevant hashtags with relevance scores (0-100). Mix niche and broad.
-- Caption must feel native to Instagram — authentic, not corporate.`
+- "tones": ALWAYS return exactly these 3 tones with confidence scores (0-100): "relatable pov", "contrarian", "question led". Score them based on how well each style fits the image content.
+- "hashtags": exactly 5 relevant hashtags with relevance scores (0-100). Mix niche and broad. Hashtags MUST relate to what is shown in the image.
+- Caption must feel native to Instagram — authentic, not corporate.
+- The caption MUST be about what is visually shown in the image. Do NOT write about unrelated topics.`
 
-  const bizContext = `You are a premium Instagram content strategist for ${biz?.business_name || 'a business'}${biz?.industry ? ` in the ${biz.industry} industry` : ''}. ${biz?.brand_voice ? `Brand voice: ${biz.brand_voice}.` : ''} Target audience: ${biz?.target_audience || 'general audience'}.`
+  /* Business context is secondary — only used to adjust voice, never to override image content */
+  const bizContext = biz?.brand_voice
+    ? `Adjust the writing voice to match: ${biz.brand_voice}. But the caption topic MUST be about the image content, not the business category.`
+    : ''
+  const audienceHint = biz?.target_audience
+    ? `Target audience: ${biz.target_audience}.`
+    : ''
 
   let raw = '{}'
   try {
@@ -131,11 +143,19 @@ Rules:
 
     if (useVision) {
       /* ── Vision model: send image for AI to analyze ── */
-      const prompt = `${bizContext}
+      const prompt = `STEP 1: Look at this image very carefully. Describe in detail EXACTLY what you see — objects, people, colors, setting, mood, action happening.
 
-Look at this image carefully. Describe what you see, then write a perfect Instagram ${contentLabel} caption based on the image content.
+STEP 2: Based ONLY on what you described in Step 1, write a perfect Instagram ${contentLabel} caption about THIS specific image.
 
+${toneInstruction}
 ${angleInstruction}
+${bizContext}
+${audienceHint}
+
+CRITICAL RULES:
+- The caption MUST be about what is IN this image. If you see a car, write about the car. If you see food, write about the food.
+- Do NOT ignore the image and write about something else.
+- Do NOT default to generic motivational or business content.
 
 ${jsonFormat}`
 
@@ -162,11 +182,12 @@ ${jsonFormat}`
       if (!r.ok) {
         // Vision model failed — fall back to text model
         console.error('Vision model error:', r.status, await r.text())
-        const fallbackPrompt = `${bizContext}
+        const fallbackPrompt = `The user has uploaded an image for an Instagram ${contentLabel}. Write an engaging, generic caption that could work for a variety of visual content.
 
-The user has uploaded an image for an Instagram ${contentLabel}. Write an engaging caption for it.
-
+${toneInstruction}
 ${angleInstruction}
+${bizContext}
+${audienceHint}
 
 ${jsonFormat}`
 
@@ -195,11 +216,12 @@ ${jsonFormat}`
 
     } else {
       /* ── Text model: for videos or non-image media ── */
-      const prompt = `${bizContext}
+      const prompt = `The user has uploaded media for an Instagram ${contentLabel}. Write an engaging caption for it.
 
-The user has uploaded media for an Instagram ${contentLabel}. Write an engaging caption for it.
-
+${toneInstruction}
 ${angleInstruction}
+${bizContext}
+${audienceHint}
 
 ${jsonFormat}`
 
@@ -252,9 +274,9 @@ ${jsonFormat}`
         score: Number(t.score ?? t.confidence ?? 85),
       }))
     : [
-        { label: 'engaging', score: 90 },
-        { label: 'authentic', score: 85 },
-        { label: 'conversational', score: 82 },
+        { label: 'relatable pov', score: 90 },
+        { label: 'contrarian', score: 85 },
+        { label: 'question led', score: 82 },
       ]
 
   if (!caption) {

@@ -94,6 +94,7 @@ export default function CreatePostClient({
   const [generatingCaption, setGeneratingCaption] = useState(false)
   const [generatedCaption, setGeneratedCaption] = useState<GeneratedCaption | null>(null)
   const [captionLimitError, setCaptionLimitError] = useState<{ message: string; generations_used: number; generations_limit: number; reset_date: string } | null>(null)
+  const [selectedTone, setSelectedTone] = useState<string | null>(null)
 
   const upcoming = useMemo(() => upcomingFestivals(45, 8), [])
   const tabConfig = TAB_CONFIG.find(t => t.value === activeTab)!
@@ -146,7 +147,7 @@ export default function CreatePostClient({
   }
 
   /* -- Generate caption from uploaded media -- */
-  async function generateCaption() {
+  async function generateCaption(toneOverride?: string) {
     if (!uploadedFile) return
     setGeneratingCaption(true); setError(""); setCaptionLimitError(null)
 
@@ -170,6 +171,7 @@ export default function CreatePostClient({
           media_url: mediaUrl,
           angle: angle.trim() || undefined,
           content_type: activeTab,
+          tone: toneOverride || undefined,
         }),
       })
       const data = await res.json()
@@ -531,16 +533,26 @@ export default function CreatePostClient({
           {/* ── Generated Caption Result ── */}
           {generatedCaption && (
             <div className="space-y-4">
-              {/* Tone indicators */}
+              {/* Tone indicators — clickable to regenerate in that style */}
               <div className="flex flex-wrap gap-2">
                 {generatedCaption.tones.map((tone, i) => (
-                  <span
+                  <button
                     key={i}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
-                    style={{ background: `${toneColor(tone.score)}15`, color: toneColor(tone.score) }}
+                    onClick={() => {
+                      setSelectedTone(tone.label)
+                      generateCaption(tone.label)
+                    }}
+                    disabled={generatingCaption}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all disabled:opacity-50"
+                    style={{
+                      background: selectedTone === tone.label ? toneColor(tone.score) : `${toneColor(tone.score)}15`,
+                      color: selectedTone === tone.label ? '#fff' : toneColor(tone.score),
+                      border: selectedTone === tone.label ? `2px solid ${toneColor(tone.score)}` : '2px solid transparent',
+                      cursor: generatingCaption ? 'wait' : 'pointer',
+                    }}
                   >
                     {tone.label} {tone.score}%
-                  </span>
+                  </button>
                 ))}
               </div>
 
@@ -588,7 +600,7 @@ export default function CreatePostClient({
 
               {/* Regenerate */}
               <button
-                onClick={generateCaption}
+                onClick={() => { setSelectedTone(null); generateCaption() }}
                 disabled={generatingCaption}
                 className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
               >
