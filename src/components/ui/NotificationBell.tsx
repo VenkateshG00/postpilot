@@ -113,7 +113,9 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const lastSeenRef = useRef<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const bellRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null)
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -121,7 +123,6 @@ export default function NotificationBell() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Fetch published + scheduled + failed + pending
       const { data } = await supabase
         .from('post_logs')
         .select('id, caption, published_at, created_at, ig_permalink, status, content_type, scheduled_for')
@@ -133,7 +134,6 @@ export default function NotificationBell() {
       if (!data) return
       setNotifications(data)
 
-      // Count unread
       const lastSeen = lastSeenRef.current
       if (lastSeen) {
         const newCount = data.filter(n => n.created_at > lastSeen).length
@@ -167,15 +167,38 @@ export default function NotificationBell() {
     return () => clearInterval(interval)
   }, [fetchNotifications])
 
+  // Compute dropdown position when opened
+  useEffect(() => {
+    if (open && bellRef.current) {
+      const rect = bellRef.current.getBoundingClientRect()
+      setDropdownPos({
+        top: rect.bottom + 8,
+        left: rect.left,
+      })
+    }
+  }, [open])
+
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        bellRef.current && !bellRef.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
       }
     }
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  // Close on Escape
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    if (open) document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
   }, [open])
 
   function handleOpen() {
@@ -189,8 +212,9 @@ export default function NotificationBell() {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={bellRef}
         onClick={handleOpen}
         className="relative p-2 rounded-lg hover:bg-[var(--accent-subtle)] transition-colors"
         aria-label="Notifications"
@@ -206,12 +230,20 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
+      {open && dropdownPos && (
         <div
-          className="absolute left-0 top-full mt-2 w-[340px] rounded-xl overflow-hidden shadow-2xl z-50"
+          ref={dropdownRef}
+          className="rounded-xl overflow-hidden"
           style={{
+            position: 'fixed',
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            width: 340,
+            zIndex: 9999,
             background: 'var(--bg-card, #fff)',
             border: '1px solid var(--border)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+            animation: 'notifDropIn 0.15s ease-out',
           }}
         >
           {/* Header */}
@@ -240,8 +272,13 @@ export default function NotificationBell() {
                 return (
                   <div
                     key={n.id}
-                    className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--accent-subtle)] transition-colors"
-                    style={{ borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))' }}
+                    className="flex items-start gap-3 px-4 py-3 transition-colors"
+                    style={{
+                      borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))',
+                      cursor: 'default',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-subtle, rgba(0,0,0,0.02))')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* Icon */}
                     <div
@@ -296,6 +333,14 @@ export default function NotificationBell() {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Keyframe for smooth dropdown entrance */}
+      <style jsx global>{`
+        @keyframes notifDropIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </>
   )
 }
