@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -108,6 +109,16 @@ function NotifIcon({ type, color }: { type: string; color: string }) {
   )
 }
 
+/* Inject keyframe once into <head> */
+let keyframeInjected = false
+function injectKeyframe() {
+  if (keyframeInjected || typeof document === 'undefined') return
+  const style = document.createElement('style')
+  style.textContent = `@keyframes ppNotifDropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}`
+  document.head.appendChild(style)
+  keyframeInjected = true
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -116,6 +127,12 @@ export default function NotificationBell() {
   const bellRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    injectKeyframe()
+  }, [])
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -211,6 +228,151 @@ export default function NotificationBell() {
     }
   }
 
+  /* ── Dropdown rendered via portal so it escapes sidebar overflow ── */
+  const dropdown = open && dropdownPos && mounted
+    ? createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            width: 340,
+            zIndex: 9999,
+            background: 'var(--bg-card, #fff)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+            overflow: 'hidden',
+            animation: 'ppNotifDropIn 0.15s ease-out',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              padding: '12px 16px',
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
+            Notifications
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+            {notifications.length === 0 ? (
+              <div
+                style={{
+                  padding: '32px 16px',
+                  textAlign: 'center',
+                  fontSize: 14,
+                  color: 'var(--text-muted)',
+                }}
+              >
+                No notifications yet
+              </div>
+            ) : (
+              notifications.map(n => {
+                const meta = getNotifMeta(n)
+                return (
+                  <div
+                    key={n.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))',
+                      cursor: 'default',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-subtle, rgba(0,0,0,0.02))')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {/* Icon */}
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: 2,
+                        background: meta.iconBg,
+                      }}
+                    >
+                      <NotifIcon type={meta.icon} color={meta.iconColor} />
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                          {meta.label}
+                        </span>
+                        {n.status === 'published' && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#22C55E">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Caption preview for published posts */}
+                      {n.status === 'published' && n.caption && (
+                        <p
+                          style={{
+                            fontSize: 12,
+                            marginTop: 2,
+                            color: 'var(--text-muted)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            margin: '2px 0 0',
+                          }}
+                        >
+                          {n.caption.slice(0, 80)}
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                          {timeAgo(meta.time)}
+                        </span>
+                        {meta.action && (
+                          <a
+                            href={meta.action.href}
+                            target={meta.action.href.startsWith('http') ? '_blank' : undefined}
+                            rel={meta.action.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 500,
+                              color: 'var(--accent-brand, #E8503A)',
+                              textDecoration: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                            }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            {meta.action.label} <span style={{ fontSize: 10 }}>→</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>,
+        document.body
+      )
+    : null
+
   return (
     <>
       <button
@@ -229,118 +391,7 @@ export default function NotificationBell() {
           </span>
         )}
       </button>
-
-      {open && dropdownPos && (
-        <div
-          ref={dropdownRef}
-          className="rounded-xl overflow-hidden"
-          style={{
-            position: 'fixed',
-            top: dropdownPos.top,
-            left: dropdownPos.left,
-            width: 340,
-            zIndex: 9999,
-            background: 'var(--bg-card, #fff)',
-            border: '1px solid var(--border)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
-            animation: 'notifDropIn 0.15s ease-out',
-          }}
-        >
-          {/* Header */}
-          <div
-            className="px-4 py-3 text-sm font-semibold"
-            style={{
-              color: 'var(--text-primary)',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            Notifications
-          </div>
-
-          {/* List */}
-          <div className="max-h-[400px] overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div
-                className="px-4 py-8 text-center text-sm"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                No notifications yet
-              </div>
-            ) : (
-              notifications.map(n => {
-                const meta = getNotifMeta(n)
-                return (
-                  <div
-                    key={n.id}
-                    className="flex items-start gap-3 px-4 py-3 transition-colors"
-                    style={{
-                      borderBottom: '1px solid var(--border-light, rgba(0,0,0,0.04))',
-                      cursor: 'default',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-subtle, rgba(0,0,0,0.02))')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    {/* Icon */}
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                      style={{ background: meta.iconBg }}
-                    >
-                      <NotifIcon type={meta.icon} color={meta.iconColor} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {meta.label}
-                        </span>
-                        {n.status === 'published' && (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#22C55E">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                        )}
-                      </div>
-
-                      {/* Caption preview for published posts */}
-                      {n.status === 'published' && n.caption && (
-                        <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
-                          {n.caption.slice(0, 80)}
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {timeAgo(meta.time)}
-                        </span>
-                        {meta.action && (
-                          <a
-                            href={meta.action.href}
-                            target={meta.action.href.startsWith('http') ? '_blank' : undefined}
-                            rel={meta.action.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="text-xs font-medium flex items-center gap-0.5"
-                            style={{ color: 'var(--accent-brand, #E8503A)' }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            {meta.action.label} <span className="text-[10px]">→</span>
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Keyframe for smooth dropdown entrance */}
-      <style jsx global>{`
-        @keyframes notifDropIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {dropdown}
     </>
   )
 }
