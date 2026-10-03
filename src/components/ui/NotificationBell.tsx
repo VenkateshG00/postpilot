@@ -146,7 +146,7 @@ export default function NotificationBell() {
         .eq('user_id', user.id)
         .in('status', ['published', 'scheduled', 'failed', 'pending'])
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(5)
 
       if (!data) return
       setNotifications(data)

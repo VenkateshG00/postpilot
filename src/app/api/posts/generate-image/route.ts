@@ -162,8 +162,8 @@ async function generateAbhiBots(prompt: string): Promise<string> {
     body: JSON.stringify({
       prompt,
       model: 'image3',
-      width: 1080,
-      height: 1080,
+      width: 1024,
+      height: 1024,
       content_class: 'photo',
     }),
   })
@@ -205,10 +205,11 @@ async function generateKieAI(prompt: string): Promise<string> {
     if (createRes.status === 429) throw new Error('Kie.ai rate limit reached — please wait and try again.')
     throw new Error(`Kie.ai error ${createRes.status}: ${err.slice(0, 200)}`)
   }
-  type CreateResp = { code: number; msg: string; data?: { taskId: string } }
-  const createData = await createRes.json() as CreateResp
-  const taskId = createData.data?.taskId
-  if (!taskId) throw new Error('Kie.ai returned no taskId')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const createData = await createRes.json() as any
+  // Kie.ai may return taskId at different paths depending on API version
+  const taskId = createData?.data?.taskId || createData?.data?.task_id || createData?.taskId || createData?.task_id
+  if (!taskId) throw new Error(`Kie.ai returned no taskId. Response: ${JSON.stringify(createData).slice(0, 300)}`)
 
   // Step 2: Poll for result
   for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
@@ -218,19 +219,21 @@ async function generateKieAI(prompt: string): Promise<string> {
       { headers: { Authorization: `Bearer ${apiKey}` } },
     )
     if (!pollRes.ok) continue
-    type PollResp = { code: number; data?: { state: string; resultJson?: string; failMsg?: string } }
-    const pollData = await pollRes.json() as PollResp
-    const state = pollData.data?.state
-    if (state === 'success') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pollData = await pollRes.json() as any
+    const state = pollData?.data?.state || pollData?.state
+    if (state === 'success' || state === 'completed') {
       try {
-        const result = JSON.parse(pollData.data!.resultJson || '{}')
-        const url = result.resultImageUrl || result.url || (Array.isArray(result.urls) ? result.urls[0] : null)
+        const resultStr = pollData?.data?.resultJson || pollData?.data?.result || '{}'
+        const result = typeof resultStr === 'string' ? JSON.parse(resultStr) : resultStr
+        const url = result?.resultImageUrl || result?.output || result?.url || (Array.isArray(result?.urls) ? result.urls[0] : null)
+          || pollData?.data?.output || pollData?.data?.url
         if (url) return url
       } catch {}
-      throw new Error('Kie.ai task succeeded but returned no image URL')
+      throw new Error(`Kie.ai task succeeded but returned no image URL. Poll response: ${JSON.stringify(pollData).slice(0, 300)}`)
     }
-    if (state === 'fail') {
-      throw new Error(pollData.data?.failMsg || 'Kie.ai image generation failed')
+    if (state === 'fail' || state === 'failed') {
+      throw new Error(pollData?.data?.failMsg || pollData?.data?.error || 'Kie.ai image generation failed')
     }
   }
   throw new Error('Kie.ai timed out — try again')
