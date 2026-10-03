@@ -207,6 +207,10 @@ async function generateKieAI(prompt: string): Promise<string> {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createData = await createRes.json() as any
+  // Kie.ai returns HTTP 200 but may have error codes in the body
+  if (createData?.code && createData.code !== 200 && createData.code !== 0) {
+    throw new Error(`Kie.ai API error (${createData.code}): ${createData.msg || JSON.stringify(createData).slice(0, 200)}`)
+  }
   // Kie.ai may return taskId at different paths depending on API version
   const taskId = createData?.data?.taskId || createData?.data?.task_id || createData?.taskId || createData?.task_id
   if (!taskId) throw new Error(`Kie.ai returned no taskId. Response: ${JSON.stringify(createData).slice(0, 300)}`)
