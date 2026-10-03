@@ -52,6 +52,22 @@ const AI_PROVIDERS: {
     envHint: 'none required',
     note: 'Public service — image quality may vary.',
   },
+  {
+    value: 'abhibots_firefly',
+    label: 'Firefly (AbhiBots)',
+    quality: 4,
+    suggestedCredits: 3,
+    desc: 'Adobe Firefly via AbhiBots. High-quality photorealistic images.',
+    envHint: 'ABHIBOTS_API_KEY',
+  },
+  {
+    value: 'kie_flux',
+    label: 'Flux Kontext (Kie.ai)',
+    quality: 4,
+    suggestedCredits: 3,
+    desc: 'Flux Kontext via Kie.ai marketplace. Excellent prompt adherence.',
+    envHint: 'KIE_API_KEY',
+  },
 ]
 
 interface Settings {
@@ -71,7 +87,7 @@ export default function AdminSettingsClient({ settings: initial, packs: initialP
     default_image_provider: initial.default_image_provider ?? 'pexels',
     ai_active_provider: initial.ai_active_provider ?? 'none',
     ai_provider_credits: initial.ai_provider_credits ?? {
-      replicate_flux: 4, gemini_flash: 2, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1,
+      replicate_flux: 4, gemini_flash: 2, huggingface_flux: 3, cloudflare_sdxl: 2, pollinations: 1, abhibots_firefly: 3, kie_flux: 3,
     },
     cron_frequency: initial.cron_frequency ?? '',
     maintenance_mode: initial.maintenance_mode ?? false,

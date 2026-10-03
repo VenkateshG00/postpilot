@@ -14,6 +14,8 @@ const AI_PROVIDERS: Record<string, { label: string; quality: number; suggestedCr
   huggingface_flux: { label: 'Flux Schnell (Hugging Face)',  quality: 3, suggestedCredits: 3 },
   cloudflare_sdxl:  { label: 'SDXL Lightning (Cloudflare)', quality: 2, suggestedCredits: 2 },
   pollinations:     { label: 'Pollinations.ai',              quality: 1, suggestedCredits: 1 },
+  abhibots_firefly: { label: 'Firefly (AbhiBots)',            quality: 4, suggestedCredits: 3 },
+  kie_flux:         { label: 'Flux Kontext (Kie.ai)',         quality: 4, suggestedCredits: 3 },
 }
 
 // ─── Replicate ────────────────────────────────────────────────────────────────
@@ -144,6 +146,95 @@ async function generateCloudflare(prompt: string): Promise<string> {
   return toDataUrl(blob, 'image/png')
 }
 
+
+// ─── AbhiBots (Adobe Firefly) ─────────────────────────────────────────────────
+// Returns a URL to the generated image directly.
+async function generateAbhiBots(prompt: string): Promise<string> {
+  const apiKey = process.env.ABHIBOTS_API_KEY
+  if (!apiKey) throw new Error('ABHIBOTS_API_KEY not configured')
+
+  const r = await fetch('https://app.abhibots.com/api/ml/firefly/generate', {
+    method: 'POST',
+    headers: {
+      'X-API-Key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      model: 'image3',
+      width: 1080,
+      height: 1080,
+      content_class: 'photo',
+    }),
+  })
+  if (!r.ok) {
+    const err = await r.text()
+    if (r.status === 429) throw new Error('AbhiBots rate limit reached — please wait and try again.')
+    throw new Error(`AbhiBots Firefly error ${r.status}: ${err.slice(0, 200)}`)
+  }
+  type AbhiResp = { url?: string; all_urls?: string[]; credits_deducted?: number; model?: string }
+  const data = await r.json() as AbhiResp
+  const imageUrl = data.url || data.all_urls?.[0]
+  if (!imageUrl) throw new Error('AbhiBots returned no image URL')
+  return imageUrl
+}
+
+// ─── Kie.ai (Flux Kontext) ───────────────────────────────────────────────────
+// Async task-based API: create task → poll for result.
+async function generateKieAI(prompt: string): Promise<string> {
+  const apiKey = process.env.KIE_API_KEY
+  if (!apiKey) throw new Error('KIE_API_KEY not configured')
+
+  // Step 1: Create task
+  const createRes = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'flux1-kontext',
+      input: {
+        prompt,
+        aspect_ratio: '1:1',
+      },
+    }),
+  })
+  if (!createRes.ok) {
+    const err = await createRes.text()
+    if (createRes.status === 429) throw new Error('Kie.ai rate limit reached — please wait and try again.')
+    throw new Error(`Kie.ai error ${createRes.status}: ${err.slice(0, 200)}`)
+  }
+  type CreateResp = { code: number; msg: string; data?: { taskId: string } }
+  const createData = await createRes.json() as CreateResp
+  const taskId = createData.data?.taskId
+  if (!taskId) throw new Error('Kie.ai returned no taskId')
+
+  // Step 2: Poll for result
+  for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, POLL_INTERVAL_MS))
+    const pollRes = await fetch(
+      `https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${encodeURIComponent(taskId)}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } },
+    )
+    if (!pollRes.ok) continue
+    type PollResp = { code: number; data?: { state: string; resultJson?: string; failMsg?: string } }
+    const pollData = await pollRes.json() as PollResp
+    const state = pollData.data?.state
+    if (state === 'success') {
+      try {
+        const result = JSON.parse(pollData.data!.resultJson || '{}')
+        const url = result.resultImageUrl || result.url || (Array.isArray(result.urls) ? result.urls[0] : null)
+        if (url) return url
+      } catch {}
+      throw new Error('Kie.ai task succeeded but returned no image URL')
+    }
+    if (state === 'fail') {
+      throw new Error(pollData.data?.failMsg || 'Kie.ai image generation failed')
+    }
+  }
+  throw new Error('Kie.ai timed out — try again')
+}
 // ─── base64 data URL helper (edge-safe, chunked to avoid stack overflow) ──────
 function toDataUrl(buffer: ArrayBuffer, mime: string): string {
   const bytes = new Uint8Array(buffer)
@@ -232,6 +323,10 @@ export async function POST(req: NextRequest) {
       image_url = await generateHuggingFace(imagePrompt)
     } else if (provider === 'cloudflare_sdxl') {
       image_url = await generateCloudflare(imagePrompt)
+    } else if (provider === 'abhibots_firefly') {
+      image_url = await generateAbhiBots(imagePrompt)
+    } else if (provider === 'kie_flux') {
+      image_url = await generateKieAI(imagePrompt)
     } else {
       await refund()
       return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 500 })
