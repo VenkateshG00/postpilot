@@ -312,15 +312,13 @@ export default function StorageClient() {
                     {data.totalSize > 0 ? Math.round((u.totalSize / data.totalSize) * 100) : 0}%
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {u.userId !== 'system' && (
-                      <button
-                        onClick={() => deleteUserFiles(u.userId, u.name)}
-                        disabled={deleting}
-                        className="text-xs text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
-                      >
-                        Delete all
-                      </button>
-                    )}
+                    <button
+                      onClick={() => deleteUserFiles(u.userId, u.name)}
+                      disabled={deleting}
+                      className="text-xs text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+                    >
+                      Delete all
+                    </button>
                   </td>
                 </tr>
               ))}

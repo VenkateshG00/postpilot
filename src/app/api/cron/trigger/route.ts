@@ -252,7 +252,55 @@ export async function GET(request: NextRequest) {
             results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: n8nRes.status, plan })
         }
 
-        return NextResponse.json({ message: 'Cron executed', time: p_current_time, triggered: schedules.length, results })
+        // ── Auto-cleanup: delete storage files from published posts older than retention ──
+        let cleaned = 0
+        try {
+            const settingsRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/app_settings?id=eq.1&select=storage_auto_delete_hours`,
+                { headers: sbHeaders }
+            )
+            const settingsRows = await settingsRes.json()
+            const autoDeleteHours = settingsRows?.[0]?.storage_auto_delete_hours ?? 24
+            if (autoDeleteHours > 0) {
+                const cutoff = new Date(Date.now() - autoDeleteHours * 60 * 60 * 1000).toISOString()
+                const oldRes = await fetch(
+                    `${SUPABASE_URL}/rest/v1/post_logs?status=eq.published&created_at=lt.${encodeURIComponent(cutoff)}&image_url=not.is.null&select=id,image_url&limit=200`,
+                    { headers: sbHeaders }
+                )
+                const oldPosts = await oldRes.json()
+                if (Array.isArray(oldPosts) && oldPosts.length > 0) {
+                    const pathsToDelete: string[] = []
+                    const idsToUpdate: string[] = []
+                    for (const post of oldPosts) {
+                        const url = post.image_url || ''
+                        const match = url.match(/\/storage\/v1\/object\/public\/ai-images\/(.+)$/)
+                        if (match) {
+                            pathsToDelete.push(match[1])
+                            idsToUpdate.push(post.id)
+                        }
+                    }
+                    if (pathsToDelete.length > 0) {
+                        // Delete files from Supabase storage
+                        await fetch(`${SUPABASE_URL}/storage/v1/object/ai-images`, {
+                            method: 'DELETE',
+                            headers: { ...sbHeaders, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prefixes: pathsToDelete }),
+                        })
+                        // Nullify image_url so we don't try again next run
+                        for (const id of idsToUpdate) {
+                            await fetch(`${SUPABASE_URL}/rest/v1/post_logs?id=eq.${id}`, {
+                                method: 'PATCH',
+                                headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                                body: JSON.stringify({ image_url: null }),
+                            })
+                        }
+                        cleaned = pathsToDelete.length
+                    }
+                }
+            }
+        } catch { /* cleanup is best-effort, don't break the cron */ }
+
+        return NextResponse.json({ message: 'Cron executed', time: p_current_time, triggered: schedules.length, results, cleaned })
 
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 })

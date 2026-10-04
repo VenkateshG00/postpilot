@@ -130,12 +130,25 @@ export async function POST(req: NextRequest) {
     if (!userId) return NextResponse.json({ error: 'No user_id' }, { status: 400 })
 
     const allPaths: string[] = []
-    for (const folder of ['media/images', 'media/videos']) {
-      const prefix = `${folder}/${userId}`
-      const { data: files } = await svc.storage.from(BUCKET).list(prefix)
-      if (files) {
-        for (const f of files) {
-          if (f.name) allPaths.push(`${prefix}/${f.name}`)
+
+    if (userId === 'system') {
+      // Root-level files (AI Generated) — not inside media/images or media/videos
+      const { data: rootFiles } = await svc.storage.from(BUCKET).list('', { limit: 500 })
+      if (rootFiles) {
+        for (const f of rootFiles) {
+          if (!f.name || f.id === null || !f.metadata) continue
+          if (f.name === 'media' || f.name === '.emptyFolderPlaceholder') continue
+          allPaths.push(f.name)
+        }
+      }
+    } else {
+      for (const folder of ['media/images', 'media/videos']) {
+        const prefix = `${folder}/${userId}`
+        const { data: files } = await svc.storage.from(BUCKET).list(prefix)
+        if (files) {
+          for (const f of files) {
+            if (f.name) allPaths.push(`${prefix}/${f.name}`)
+          }
         }
       }
     }
