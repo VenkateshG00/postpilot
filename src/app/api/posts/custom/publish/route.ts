@@ -62,16 +62,112 @@ export async function POST(req: NextRequest) {
   const caption = String(body.caption ?? '')
   const media_url = String(body.image_url ?? body.media_url ?? '')
   const topic = String(body.topic ?? 'Custom post')
-  const content_type = ['post', 'reel', 'story'].includes(body.content_type) ? body.content_type : 'post'
+  const content_type = ['post', 'reel', 'story', 'carousel'].includes(body.content_type) ? body.content_type : 'post'
   const scheduledFor = body.scheduled_for ? new Date(body.scheduled_for) : null
   const isFuture = !!scheduledFor && !isNaN(scheduledFor.getTime()) && scheduledFor.getTime() > Date.now() + 30000
-  if (!accountId || !media_url || !caption) return NextResponse.json({ error: 'Missing post content' }, { status: 400 })
+  if (!accountId || !caption) return NextResponse.json({ error: 'Missing post content' }, { status: 400 })
+  if (content_type !== 'carousel' && !media_url) return NextResponse.json({ error: 'Missing post content' }, { status: 400 })
 
   const { data: acct } = await supabase.from('social_accounts')
     .select('id, ig_business_id, access_token').eq('id', accountId).eq('user_id', user.id).maybeSingle()
   if (!acct) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
 
   const svc = await createServiceClient()
+
+  // ─── Carousel publishing ─────────────────────────────────────────────────────
+  if (content_type === 'carousel') {
+    const carouselSlides = body.carousel_slides
+    if (!Array.isArray(carouselSlides) || carouselSlides.length < 2) {
+      return NextResponse.json({ error: 'Carousel needs at least 2 slides' }, { status: 400 })
+    }
+
+    // Upload all slide images to stable Supabase public URLs
+    const stableSlideUrls: string[] = []
+    for (const slide of carouselSlides) {
+      if (!slide.image_url) continue
+      try {
+        const url = await ensurePublicUrl(slide.image_url, svc)
+        stableSlideUrls.push(url)
+      } catch {
+        return NextResponse.json({ error: 'Failed to upload carousel image' }, { status: 502 })
+      }
+    }
+    if (stableSlideUrls.length < 2) {
+      return NextResponse.json({ error: 'Need at least 2 valid images for carousel' }, { status: 400 })
+    }
+
+    // Create post log entry
+    const { data: log, error: logErr } = await svc.from('post_logs').insert({
+      user_id: user.id, social_account_id: accountId, platform: 'instagram',
+      status: isFuture ? 'scheduled' : 'pending',
+      image_url: stableSlideUrls[0], caption, topic_used: topic,
+      content_type: 'carousel',
+      scheduled_for: isFuture ? scheduledFor!.toISOString() : new Date().toISOString(),
+    }).select('id').single()
+    if (logErr) return NextResponse.json({ error: logErr.message }, { status: 500 })
+
+    if (isFuture) {
+      return NextResponse.json({ ok: true, scheduled: true, scheduled_for: scheduledFor!.toISOString(), post_log_id: log.id })
+    }
+
+    // Publish carousel via Instagram Graph API (3-step flow)
+    try {
+      // Step 1: Create individual media containers for each slide
+      const containerIds: string[] = []
+      for (const url of stableSlideUrls) {
+        const params = new URLSearchParams({
+          image_url: url,
+          is_carousel_item: 'true',
+          access_token: acct.access_token,
+        })
+        const cRes = await fetch(
+          `https://graph.facebook.com/v22.0/${acct.ig_business_id}/media?${params}`,
+          { method: 'POST' }
+        )
+        const cData = await cRes.json()
+        if (cData.error) throw new Error(cData.error.message || 'Container creation failed')
+        containerIds.push(cData.id)
+      }
+
+      // Step 2: Create the carousel container referencing all children
+      const carouselParams = new URLSearchParams({
+        media_type: 'CAROUSEL',
+        children: containerIds.join(','),
+        caption,
+        access_token: acct.access_token,
+      })
+      const crRes = await fetch(
+        `https://graph.facebook.com/v22.0/${acct.ig_business_id}/media?${carouselParams}`,
+        { method: 'POST' }
+      )
+      const crData = await crRes.json()
+      if (crData.error) throw new Error(crData.error.message || 'Carousel creation failed')
+
+      // Step 3: Publish the carousel
+      const pubParams = new URLSearchParams({
+        creation_id: crData.id,
+        access_token: acct.access_token,
+      })
+      const pubRes = await fetch(
+        `https://graph.facebook.com/v22.0/${acct.ig_business_id}/media_publish?${pubParams}`,
+        { method: 'POST' }
+      )
+      const pubData = await pubRes.json()
+      if (pubData.error) throw new Error(pubData.error.message || 'Publish failed')
+
+      // Mark as published
+      await svc.from('post_logs').update({
+        status: 'published', ig_post_id: pubData.id,
+      }).eq('id', log.id)
+
+      return NextResponse.json({ ok: true, post_log_id: log.id, ig_post_id: pubData.id })
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Carousel publish failed'
+      await svc.from('post_logs').update({ status: 'failed', error_message: msg }).eq('id', log.id)
+      return NextResponse.json({ error: msg }, { status: 502 })
+    }
+  }
+
 
   // Resolve media to a stable public Supabase URL
   const isVideo = content_type === 'reel' || media_url.match(/\.(mp4|mov|webm)(\?|$)/i) !== null

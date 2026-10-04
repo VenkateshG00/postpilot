@@ -80,11 +80,10 @@ export default function CarouselClient({
  const data = await res.json()
  if (!res.ok) throw new Error(data.error || 'Failed')
 
- /* Parse: use the same image for all slides initially, split caption by line */
  const captionLines = (data.caption || '').split('\n').filter((l: string) => l.trim())
  const newSlides: Slide[] = Array.from({ length: slideCount }, (_, i) => ({
  id: newSlideId(),
- image_url: data.image_url || '',
+ image_url: '',
  caption: captionLines[i] || `Slide ${i + 1}`,
  }))
 
@@ -92,6 +91,22 @@ export default function CarouselClient({
  setMainCaption(data.caption || '')
  setActiveSlideIdx(0)
  if (typeof data.credits_left === 'number') setCredits(data.credits_left)
+
+ // Generate unique AI images for each slide in parallel
+ await Promise.all(newSlides.map(async (slide) => {
+   try {
+     const imgRes = await fetch('/api/posts/generate-image', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ brief: slide.caption }),
+     })
+     const imgData = await imgRes.json()
+     if (imgRes.ok && imgData.image_url) {
+       setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, image_url: imgData.image_url } : s))
+       if (typeof imgData.credits_left === 'number') setCredits(imgData.credits_left)
+     }
+   } catch { /* best-effort per slide */ }
+ }))
  } catch (e: unknown) {
  setError(e instanceof Error ? e.message : 'Generation failed')
  } finally {
@@ -316,7 +331,7 @@ export default function CarouselClient({
  >
  {idx + 1}
  </span>
- {genSlideImg === slide.id && (
+ {(genSlideImg === slide.id || (gen && !slide.image_url)) && (
  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
  <Loader2 size={16} className="animate-spin text-white" />
  </div>
