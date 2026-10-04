@@ -69,7 +69,7 @@ function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[
   const items: NotifItem[] = []
 
   // Use start-of-today as a stable timestamp for suggestions so unread count
-  // doesn’t keep resetting every time the 30s poll re-runs buildNotifications.
+  // doesn't keep resetting every time the 30s poll re-runs buildNotifications.
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const stableSugTime = todayStart.toISOString()
@@ -87,38 +87,38 @@ function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[
       for (const t of times) {
         timeLabels.push(formatTime12(t))
       }
-      types.push(contentLabel(s.content_type ?? ‘post’))
+      types.push(contentLabel(s.content_type ?? 'post'))
     }
 
     if (totalPosts === 1) {
       const ct = types[0]
       items.push({
         id: `sug-${activeSchedules[0].id}`,
-        type: ‘suggestion’,
+        type: 'suggestion',
         title: `Your plan suggests a ${ct} around ${timeLabels[0]} today`,
-        description: `Today’s plan suggests a ${ct} around ${timeLabels[0]} and nothing is scheduled for it yet. Posting consistently helps grow your reach.`,
+        description: `Today's plan suggests a ${ct} around ${timeLabels[0]} and nothing is scheduled for it yet. Posting consistently helps grow your reach.`,
         time: stableSugTime,
-        actionLabel: ‘schedule’,
-        actionHref: ‘/dashboard/schedule’,
-        contentType: types[0] === ‘reel’ ? ‘reel’ : ‘post’,
+        actionLabel: 'schedule',
+        actionHref: '/dashboard/schedule',
+        contentType: types[0] === 'reel' ? 'reel' : 'post',
       })
     } else if (totalPosts > 1) {
       const typesList = [...new Set(types)]
-      const typesStr = typesList.length === 1 ? `${typesList[0]}s` : ‘posts’
+      const typesStr = typesList.length === 1 ? `${typesList[0]}s` : 'posts'
       const descParts = activeSchedules.map((s, i) => {
-        const ct = contentLabel(s.content_type ?? ‘post’)
+        const ct = contentLabel(s.content_type ?? 'post')
         const t = (s.post_times ?? [])[0]
         return `a ${ct} around ${t ? formatTime12(t) : timeLabels[i] ?? timeLabels[0]}`
       }).slice(0, 2)
       items.push({
-        id: ‘sug-multi’,
-        type: ‘suggestion’,
+        id: 'sug-multi',
+        type: 'suggestion',
         title: `Your plan suggests ${totalPosts} ${typesStr} today`,
-        description: `Today’s plan suggests ${descParts.join(‘ and ‘)}. Nothing is scheduled yet.`,
+        description: `Today's plan suggests ${descParts.join(' and ')}. Nothing is scheduled yet.`,
         time: stableSugTime,
-        actionLabel: ‘schedule’,
-        actionHref: ‘/dashboard/schedule’,
-        contentType: ‘post’,
+        actionLabel: 'schedule',
+        actionHref: '/dashboard/schedule',
+        contentType: 'post',
       })
     }
   }
