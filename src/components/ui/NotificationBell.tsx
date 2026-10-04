@@ -68,6 +68,12 @@ function contentLabel(ct: string): string {
 function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[] {
   const items: NotifItem[] = []
 
+  // Use start-of-today as a stable timestamp for suggestions so unread count
+  // doesn’t keep resetting every time the 30s poll re-runs buildNotifications.
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const stableSugTime = todayStart.toISOString()
+
   // Build schedule suggestion notifications
   const activeSchedules = schedules.filter(s => s.is_active && s.post_times?.length)
   if (activeSchedules.length > 0) {
@@ -81,38 +87,38 @@ function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[
       for (const t of times) {
         timeLabels.push(formatTime12(t))
       }
-      types.push(contentLabel(s.content_type ?? 'post'))
+      types.push(contentLabel(s.content_type ?? ‘post’))
     }
 
     if (totalPosts === 1) {
       const ct = types[0]
       items.push({
         id: `sug-${activeSchedules[0].id}`,
-        type: 'suggestion',
+        type: ‘suggestion’,
         title: `Your plan suggests a ${ct} around ${timeLabels[0]} today`,
         description: `Today’s plan suggests a ${ct} around ${timeLabels[0]} and nothing is scheduled for it yet. Posting consistently helps grow your reach.`,
-        time: new Date().toISOString(),
-        actionLabel: 'schedule',
-        actionHref: '/dashboard/schedule',
-        contentType: types[0] === 'reel' ? 'reel' : 'post',
+        time: stableSugTime,
+        actionLabel: ‘schedule’,
+        actionHref: ‘/dashboard/schedule’,
+        contentType: types[0] === ‘reel’ ? ‘reel’ : ‘post’,
       })
     } else if (totalPosts > 1) {
       const typesList = [...new Set(types)]
-      const typesStr = typesList.length === 1 ? `${typesList[0]}s` : 'posts'
+      const typesStr = typesList.length === 1 ? `${typesList[0]}s` : ‘posts’
       const descParts = activeSchedules.map((s, i) => {
-        const ct = contentLabel(s.content_type ?? 'post')
+        const ct = contentLabel(s.content_type ?? ‘post’)
         const t = (s.post_times ?? [])[0]
         return `a ${ct} around ${t ? formatTime12(t) : timeLabels[i] ?? timeLabels[0]}`
       }).slice(0, 2)
       items.push({
-        id: 'sug-multi',
-        type: 'suggestion',
+        id: ‘sug-multi’,
+        type: ‘suggestion’,
         title: `Your plan suggests ${totalPosts} ${typesStr} today`,
-        description: `Today’s plan suggests ${descParts.join(' and ')}. Nothing is scheduled yet.`,
-        time: new Date().toISOString(),
-        actionLabel: 'schedule',
-        actionHref: '/dashboard/schedule',
-        contentType: 'post',
+        description: `Today’s plan suggests ${descParts.join(‘ and ‘)}. Nothing is scheduled yet.`,
+        time: stableSugTime,
+        actionLabel: ‘schedule’,
+        actionHref: ‘/dashboard/schedule’,
+        contentType: ‘post’,
       })
     }
   }
@@ -158,7 +164,7 @@ function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[
         actionHref: '/dashboard/posts',
         contentType: p.content_type ?? 'post',
       })
-    } else {
+    } else if (p.status === 'pending_approval') {
       items.push({
         id: p.id,
         type: 'pending',
@@ -169,10 +175,23 @@ function buildNotifications(posts: PostLog[], schedules: Schedule[]): NotifItem[
         actionHref: '/dashboard/approvals',
         contentType: p.content_type ?? 'post',
       })
+    } else if (p.status === 'pending') {
+      items.push({
+        id: p.id,
+        type: 'scheduled',
+        title: `${ctCap} is processing`,
+        description: p.caption ? p.caption.slice(0, 100) : 'Your post is being prepared for publishing.',
+        time: p.created_at,
+        actionLabel: 'details',
+        actionHref: '/dashboard/posts',
+        contentType: p.content_type ?? 'post',
+      })
     }
   }
 
-  return items
+  // Sort by time descending and cap at exactly 5
+  items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+  return items.slice(0, 5)
 }
 
 /* ─── Notification icon per type ────────────────────────────────────────────── */
@@ -263,7 +282,7 @@ export default function NotificationBell() {
           .from('post_logs')
           .select('id, caption, published_at, created_at, ig_permalink, status, content_type, scheduled_for')
           .eq('user_id', user.id)
-          .in('status', ['published', 'scheduled', 'failed', 'pending'])
+          .in('status', ['published', 'scheduled', 'failed', 'pending', 'pending_approval'])
           .order('created_at', { ascending: false })
           .limit(5),
         supabase

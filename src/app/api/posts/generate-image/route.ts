@@ -15,7 +15,7 @@ const AI_PROVIDERS: Record<string, { label: string; quality: number; suggestedCr
   cloudflare_sdxl:  { label: 'SDXL Lightning (Cloudflare)', quality: 2, suggestedCredits: 2 },
   pollinations:     { label: 'Pollinations.ai',              quality: 1, suggestedCredits: 1 },
   abhibots_firefly: { label: 'Firefly (AbhiBots)',            quality: 4, suggestedCredits: 3 },
-  kie_flux:         { label: 'Flux Kontext (Kie.ai)',         quality: 4, suggestedCredits: 3 },
+  kie_flux:         { label: 'Flux Kontext (Kie.ai)',           quality: 4, suggestedCredits: 3 },
 }
 
 // ─── Replicate ────────────────────────────────────────────────────────────────
@@ -181,39 +181,59 @@ async function generateAbhiBots(prompt: string): Promise<string> {
 
 // ─── Kie.ai (Flux Kontext) ───────────────────────────────────────────────────
 // Async task-based API: create task → poll for result.
-async function generateKieAI(prompt: string): Promise<string> {
-  const apiKey = process.env.KIE_API_KEY
-  if (!apiKey) throw new Error('KIE_API_KEY not configured')
+// Tries models in order until one is authorized for the API key.
+const KIE_MODELS = ['flux-kontext-pro', 'flux1-kontext', 'flux-kontext-max']
 
-  // Step 1: Create task
-  const createRes = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+async function kieCreateTask(apiKey: string, model: string, prompt: string) {
+  const res = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'flux1-kontext',
-      input: {
-        prompt,
-        aspect_ratio: '1:1',
-      },
+      model,
+      input: { prompt, aspect_ratio: '1:1' },
     }),
   })
-  if (!createRes.ok) {
-    const err = await createRes.text()
-    if (createRes.status === 429) throw new Error('Kie.ai rate limit reached — please wait and try again.')
-    throw new Error(`Kie.ai error ${createRes.status}: ${err.slice(0, 200)}`)
+  if (!res.ok) {
+    const err = await res.text()
+    if (res.status === 429) throw new Error('Kie.ai rate limit reached — please wait and try again.')
+    return { ok: false, code: res.status, msg: err.slice(0, 200) }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const createData = await createRes.json() as any
-  // Kie.ai returns HTTP 200 but may have error codes in the body
-  if (createData?.code && createData.code !== 200 && createData.code !== 0) {
-    throw new Error(`Kie.ai API error (${createData.code}): ${createData.msg || JSON.stringify(createData).slice(0, 200)}`)
+  const data = await res.json() as any
+  // Kie.ai returns HTTP 200 but may have error codes in the body (e.g. 401 unauthorized)
+  if (data?.code && data.code !== 200 && data.code !== 0) {
+    return { ok: false, code: data.code, msg: data.msg || JSON.stringify(data).slice(0, 200) }
   }
-  // Kie.ai may return taskId at different paths depending on API version
-  const taskId = createData?.data?.taskId || createData?.data?.task_id || createData?.taskId || createData?.task_id
-  if (!taskId) throw new Error(`Kie.ai returned no taskId. Response: ${JSON.stringify(createData).slice(0, 300)}`)
+  const taskId = data?.data?.taskId || data?.data?.task_id || data?.taskId || data?.task_id
+  if (!taskId) return { ok: false, code: 0, msg: `No taskId. Response: ${JSON.stringify(data).slice(0, 200)}` }
+  return { ok: true, taskId }
+}
+
+async function generateKieAI(prompt: string): Promise<string> {
+  const apiKey = process.env.KIE_API_KEY
+  if (!apiKey) throw new Error('KIE_API_KEY not configured')
+
+  // Step 1: Try each model until one works
+  let taskId: string | undefined
+  let lastErr = ''
+  for (const model of KIE_MODELS) {
+    const result = await kieCreateTask(apiKey, model, prompt)
+    if (result.ok && result.taskId) {
+      taskId = result.taskId
+      break
+    }
+    lastErr = `${model}: (${result.code}) ${result.msg}`
+    // If error is NOT about authorization, stop trying other models
+    if (result.code !== 401 && result.code !== 403) {
+      throw new Error(`Kie.ai error: ${lastErr}`)
+    }
+  }
+  if (!taskId) {
+    throw new Error(`Kie.ai: None of the available models are authorized for your API key. Last error: ${lastErr}`)
+  }
 
   // Step 2: Poll for result
   for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
