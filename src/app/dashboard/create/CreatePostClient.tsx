@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useRef, useCallback } from "react"
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap, Type } from "lucide-react"
+import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap, Type, Heart, MessageCircle, Bookmark, MoreHorizontal, Share2 } from "lucide-react"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
 import { useToast } from "@/components/ui/Toast"
 
@@ -721,83 +721,162 @@ export default function CreatePostClient({
             </button>
           </div>
 
-          {/* AI Preview — Clean Card */}
+          {/* AI Preview — Instagram Post Mockup */}
           {preview && (
-            <div className="mt-5 overflow-hidden" style={{ borderRadius: "16px", border: "1px solid var(--border)", background: "var(--card-bg, #fff)" }}>
-              {/* Image section */}
-              <div className="relative">
-                {preview.image_url ? (
-                  <img src={preview.image_url} alt="" className="w-full aspect-square object-cover" />
-                ) : (
-                  <div className="w-full aspect-square flex items-center justify-center text-sm" style={{ background: "var(--bg)", color: "var(--text-muted)" }}>
-                    <div className="text-center">
-                      <ImagePlus size={32} className="mx-auto mb-2" style={{ opacity: 0.4 }} />
-                      <p>No image generated</p>
+            <div className="mt-5 space-y-4">
+              {/* ── Instagram Phone Mockup ── */}
+              <div style={{ maxWidth: 420, margin: "0 auto" }}>
+                <div style={{
+                  borderRadius: 24,
+                  overflow: "hidden",
+                  border: "1px solid var(--border)",
+                  background: "var(--card-bg, #fff)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+                }}>
+                  {/* IG Header */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div style={{
+                        width: 36, height: 36, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+                        padding: 2, display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <div className="flex items-center justify-center text-xs font-bold" style={{
+                          width: "100%", height: "100%", borderRadius: "50%",
+                          background: "var(--card-bg, #fff)", color: "var(--accent)",
+                        }}>
+                          {(accounts.find(a => a.id === accountId)?.account_name || "?")[0].toUpperCase()}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold leading-tight" style={{ color: "var(--text-primary)" }}>
+                          {accounts.find(a => a.id === accountId)?.account_name || "account"}
+                        </p>
+                        <p className="text-[11px] leading-tight" style={{ color: "var(--text-muted)" }}>Original post</p>
+                      </div>
                     </div>
+                    <MoreHorizontal size={18} style={{ color: "var(--text-muted)" }} />
                   </div>
-                )}
-                {genImg && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm" style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
-                    <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
-                    <span className="font-medium">Generating AI image...</span>
+
+                  {/* IG Image */}
+                  <div className="relative" style={{ background: "#000" }}>
+                    {preview.image_url ? (
+                      <img src={preview.image_url} alt="" className="w-full aspect-square object-cover" style={{ display: "block" }} />
+                    ) : (
+                      <div className="w-full aspect-square flex items-center justify-center" style={{ background: "var(--bg)" }}>
+                        <div className="text-center" style={{ color: "var(--text-muted)" }}>
+                          <ImagePlus size={40} className="mx-auto mb-2" style={{ opacity: 0.3 }} />
+                          <p className="text-sm font-medium">No image yet</p>
+                          <p className="text-xs mt-1" style={{ opacity: 0.6 }}>Generate one below</p>
+                        </div>
+                      </div>
+                    )}
+                    {genImg && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{
+                        background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)",
+                      }}>
+                        <Loader2 size={28} className="animate-spin" style={{ color: "#fff" }} />
+                        <span className="text-sm font-medium" style={{ color: "#fff" }}>Generating image...</span>
+                      </div>
+                    )}
                   </div>
-                )}
-                {/* Regen Image button overlay */}
-                {!genImg && !genCap && aiImageProvider !== "none" && (
-                  <button onClick={generateAIImage} disabled={genImg || gen || genCap || credits < aiImageCredits}
-                    className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium disabled:opacity-40 transition-all hover:scale-105"
-                    style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--text-primary)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-                    <ImagePlus size={14} /> Regenerate image <span style={{ color: "var(--text-muted)" }}>({aiImageCredits} cr)</span>
-                  </button>
-                )}
+
+                  {/* IG Action Icons */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-4">
+                      <Heart size={22} style={{ color: "var(--text-primary)" }} />
+                      <MessageCircle size={22} style={{ color: "var(--text-primary)", transform: "scaleX(-1)" }} />
+                      <Share2 size={20} style={{ color: "var(--text-primary)" }} />
+                    </div>
+                    <Bookmark size={22} style={{ color: "var(--text-primary)" }} />
+                  </div>
+
+                  {/* IG Caption Area */}
+                  <div className="px-4 pb-4">
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                      <span className="font-semibold mr-1.5">{accounts.find(a => a.id === accountId)?.account_name || "account"}</span>
+                      <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        {(caption || preview.caption).length > 140
+                          ? (caption || preview.caption).slice(0, 140) + "..."
+                          : (caption || preview.caption)}
+                      </span>
+                    </p>
+                    {(caption || preview.caption).length > 140 && (
+                      <button className="text-xs mt-0.5" style={{ color: "var(--text-muted)", background: "none", border: "none", padding: 0, cursor: "default" }}>
+                        more
+                      </button>
+                    )}
+                    <p className="text-[11px] mt-2 uppercase tracking-wide" style={{ color: "var(--text-muted)", opacity: 0.7 }}>Just now</p>
+                  </div>
+                </div>
+
+                {/* "Preview" label */}
+                <p className="text-center text-[11px] mt-2 font-medium tracking-wide uppercase" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+                  Preview · How your post will look on Instagram
+                </p>
               </div>
 
-              {/* Caption section */}
-              <div className="p-5 space-y-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "var(--accent)", color: "#fff" }}>
-                    {(accounts.find(a => a.id === accountId)?.account_name || "?")[0].toUpperCase()}
+              {/* ── Edit Controls ── */}
+              <div className="card p-5 space-y-4" style={{ maxWidth: 420, margin: "0 auto" }}>
+                {/* Editable caption */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Edit caption</label>
+                    <span className="text-xs tabular-nums" style={{ color: (caption || preview.caption).length > 2200 ? "#ef4444" : "var(--text-muted)" }}>
+                      {(caption || preview.caption).length} / 2,200
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                    @{accounts.find(a => a.id === accountId)?.account_name || "account"}
-                  </span>
+                  <textarea
+                    value={caption || preview.caption}
+                    onChange={e => {
+                      const val = e.target.value
+                      setPreview(p => p ? { ...p, caption: val } : p)
+                      setCaption(val)
+                    }}
+                    rows={5}
+                    className="w-full text-sm p-3.5 resize-y transition-colors"
+                    style={{
+                      background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)",
+                      outline: "none", lineHeight: "1.65", borderRadius: 14,
+                    }}
+                    placeholder="Edit your caption..."
+                  />
                 </div>
 
-                <textarea
-                  value={preview.caption}
-                  onChange={e => {
-                    const val = e.target.value
-                    setPreview(p => p ? { ...p, caption: val } : p)
-                    setCaption(val)
-                  }}
-                  rows={6}
-                  className="w-full text-sm rounded-xl p-3.5 resize-y transition-colors"
-                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", outline: "none", lineHeight: "1.6" }}
-                  placeholder="Edit your caption..."
-                />
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2">
+                {/* Regen buttons row */}
+                <div className="flex gap-2">
                   <button onClick={regenerateCaption} disabled={genCap || gen || genImg}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40 hover:scale-[1.02]"
-                    style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                    style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", borderRadius: 12 }}>
                     {genCap ? <Loader2 size={15} className="animate-spin" /> : <Type size={15} />}
-                    Regen caption
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>1 cr</span>
+                    New caption
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>1 cr</span>
                   </button>
-                  <button onClick={() => publish()} disabled={posting || genImg || genCap}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50">
-                    {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
-                  </button>
+                  {aiImageProvider !== "none" && (
+                    <button onClick={generateAIImage} disabled={genImg || gen || genCap || credits < aiImageCredits}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                      style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", borderRadius: 12 }}>
+                      {genImg ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}
+                      New image
+                      <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{aiImageCredits} cr</span>
+                    </button>
+                  )}
                 </div>
+
+                {/* Post button */}
+                <button onClick={() => publish()} disabled={posting || genImg || genCap}
+                  className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold disabled:opacity-50"
+                  style={{ borderRadius: 14 }}>
+                  {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
+                </button>
 
                 {/* Schedule row */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
                   <Clock size={14} style={{ color: "var(--text-muted)" }} />
                   <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule for</span>
-                  <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm rounded-xl" style={inputStyle} />
+                  <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm" style={{ ...inputStyle, borderRadius: 12 }} />
                   <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor || genImg}
-                    className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap rounded-xl disabled:opacity-50">Schedule</button>
+                    className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50" style={{ borderRadius: 12 }}>Schedule</button>
                 </div>
               </div>
             </div>
