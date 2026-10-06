@@ -1,7 +1,12 @@
 "use client"
 
-import { useMemo, useState, useRef, useCallback } from "react"
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap, Type, Heart, MessageCircle, Bookmark, MoreHorizontal, Share2 } from "lucide-react"
+import { useMemo, useState, useRef, useCallback, useEffect } from "react"
+import {
+  Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper,
+  ImagePlus, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight,
+  Zap, Type, Heart, MessageCircle, Bookmark, MoreHorizontal, Share2,
+  Smile, Save, TrendingUp, ChevronDown, ChevronUp
+} from "lucide-react"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
 import { useToast } from "@/components/ui/Toast"
 
@@ -23,15 +28,37 @@ const TAB_CONFIG: { value: ContentTab; label: string; icon: typeof Image; title:
   { value: "story", label: "Story", icon: CircleDot,  title: "Create story", desc: "Upload an image or video for your story.",            accept: "image/*,video/*",     formats: "JPG, PNG, MP4, MOV",    dropLabel: "image or video" },
 ]
 
-/* Tone indicator color based on score */
+/* ─── Emoji data ─── */
+const EMOJI_CATS = [
+  { name: "Popular", emojis: ["🔥","❤️","✨","💯","🎉","👏","🙌","💪","👍","😍","🤩","😂","🥰","😎","💎","⭐"] },
+  { name: "Social", emojis: ["📸","🎬","🎨","💡","🏆","🎯","📱","🎵","📌","✅","💰","🛍️","📢","🎤","🚀","💬"] },
+  { name: "Nature", emojis: ["🌸","🌺","🌻","🌈","☀️","🌙","⚡","🍃","🌿","🦋","🌊","🏔️","🌅","🍀","🌹","🐾"] },
+  { name: "Food", emojis: ["☕","🍕","🎂","🍷","🥗","🍩","🧁","🍔","🥤","🍦","🌶️","🍣","🥑","🫖","🧋","🍹"] },
+]
+
+/* ─── Best posting times (IST general) ─── */
+const BEST_TIMES = [
+  { h: 11, label: "11:00 AM", quality: "peak" as const,  reason: "Lunch break scroll" },
+  { h: 13, label: "1:00 PM",  quality: "good" as const,  reason: "Post-lunch browse" },
+  { h: 17, label: "5:00 PM",  quality: "peak" as const,  reason: "After work / school" },
+  { h: 19, label: "7:00 PM",  quality: "peak" as const,  reason: "Prime-time feed" },
+  { h: 21, label: "9:00 PM",  quality: "good" as const,  reason: "Night scrolling" },
+]
+
+/* ─── Aspect ratios ─── */
+const RATIOS = [
+  { label: "1:1", css: "1/1", desc: "Square" },
+  { label: "4:5", css: "4/5", desc: "Portrait" },
+  { label: "16:9", css: "16/9", desc: "Landscape" },
+]
+
+/* ─── Style helpers ─── */
 function toneColor(score: number): string {
   if (score >= 90) return "#22c55e"
   if (score >= 80) return "#3b82f6"
   if (score >= 70) return "#f59e0b"
   return "#94a3b8"
 }
-
-/* Hashtag relevance color */
 function hashColor(relevance: number): string {
   if (relevance >= 90) return "rgba(34,197,94,0.15)"
   if (relevance >= 80) return "rgba(59,130,246,0.15)"
@@ -44,18 +71,38 @@ function hashTextColor(relevance: number): string {
   if (relevance >= 70) return "#d97706"
   return "#64748b"
 }
+function qualityDot(q: "peak" | "good") {
+  return q === "peak" ? "#22c55e" : "#3b82f6"
+}
+
+/* Glass card */
+const glass: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--card-bg, #fff) 72%, transparent)",
+  backdropFilter: "blur(24px) saturate(1.4)",
+  WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+  border: "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
+  boxShadow: "0 8px 40px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.02), inset 0 0.5px 0 rgba(255,255,255,0.12)",
+  borderRadius: 22,
+}
+const glassInner: React.CSSProperties = {
+  background: "color-mix(in srgb, var(--bg) 80%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--border) 40%, transparent)",
+  borderRadius: 14,
+}
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "10px 14px",
-  borderRadius: 12,
+  padding: "11px 14px",
+  borderRadius: 14,
   fontSize: 14,
   outline: "none",
-  background: "var(--bg)",
-  border: "1px solid var(--border)",
+  background: "color-mix(in srgb, var(--bg) 85%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
   color: "var(--text-primary)",
+  transition: "border-color 0.2s, box-shadow 0.2s",
 }
 
+/* ─────────────────────── Component ─────────────────────── */
 export default function CreatePostClient({
   accounts,
   credits: initialCredits,
@@ -80,27 +127,34 @@ export default function CreatePostClient({
   const [posted, setPosted] = useState<"now" | "scheduled" | null>(null)
   const [scheduledFor, setScheduledFor] = useState("")
   const [error, setError] = useState("")
-  // Media upload state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploadPreview, setUploadPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  // Caption editing
   const [caption, setCaption] = useState("")
   const [mode, setMode] = useState<"upload" | "ai">("upload")
-  // Generate caption state (for upload mode)
   const [angle, setAngle] = useState("")
   const [generatingCaption, setGeneratingCaption] = useState(false)
   const [generatedCaption, setGeneratedCaption] = useState<GeneratedCaption | null>(null)
   const [captionLimitError, setCaptionLimitError] = useState<{ message: string; generations_used: number; generations_limit: number; reset_date: string } | null>(null)
   const [selectedTone, setSelectedTone] = useState<string | null>(null)
 
+  /* ── New state ── */
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [aspectRatio, setAspectRatio] = useState("1:1")
+  const [expandCaption, setExpandCaption] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
+  const [showBestTimes, setShowBestTimes] = useState(false)
+
+  const captionRef = useRef<HTMLTextAreaElement>(null)
+  const emojiRef = useRef<HTMLDivElement>(null)
+
   const upcoming = useMemo(() => upcomingFestivals(45, 8), [])
   const tabConfig = TAB_CONFIG.find(t => t.value === activeTab)!
 
-  /* -- Step indicator -- */
+  /* Step indicator */
   const currentStep = !uploadedFile && !preview ? 1 : (!preview && !caption && !generatedCaption) ? 2 : 3
   const steps = [
     { num: 1, label: "Upload" },
@@ -108,7 +162,42 @@ export default function CreatePostClient({
     { num: 3, label: "Schedule or post" },
   ]
 
-  /* -- File handling -- */
+  /* ── Auto-resize textarea ── */
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = Math.max(el.scrollHeight, 80) + "px"
+  }, [])
+
+  useEffect(() => {
+    if (captionRef.current) autoResize(captionRef.current)
+  }, [caption, autoResize])
+
+  /* ── Close emoji on click outside ── */
+  useEffect(() => {
+    if (!showEmoji) return
+    function handleClick(e: MouseEvent) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [showEmoji])
+
+  /* ── Insert emoji at cursor ── */
+  function insertEmoji(emoji: string) {
+    const el = captionRef.current
+    if (el) {
+      const start = el.selectionStart ?? caption.length
+      const end = el.selectionEnd ?? caption.length
+      const next = caption.slice(0, start) + emoji + caption.slice(end)
+      setCaption(next)
+      setTimeout(() => { el.selectionStart = el.selectionEnd = start + emoji.length; el.focus() }, 0)
+    } else {
+      setCaption(c => c + emoji)
+    }
+  }
+
+  /* ── File handling ── */
   function handleFile(file: File) {
     const isVideo = file.type.startsWith("video/")
     const isImage = file.type.startsWith("image/")
@@ -137,7 +226,6 @@ export default function CreatePostClient({
     setAngle("")
   }
 
-  /* -- Upload file to Supabase via API -- */
   async function uploadMedia(file: File): Promise<string> {
     const fd = new FormData()
     fd.append("file", file)
@@ -147,7 +235,6 @@ export default function CreatePostClient({
     return data.url
   }
 
-  /* -- Convert file to base64 in browser -- */
   function fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -157,70 +244,35 @@ export default function CreatePostClient({
     })
   }
 
-  /* -- Generate caption from uploaded media -- */
+  /* ── Generate caption from uploaded media ── */
   async function generateCaption(toneOverride?: string) {
     if (!uploadedFile) return
     setGeneratingCaption(true); setError(""); setCaptionLimitError(null)
-
     try {
-      // Convert file to base64 in browser — no Supabase upload needed for caption gen
       let base64Data: string | undefined
       const isImage = uploadedFile.type.startsWith("image/")
       if (isImage) {
-        if (uploadedFile.size > 4 * 1024 * 1024) {
-          setError("Image too large for AI analysis (max 4MB). Use a smaller image.")
-          setGeneratingCaption(false)
-          return
-        }
-        try {
-          base64Data = await fileToBase64(uploadedFile)
-        } catch {
-          setError("Could not read image file")
-          setGeneratingCaption(false)
-          return
-        }
+        if (uploadedFile.size > 4 * 1024 * 1024) { setError("Image too large for AI analysis (max 4MB). Use a smaller image."); setGeneratingCaption(false); return }
+        try { base64Data = await fileToBase64(uploadedFile) } catch { setError("Could not read image file"); setGeneratingCaption(false); return }
       }
-
       const res = await fetch("/api/posts/generate-caption", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: base64Data,
-          angle: angle.trim() || undefined,
-          content_type: activeTab,
-          tone: toneOverride || undefined,
-        }),
+        body: JSON.stringify({ image_base64: base64Data, angle: angle.trim() || undefined, content_type: activeTab, tone: toneOverride || undefined }),
       })
       const data = await res.json()
-
       if (res.status === 429 && data.error === "caption_limit_reached") {
-        setCaptionLimitError({
-          message: data.message,
-          generations_used: data.generations_used,
-          generations_limit: data.generations_limit,
-          reset_date: data.reset_date,
-        })
+        setCaptionLimitError({ message: data.message, generations_used: data.generations_used, generations_limit: data.generations_limit, reset_date: data.reset_date })
         return
       }
-
       if (!res.ok) throw new Error(data.error || "Failed")
-
-      setGeneratedCaption({
-        caption: data.caption,
-        hashtags: data.hashtags,
-        tones: data.tones,
-        generations_used: data.generations_used,
-        generations_limit: data.generations_limit,
-      })
+      setGeneratedCaption({ caption: data.caption, hashtags: data.hashtags, tones: data.tones, generations_used: data.generations_used, generations_limit: data.generations_limit })
       setCaption(data.caption)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Caption generation failed")
-    } finally {
-      setGeneratingCaption(false)
-    }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Caption generation failed") }
+    finally { setGeneratingCaption(false) }
   }
 
-  /* -- AI generation (existing) -- */
+  /* ── AI generation ── */
   async function generate(briefText?: string) {
     const text = (briefText ?? brief).trim()
     if (!text) { setError("Tell us what the post is about"); return }
@@ -236,9 +288,8 @@ export default function CreatePostClient({
       setPreview({ caption: data.caption, image_url: data.image_url, topic: data.topic })
       setCaption(data.caption)
       if (typeof data.credits_left === "number") setCredits(data.credits_left)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Generation failed")
-    } finally { setGen(false) }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Generation failed") }
+    finally { setGen(false) }
   }
 
   async function generateAIImage() {
@@ -254,14 +305,13 @@ export default function CreatePostClient({
       if (!res.ok) throw new Error(data.error || "Failed")
       setPreview(p => p ? { ...p, image_url: data.image_url } : p)
       if (typeof data.credits_left === "number") setCredits(data.credits_left)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "AI image generation failed")
-    } finally { setGenImg(false) }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "AI image generation failed") }
+    finally { setGenImg(false) }
   }
 
   async function regenerateCaption() {
     if (!preview) return
-    const text = brief.trim() || preview.topic || 'update'
+    const text = brief.trim() || preview.topic || "update"
     setError(""); setGenCap(true)
     try {
       const res = await fetch("/api/posts/custom/generate", {
@@ -274,9 +324,8 @@ export default function CreatePostClient({
       setPreview(p => p ? { ...p, caption: data.caption, topic: data.topic } : p)
       setCaption(data.caption)
       if (typeof data.credits_left === "number") setCredits(data.credits_left)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Caption regeneration failed")
-    } finally { setGenCap(false) }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Caption regeneration failed") }
+    finally { setGenCap(false) }
   }
 
   function pickFestival(f: Festival) {
@@ -284,6 +333,7 @@ export default function CreatePostClient({
     setBrief(f.greeting); setMode("ai"); generate(f.greeting)
   }
 
+  /* ── Publish ── */
   async function publish(scheduleAt?: string) {
     if (!accountId) return
     setPosting(true); setError("")
@@ -291,28 +341,19 @@ export default function CreatePostClient({
       let mediaUrl = uploadedUrl || preview?.image_url || null
       if (uploadedFile && !uploadedUrl) {
         setUploading(true)
-        try {
-          mediaUrl = await uploadMedia(uploadedFile)
-          setUploadedUrl(mediaUrl)
-        } finally {
-          setUploading(false)
-        }
+        try { mediaUrl = await uploadMedia(uploadedFile); setUploadedUrl(mediaUrl) }
+        finally { setUploading(false) }
       }
-      // Build full caption with hashtags if generated
       let fullCaption = caption || preview?.caption || ""
       if (generatedCaption && generatedCaption.hashtags.length > 0 && !fullCaption.includes("#")) {
-        const hashtagStr = generatedCaption.hashtags.map(h => h.tag).join(" ")
-        fullCaption = `${fullCaption}\n\n${hashtagStr}`
+        fullCaption = `${fullCaption}\n\n${generatedCaption.hashtags.map(h => h.tag).join(" ")}`
       }
       if (!mediaUrl && !fullCaption) { setError("Add media or generate content first"); setPosting(false); return }
-
       const res = await fetch("/api/posts/custom/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          account_id: accountId,
-          caption: fullCaption,
-          image_url: mediaUrl,
+          account_id: accountId, caption: fullCaption, image_url: mediaUrl,
           topic: preview?.topic || brief || angle || "manual upload",
           content_type: activeTab,
           scheduled_for: scheduleAt ? new Date(scheduleAt).toISOString() : undefined,
@@ -332,24 +373,183 @@ export default function CreatePostClient({
     } finally { setPosting(false) }
   }
 
-  /* ── Shared: account name helper ── */
-  const acctName = accounts.find(a => a.id === accountId)?.account_name || "account"
+  /* ── Save as draft ── */
+  async function saveDraft() {
+    if (!accountId) return
+    setSavingDraft(true); setError("")
+    try {
+      let mediaUrl = uploadedUrl || preview?.image_url || null
+      if (uploadedFile && !uploadedUrl) {
+        setUploading(true)
+        try { mediaUrl = await uploadMedia(uploadedFile); setUploadedUrl(mediaUrl) }
+        finally { setUploading(false) }
+      }
+      let fullCaption = caption || preview?.caption || ""
+      if (generatedCaption && generatedCaption.hashtags.length > 0 && !fullCaption.includes("#")) {
+        fullCaption = `${fullCaption}\n\n${generatedCaption.hashtags.map(h => h.tag).join(" ")}`
+      }
+      const res = await fetch("/api/posts/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account_id: accountId, caption: fullCaption, image_url: mediaUrl,
+          topic: preview?.topic || brief || angle || "draft",
+          content_type: activeTab,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to save draft")
+      addToast("Draft saved! Find it in your posts.", "success", 3000)
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Failed to save draft") }
+    finally { setSavingDraft(false) }
+  }
 
-  /* ── Instagram Mockup Preview (reusable) ── */
+  /* ── Best time click → fill schedule ── */
+  function pickBestTime(hour: number) {
+    const now = new Date()
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0)
+    if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1)
+    const pad = (n: number) => String(n).padStart(2, "0")
+    setScheduledFor(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`)
+    setShowBestTimes(false)
+  }
+
+  /* ── Account name ── */
+  const acctName = accounts.find(a => a.id === accountId)?.account_name || "account"
+  const previewCaption = caption || preview?.caption || ""
+  const hasContent = uploadedFile || preview || caption
+
+  /* ── Shared: caption editor block (reusable for both modes) ── */
+  const captionEditor = (
+    <div className="relative">
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>
+          {generatedCaption || preview ? "Edit caption" : "Caption"}
+        </label>
+        <span className="text-xs tabular-nums" style={{ color: caption.length > 2200 ? "#ef4444" : "var(--text-muted)" }}>
+          {caption.length} / 2,200
+        </span>
+      </div>
+      <div className="relative">
+        <textarea
+          ref={captionRef}
+          value={caption}
+          onChange={e => { setCaption(e.target.value); if (preview) setPreview(p => p ? { ...p, caption: e.target.value } : p); autoResize(e.target) }}
+          placeholder={`Write your ${activeTab} caption here...`}
+          className="w-full text-sm transition-all focus:ring-2 focus:ring-[var(--accent)]/20"
+          style={{ ...inputStyle, minHeight: 80, resize: "none", paddingRight: 44, lineHeight: "1.7" }}
+        />
+        {/* Emoji toggle */}
+        <div ref={emojiRef} className="absolute bottom-2 right-2">
+          <button
+            onClick={() => setShowEmoji(s => !s)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+            style={{ background: showEmoji ? "var(--accent)" : "color-mix(in srgb, var(--border) 40%, transparent)", color: showEmoji ? "#fff" : "var(--text-muted)" }}
+            type="button"
+          >
+            <Smile size={16} />
+          </button>
+          {showEmoji && (
+            <div className="absolute bottom-10 right-0 z-50 p-3" style={{ ...glass, width: 300, maxHeight: 280, overflowY: "auto" }}>
+              {EMOJI_CATS.map(cat => (
+                <div key={cat.name} className="mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>{cat.name}</p>
+                  <div className="grid grid-cols-8 gap-0.5">
+                    {cat.emojis.map(e => (
+                      <button key={e} onClick={() => insertEmoji(e)} type="button"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[var(--bg)] hover:scale-110 transition-all">
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
+  /* ── Shared: schedule + best times block ── */
+  const scheduleBlock = (
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3" style={{ borderTop: "1px solid color-mix(in srgb, var(--border) 40%, transparent)" }}>
+        <div className="flex items-center gap-1.5">
+          <Clock size={14} style={{ color: "var(--text-muted)" }} />
+          <span className="text-xs font-medium whitespace-nowrap" style={{ color: "var(--text-muted)" }}>Schedule for</span>
+        </div>
+        <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)}
+          className="flex-1 text-sm" style={{ ...inputStyle, borderRadius: 12 }} />
+        <button onClick={() => publish(scheduledFor)} disabled={posting || uploading || !scheduledFor || (!uploadedFile && !caption && !preview)}
+          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all disabled:opacity-40"
+          style={{ ...glassInner, borderRadius: 12, color: "var(--text-primary)" }}>
+          Schedule
+        </button>
+      </div>
+
+      {/* Best times */}
+      <div>
+        <button onClick={() => setShowBestTimes(b => !b)} type="button"
+          className="flex items-center gap-1.5 text-xs font-medium transition-all hover:opacity-80"
+          style={{ color: "var(--accent)" }}>
+          <TrendingUp size={12} />
+          Best times to post
+          {showBestTimes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+        {showBestTimes && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {BEST_TIMES.map(t => (
+              <button key={t.h} onClick={() => pickBestTime(t.h)} type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all hover:scale-[1.03]"
+                style={{ ...glassInner, padding: "6px 12px" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: qualityDot(t.quality) }} />
+                {t.label}
+                <span className="hidden sm:inline" style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.reason}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  /* ── Shared: action buttons (Post + Draft) ── */
+  function actionButtons(disabled: boolean) {
+    return (
+      <div className="flex gap-2">
+        <button onClick={() => publish()} disabled={disabled}
+          className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all disabled:opacity-40"
+          style={{
+            background: "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, #e040fb) 100%)",
+            color: "#fff", borderRadius: 14,
+            boxShadow: "0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent)",
+          }}>
+          {posting ? <><Loader2 size={16} className="animate-spin" /> {uploading ? "Uploading..." : "Posting..."}</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
+        </button>
+        <button onClick={saveDraft} disabled={savingDraft || (!uploadedFile && !caption && !preview)} type="button"
+          className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all disabled:opacity-40"
+          style={{ ...glassInner, borderRadius: 14, color: "var(--text-primary)" }}>
+          {savingDraft ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          <span className="hidden sm:inline">Draft</span>
+        </button>
+      </div>
+    )
+  }
+
+  /* ═══════════ Instagram Mockup Preview (reusable) ═══════════ */
   const igPreview = (preview || (mode === "upload" && (uploadedFile || uploadPreview))) ? (
     <div>
       <div style={{
-        borderRadius: 20,
+        ...glass,
         overflow: "hidden",
-        border: "1px solid var(--border)",
-        background: "var(--card-bg, #fff)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
+        padding: 0,
       }}>
         {/* IG Header */}
-        <div className="flex items-center justify-between px-3.5 py-2.5">
+        <div className="flex items-center justify-between px-3.5 py-3">
           <div className="flex items-center gap-2.5">
             <div style={{
-              width: 32, height: 32, borderRadius: "50%",
+              width: 34, height: 34, borderRadius: "50%",
               background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
               padding: 2, display: "flex", alignItems: "center", justifyContent: "center",
             }}>
@@ -373,15 +573,15 @@ export default function CreatePostClient({
           {(preview?.image_url || uploadPreview) ? (
             uploadPreview && !preview?.image_url ? (
               uploadedFile?.type.startsWith("video/") ? (
-                <video src={uploadPreview} className="w-full aspect-square object-cover" style={{ display: "block" }} muted />
+                <video src={uploadPreview} className="w-full object-cover" style={{ display: "block", aspectRatio: aspectRatio === "4:5" ? "4/5" : aspectRatio === "16:9" ? "16/9" : "1/1" }} muted />
               ) : (
-                <img src={uploadPreview} alt="" className="w-full aspect-square object-cover" style={{ display: "block" }} />
+                <img src={uploadPreview} alt="" className="w-full object-cover" style={{ display: "block", aspectRatio: aspectRatio === "4:5" ? "4/5" : aspectRatio === "16:9" ? "16/9" : "1/1" }} />
               )
             ) : (
-              <img src={preview!.image_url} alt="" className="w-full aspect-square object-cover" style={{ display: "block" }} />
+              <img src={preview!.image_url} alt="" className="w-full object-cover" style={{ display: "block", aspectRatio: aspectRatio === "4:5" ? "4/5" : aspectRatio === "16:9" ? "16/9" : "1/1" }} />
             )
           ) : (
-            <div className="w-full aspect-square flex items-center justify-center" style={{ background: "var(--bg)" }}>
+            <div className="w-full flex items-center justify-center" style={{ background: "var(--bg)", aspectRatio: "1/1" }}>
               <div className="text-center" style={{ color: "var(--text-muted)" }}>
                 <ImagePlus size={36} className="mx-auto mb-2" style={{ opacity: 0.25 }} />
                 <p className="text-xs font-medium">No image yet</p>
@@ -389,9 +589,7 @@ export default function CreatePostClient({
             </div>
           )}
           {genImg && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{
-              background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)",
-            }}>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)" }}>
               <Loader2 size={24} className="animate-spin" style={{ color: "#fff" }} />
               <span className="text-xs font-medium" style={{ color: "#fff" }}>Generating image...</span>
             </div>
@@ -408,43 +606,73 @@ export default function CreatePostClient({
           <Bookmark size={20} style={{ color: "var(--text-primary)" }} />
         </div>
 
-        {/* IG Caption */}
+        {/* IG Caption — FULL with expand/collapse */}
         <div className="px-3.5 pb-3.5">
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-primary)" }}>
+          <div className="text-xs leading-relaxed" style={{ color: "var(--text-primary)" }}>
             <span className="font-semibold mr-1">{acctName}</span>
             <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-              {(caption || preview?.caption || "Your caption will appear here...").length > 120
-                ? (caption || preview?.caption || "").slice(0, 120) + "..."
-                : (caption || preview?.caption || "Your caption will appear here...")}
+              {expandCaption
+                ? previewCaption || "Your caption will appear here..."
+                : (previewCaption || "Your caption will appear here...").slice(0, 100) + (previewCaption.length > 100 ? "" : "")}
+              {!expandCaption && previewCaption.length > 100 && "..."}
             </span>
-          </p>
-          {(caption || preview?.caption || "").length > 120 && (
-            <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>more</span>
+          </div>
+          {/* Hashtags shown when expanded */}
+          {expandCaption && generatedCaption?.hashtags && generatedCaption.hashtags.length > 0 && !previewCaption.includes("#") && (
+            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "#3b82f6" }}>
+              {generatedCaption.hashtags.map(h => h.tag).join("  ")}
+            </p>
           )}
-          <p className="text-[10px] mt-1.5 uppercase tracking-wide" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Just now</p>
+          {previewCaption.length > 100 && (
+            <button onClick={() => setExpandCaption(e => !e)} type="button"
+              className="text-[11px] font-medium mt-0.5 block" style={{ color: "var(--text-muted)" }}>
+              {expandCaption ? "less" : "more"}
+            </button>
+          )}
+          <p className="text-[10px] mt-2 uppercase tracking-wide" style={{ color: "var(--text-muted)", opacity: 0.5 }}>Just now</p>
         </div>
       </div>
-      <p className="text-center text-[10px] mt-2 font-medium tracking-wide uppercase" style={{ color: "var(--text-muted)", opacity: 0.4 }}>
+      {/* Aspect ratio selector */}
+      <div className="flex items-center justify-center gap-1.5 mt-3">
+        {RATIOS.map(r => (
+          <button key={r.label} onClick={() => setAspectRatio(r.label)} type="button"
+            className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all"
+            style={{
+              background: aspectRatio === r.label ? "var(--accent)" : "color-mix(in srgb, var(--bg) 80%, transparent)",
+              color: aspectRatio === r.label ? "#fff" : "var(--text-muted)",
+              border: aspectRatio === r.label ? "none" : "1px solid color-mix(in srgb, var(--border) 40%, transparent)",
+            }}>
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-center text-[10px] mt-2 font-medium tracking-wide uppercase" style={{ color: "var(--text-muted)", opacity: 0.35 }}>
         Preview
       </p>
     </div>
   ) : null
 
+  /* ═══════════ JSX ═══════════ */
   return (
     <div>
       {/* Header */}
-      <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="page-heading">{tabConfig.title.split(" ")[0]} <em>{tabConfig.title.split(" ")[1]}</em></h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{tabConfig.desc}</p>
         </div>
-        <span className="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shrink-0" style={{ background: "rgba(255,77,77,0.1)", color: "var(--accent)" }}>
+        <span className="text-xs font-bold px-3.5 py-1.5 rounded-full whitespace-nowrap shrink-0"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,77,77,0.12) 0%, rgba(255,77,77,0.06) 100%)",
+            color: "var(--accent)",
+            border: "1px solid rgba(255,77,77,0.15)",
+          }}>
           {credits} credits
         </span>
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-2xl mb-4" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+      <div className="flex gap-1 p-1 rounded-2xl mb-5" style={{ ...glassInner }}>
         {TAB_CONFIG.map(tab => {
           const Icon = tab.icon
           const active = activeTab === tab.value
@@ -452,7 +680,11 @@ export default function CreatePostClient({
             <button key={tab.value}
               onClick={() => { setActiveTab(tab.value); setPreview(null); setError(""); setCaption(""); setGeneratedCaption(null); setCaptionLimitError(null); setAngle(""); clearUpload() }}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: active ? "var(--accent)" : "transparent", color: active ? "#fff" : "var(--text-muted)" }}>
+              style={{
+                background: active ? "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, #e040fb) 100%)" : "transparent",
+                color: active ? "#fff" : "var(--text-muted)",
+                boxShadow: active ? "0 2px 12px color-mix(in srgb, var(--accent) 25%, transparent)" : "none",
+              }}>
               <Icon size={14} />{tab.label}
             </button>
           )
@@ -460,15 +692,18 @@ export default function CreatePostClient({
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-5">
         {steps.map((step, i) => (
           <div key={step.num} className="flex items-center gap-2 flex-1">
             <div className="flex items-center gap-2 flex-1">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all"
                 style={{
-                  background: currentStep >= step.num ? "var(--accent)" : "var(--bg)",
+                  background: currentStep >= step.num
+                    ? "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, #e040fb) 100%)"
+                    : "color-mix(in srgb, var(--bg) 80%, transparent)",
                   color: currentStep >= step.num ? "#fff" : "var(--text-muted)",
                   border: currentStep >= step.num ? "none" : "1px solid var(--border)",
+                  boxShadow: currentStep >= step.num ? "0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent)" : "none",
                 }}>
                 {currentStep > step.num ? "✓" : step.num}
               </div>
@@ -477,7 +712,7 @@ export default function CreatePostClient({
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className="flex-1 h-px" style={{ background: currentStep > step.num ? "var(--accent)" : "var(--border)" }} />
+              <div className="flex-1 h-px transition-all" style={{ background: currentStep > step.num ? "var(--accent)" : "var(--border)" }} />
             )}
           </div>
         ))}
@@ -503,40 +738,43 @@ export default function CreatePostClient({
       )}
 
       {/* Mode toggle */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-5">
         <button onClick={() => setMode("upload")}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
           style={{
-            background: mode === "upload" ? "var(--bg-card)" : "transparent",
+            ...(mode === "upload" ? glass : {}),
+            background: mode === "upload" ? glass.background : "transparent",
             color: mode === "upload" ? "var(--text-primary)" : "var(--text-muted)",
-            border: mode === "upload" ? "1px solid var(--border)" : "1px solid transparent",
-            boxShadow: mode === "upload" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            border: mode === "upload" ? glass.border : "1px solid transparent",
+            boxShadow: mode === "upload" ? "0 2px 12px rgba(0,0,0,0.04)" : "none",
           }}>
           <Upload size={14} /> Upload media
         </button>
         <button onClick={() => setMode("ai")}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
           style={{
-            background: mode === "ai" ? "var(--bg-card)" : "transparent",
+            ...(mode === "ai" ? glass : {}),
+            background: mode === "ai" ? glass.background : "transparent",
             color: mode === "ai" ? "var(--text-primary)" : "var(--text-muted)",
-            border: mode === "ai" ? "1px solid var(--border)" : "1px solid transparent",
-            boxShadow: mode === "ai" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            border: mode === "ai" ? glass.border : "1px solid transparent",
+            boxShadow: mode === "ai" ? "0 2px 12px rgba(0,0,0,0.04)" : "none",
           }}>
           <Sparkles size={14} /> AI generate
         </button>
       </div>
 
       {/* ═══════════ SPLIT LAYOUT ═══════════ */}
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
 
         {/* ── LEFT COLUMN: Form ── */}
-        <div className="w-full lg:flex-1 min-w-0 space-y-4">
+        <div className="w-full lg:flex-1 min-w-0 space-y-5">
 
-          {/* Upload mode */}
+          {/* ═══ Upload mode ═══ */}
           {mode === "upload" && (
-            <div className="card p-5 space-y-4">
+            <div style={{ ...glass, padding: 24 }} className="space-y-5">
+              {/* Account */}
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>Instagram account</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>Instagram account</label>
                 <select value={accountId} onChange={e => setAccountId(e.target.value)} style={{ ...inputStyle, appearance: "none" }}>
                   {accounts.map(a => <option key={a.id} value={a.id}>@{a.account_name}</option>)}
                 </select>
@@ -544,56 +782,69 @@ export default function CreatePostClient({
 
               {/* Drag and drop */}
               {!uploadedFile ? (
-                <div className="relative rounded-2xl p-6 text-center cursor-pointer transition-all"
-                  style={{ border: isDragging ? "2px dashed var(--accent)" : "2px dashed var(--border)", background: isDragging ? "rgba(10,10,10,0.03)" : "var(--bg)" }}
+                <div className="relative rounded-2xl p-8 text-center cursor-pointer transition-all"
+                  style={{
+                    border: isDragging ? "2px dashed var(--accent)" : "2px dashed color-mix(in srgb, var(--border) 60%, transparent)",
+                    background: isDragging ? "color-mix(in srgb, var(--accent) 5%, transparent)" : "color-mix(in srgb, var(--bg) 60%, transparent)",
+                  }}
                   onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}>
                   <input ref={fileInputRef} type="file" accept={tabConfig.accept} className="hidden"
                     onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-                  <Upload size={28} className="mx-auto mb-2" style={{ color: "var(--text-muted)" }} />
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
+                    style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)" }}>
+                    <Upload size={24} style={{ color: "var(--accent)" }} />
+                  </div>
                   <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Drop your {tabConfig.dropLabel} here</p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Or select a file · {tabConfig.formats}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>or click to browse · {tabConfig.formats}</p>
                 </div>
               ) : (
                 <div className="relative">
                   {uploadedFile.type.startsWith("video/") ? (
-                    <video src={uploadPreview!} controls className="w-full rounded-xl" style={{ maxHeight: 240 }} />
+                    <video src={uploadPreview!} controls className="w-full rounded-2xl" style={{ maxHeight: 260 }} />
                   ) : (
-                    <img src={uploadPreview!} alt="" className="w-full rounded-xl object-cover" style={{ maxHeight: 240 }} />
+                    <img src={uploadPreview!} alt="" className="w-full rounded-2xl object-cover" style={{ maxHeight: 260 }} />
                   )}
                   <button onClick={clearUpload}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}>
+                    className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                    style={{ background: "rgba(0,0,0,0.6)", color: "#fff", backdropFilter: "blur(8px)" }}>
                     <X size={14} />
                   </button>
                   {uploading && (
-                    <div className="absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-2 text-sm" style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
+                    <div className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-2 text-sm"
+                      style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
                       <Loader2 size={20} className="animate-spin" style={{ color: "var(--accent)" }} /><span>Uploading...</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Generate caption (upload mode) */}
+              {/* Generate caption section (upload mode — no caption yet) */}
               {uploadedFile && !generatedCaption && !captionLimitError && (
-                <div className="rounded-2xl p-4 space-y-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-                  <div className="flex items-start gap-2">
-                    <Zap size={14} className="shrink-0 mt-0.5" style={{ color: "var(--accent-brand)" }} />
+                <div className="rounded-2xl p-4 space-y-3" style={{ ...glassInner }}>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)" }}>
+                      <Zap size={14} style={{ color: "var(--accent)" }} />
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Generate caption</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        Tell us the angle, or just hit Generate.
-                      </p>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>AI Caption</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Describe the angle, or just hit Generate.</p>
                     </div>
                   </div>
                   <input type="text" value={angle} onChange={e => setAngle(e.target.value)}
                     placeholder="e.g. motivational, behind the scenes..."
                     style={inputStyle} />
                   <button onClick={() => generateCaption()} disabled={generatingCaption || !uploadedFile}
-                    className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50">
-                    {generatingCaption ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate</>}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold disabled:opacity-50 transition-all"
+                    style={{
+                      background: "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, #e040fb) 100%)",
+                      color: "#fff", borderRadius: 14,
+                      boxShadow: "0 4px 16px color-mix(in srgb, var(--accent) 25%, transparent)",
+                    }}>
+                    {generatingCaption ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate caption</>}
                   </button>
                 </div>
               )}
@@ -615,9 +866,10 @@ export default function CreatePostClient({
                 </div>
               )}
 
-              {/* Generated caption result */}
+              {/* Generated caption result (tones, hashtags, regenerate) */}
               {generatedCaption && (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  {/* Tone chips */}
                   <div className="flex flex-wrap gap-1.5">
                     {generatedCaption.tones.map((tone, i) => (
                       <button key={i} onClick={() => { setSelectedTone(tone.label); generateCaption(tone.label) }}
@@ -625,23 +877,23 @@ export default function CreatePostClient({
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-50"
                         style={{
                           background: selectedTone === tone.label ? toneColor(tone.score) : `${toneColor(tone.score)}15`,
-                          color: selectedTone === tone.label ? '#fff' : toneColor(tone.score),
-                          border: selectedTone === tone.label ? `2px solid ${toneColor(tone.score)}` : '2px solid transparent',
+                          color: selectedTone === tone.label ? "#fff" : toneColor(tone.score),
+                          border: selectedTone === tone.label ? `2px solid ${toneColor(tone.score)}` : "2px solid transparent",
                         }}>
                         {tone.label} {tone.score}%
                       </button>
                     ))}
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Caption</label>
-                      <span className="text-xs" style={{ color: caption.length > 2200 ? "#ef4444" : "var(--text-muted)" }}>{caption.length} / 2,200</span>
-                    </div>
-                    <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={4} style={{ ...inputStyle, resize: "none" }} />
-                  </div>
+
+                  {/* Caption editor */}
+                  {captionEditor}
+
+                  {/* Hashtags */}
                   {generatedCaption.hashtags.length > 0 && (
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}><Hash size={11} className="inline mr-1" />Hashtags</label>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>
+                        <Hash size={11} className="inline mr-1" />Hashtags
+                      </label>
                       <div className="flex flex-wrap gap-1.5">
                         {generatedCaption.hashtags.map((h, i) => (
                           <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
@@ -652,55 +904,50 @@ export default function CreatePostClient({
                       </div>
                     </div>
                   )}
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{generatedCaption.generations_used} / {generatedCaption.generations_limit} captions used</p>
-                  <button onClick={() => { setSelectedTone(null); generateCaption() }} disabled={generatingCaption}
-                    className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
-                    {generatingCaption ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Regenerate
-                  </button>
+
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>{generatedCaption.generations_used} / {generatedCaption.generations_limit} captions used</p>
+                    <button onClick={() => { setSelectedTone(null); generateCaption() }} disabled={generatingCaption}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all disabled:opacity-50"
+                      style={{ ...glassInner, borderRadius: 10, color: "var(--text-primary)" }}>
+                      {generatingCaption ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Regenerate
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* Manual caption */}
-              {!generatedCaption && (
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>Caption</label>
-                  <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={3}
-                    placeholder={`Write your ${activeTab} caption here...`}
-                    style={{ ...inputStyle, resize: "none" }} />
-                </div>
-              )}
+              {/* Manual caption (when no AI caption generated yet) */}
+              {!generatedCaption && captionEditor}
 
-              {/* Post + Schedule */}
-              <button onClick={() => publish()} disabled={posting || uploading || (!uploadedFile && !caption)}
-                className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2.5 disabled:opacity-50">
-                {posting ? <><Loader2 size={16} className="animate-spin" /> {uploading ? "Uploading..." : "Posting..."}</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
-              </button>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 flex-wrap" style={{ borderTop: "1px solid var(--border)" }}>
-                <Clock size={14} style={{ color: "var(--text-muted)" }} />
-                <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule for</span>
-                <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm" style={inputStyle} />
-                <button onClick={() => publish(scheduledFor)} disabled={posting || uploading || !scheduledFor || (!uploadedFile && !caption)}
-                  className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50">Schedule</button>
-              </div>
+              {/* Action buttons */}
+              {actionButtons(posting || uploading || (!uploadedFile && !caption))}
+
+              {/* Schedule */}
+              {scheduleBlock}
             </div>
           )}
 
-          {/* AI mode */}
+          {/* ═══ AI mode ═══ */}
           {mode === "ai" && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Festivals */}
               {upcoming.length > 0 && (
-                <div className="card p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <PartyPopper size={14} style={{ color: "var(--accent)" }} />
-                    <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Upcoming festivals</p>
+                <div style={{ ...glass, padding: 24 }}>
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)" }}>
+                      <PartyPopper size={14} style={{ color: "var(--accent)" }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Upcoming festivals</p>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>One click drafts a greeting post.</p>
+                    </div>
                   </div>
-                  <p className="text-xs mb-2.5" style={{ color: "var(--text-muted)" }}>One click drafts a greeting post.</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 mt-3">
                     {upcoming.map(f => (
                       <button key={f.date + f.name} onClick={() => pickFestival(f)} disabled={gen || !accountId}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all disabled:opacity-50"
-                        style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all disabled:opacity-50 hover:scale-[1.02]"
+                        style={{ ...glassInner, padding: "6px 12px", color: "var(--text-primary)" }}>
                         <span aria-hidden>{f.emoji}</span><span className="font-medium">{f.name}</span>
                         <span style={{ color: "var(--text-muted)" }}>{whenLabel(f.date)}</span>
                       </button>
@@ -710,76 +957,55 @@ export default function CreatePostClient({
               )}
 
               {/* AI form */}
-              <div className="card p-5 space-y-3">
+              <div style={{ ...glass, padding: 24 }} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>Instagram account</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>Instagram account</label>
                   <select value={accountId} onChange={e => setAccountId(e.target.value)} style={{ ...inputStyle, appearance: "none" }}>
                     {accounts.map(a => <option key={a.id} value={a.id}>@{a.account_name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>What should this {activeTab} be about?</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>What should this {activeTab} be about?</label>
                   <textarea value={brief} onChange={e => setBrief(e.target.value)} rows={3}
                     placeholder="e.g. Diwali wishes to our patients · Weekend 20% off on cleanings"
-                    style={{ ...inputStyle, resize: "none" }} />
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)", opacity: 0.6 }}>1 credit per generation. AI image costs extra.</p>
+                    style={{ ...inputStyle, resize: "none", lineHeight: "1.7" }} />
+                  <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)", opacity: 0.6 }}>1 credit per generation. AI image costs extra.</p>
                 </div>
                 <button onClick={() => generate()} disabled={gen || !accountId}
-                  className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50">
+                  className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold disabled:opacity-50 transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, #e040fb) 100%)",
+                    color: "#fff", borderRadius: 14,
+                    boxShadow: "0 4px 16px color-mix(in srgb, var(--accent) 25%, transparent)",
+                  }}>
                   {gen ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate {activeTab}</>}
                 </button>
               </div>
 
-              {/* AI Edit Controls (below form, shown when preview exists) */}
+              {/* AI Edit Controls */}
               {preview && (
-                <div className="card p-5 space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Edit caption</label>
-                      <span className="text-xs tabular-nums" style={{ color: (caption || preview.caption).length > 2200 ? "#ef4444" : "var(--text-muted)" }}>
-                        {(caption || preview.caption).length} / 2,200
-                      </span>
-                    </div>
-                    <textarea
-                      value={caption || preview.caption}
-                      onChange={e => { const val = e.target.value; setPreview(p => p ? { ...p, caption: val } : p); setCaption(val) }}
-                      rows={5}
-                      className="w-full text-sm p-3 resize-y transition-colors"
-                      style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", outline: "none", lineHeight: "1.6", borderRadius: 12 }}
-                      placeholder="Edit your caption..."
-                    />
-                  </div>
+                <div style={{ ...glass, padding: 24 }} className="space-y-4">
+                  {captionEditor}
 
                   <div className="flex gap-2">
                     <button onClick={regenerateCaption} disabled={genCap || gen || genImg}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
-                      style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", borderRadius: 10 }}>
+                      style={{ ...glassInner, borderRadius: 12, color: "var(--text-primary)", padding: "10px 12px" }}>
                       {genCap ? <Loader2 size={14} className="animate-spin" /> : <Type size={14} />}
-                      New caption <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>1 cr</span>
+                      New caption <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>1 cr</span>
                     </button>
                     {aiImageProvider !== "none" && (
                       <button onClick={generateAIImage} disabled={genImg || gen || genCap || credits < aiImageCredits}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
-                        style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", borderRadius: 10 }}>
+                        style={{ ...glassInner, borderRadius: 12, color: "var(--text-primary)", padding: "10px 12px" }}>
                         {genImg ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
-                        New image <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{aiImageCredits} cr</span>
+                        New image <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>{aiImageCredits} cr</span>
                       </button>
                     )}
                   </div>
 
-                  <button onClick={() => publish()} disabled={posting || genImg || genCap}
-                    className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold disabled:opacity-50"
-                    style={{ borderRadius: 12 }}>
-                    {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
-                  </button>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <Clock size={14} style={{ color: "var(--text-muted)" }} />
-                    <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule</span>
-                    <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm" style={{ ...inputStyle, borderRadius: 10 }} />
-                    <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor || genImg}
-                      className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50" style={{ borderRadius: 10 }}>Schedule</button>
-                  </div>
+                  {actionButtons(posting || genImg || genCap)}
+                  {scheduleBlock}
                 </div>
               )}
             </div>
@@ -788,11 +1014,10 @@ export default function CreatePostClient({
 
         {/* ── RIGHT COLUMN: Live Instagram Preview (sticky) ── */}
         {igPreview && (
-          <div className="w-full lg:w-[340px] lg:shrink-0 lg:sticky lg:top-4">
+          <div className="w-full lg:w-[360px] lg:shrink-0 lg:sticky lg:top-4">
             {igPreview}
           </div>
         )}
-
       </div>
     </div>
   )
