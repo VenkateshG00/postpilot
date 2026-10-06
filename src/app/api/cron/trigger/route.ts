@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
                 const gen = await generatePost(topic, {
                     business_name: schedule.business_name, industry: schedule.industry,
                     brand_voice: schedule.brand_voice, target_audience: schedule.target_audience,
-                })
+                }, { supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_SERVICE_KEY })
                 await fetch(`${SUPABASE_URL}/rest/v1/post_logs?id=eq.${logId}`, {
                     method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
                     body: JSON.stringify({ status: 'pending_approval', image_url: gen?.image_url || '', caption: gen?.caption || '', topic_used: topic }),
@@ -225,31 +225,64 @@ export async function GET(request: NextRequest) {
                 continue
             }
 
-            // Fire the n8n webhook.
-            const n8nRes = await fetch(N8N_WEBHOOK_BASE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    post_log_id: logId,
-                    user_id: userId,
-                    business_name: schedule.business_name,
-                    industry: schedule.industry,
-                    description: schedule.description,
-                    target_audience: schedule.target_audience,
-                    brand_voice: schedule.brand_voice,
-                    topics: effectiveTopics,
-                    hashtags: schedule.hashtags,
-                    language: schedule.language,
-                    ig_business_id: schedule.ig_business_id,
-                    access_token: schedule.access_token,
-                    account_name: schedule.account_name,
-                    content_type: schedule.content_type,
-                    supabase_url: SUPABASE_URL,
-                    supabase_key: SUPABASE_SERVICE_KEY
-                })
+            // Generate content in-app (AI caption + AI image via admin provider)
+            const topicList2 = Array.isArray(effectiveTopics) ? effectiveTopics : []
+            const topic2 = topicList2.length ? topicList2[Math.floor(Math.random() * topicList2.length)] : (schedule.industry || 'update')
+            const gen2 = await generatePost(topic2, {
+                business_name: schedule.business_name, industry: schedule.industry,
+                brand_voice: schedule.brand_voice, target_audience: schedule.target_audience,
+            }, { supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_SERVICE_KEY })
+
+            const generatedCaption = gen2?.caption || ''
+            const generatedImage = gen2?.image_url || ''
+
+            // Update post_log with generated content
+            await fetch(`${SUPABASE_URL}/rest/v1/post_logs?id=eq.${logId}`, {
+                method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                body: JSON.stringify({ caption: generatedCaption, image_url: generatedImage, topic_used: topic2 }),
             })
 
-            results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: n8nRes.status, plan })
+            // Publish via n8n publish webhook (sends ready content, n8n just posts to IG)
+            if (N8N_PUBLISH_WEBHOOK_URL) {
+                const pubRes = await fetch(N8N_PUBLISH_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image_url: generatedImage,
+                        caption: generatedCaption,
+                        ig_business_id: schedule.ig_business_id,
+                        access_token: schedule.access_token,
+                        post_log_id: logId,
+                        content_type: schedule.content_type,
+                    }),
+                })
+                results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: pubRes.status, plan, method: 'in_app_generate' })
+            } else {
+                // Fallback: old flow — send raw data for n8n to generate
+                const n8nRes = await fetch(N8N_WEBHOOK_BASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_log_id: logId,
+                        user_id: userId,
+                        business_name: schedule.business_name,
+                        industry: schedule.industry,
+                        description: schedule.description,
+                        target_audience: schedule.target_audience,
+                        brand_voice: schedule.brand_voice,
+                        topics: effectiveTopics,
+                        hashtags: schedule.hashtags,
+                        language: schedule.language,
+                        ig_business_id: schedule.ig_business_id,
+                        access_token: schedule.access_token,
+                        account_name: schedule.account_name,
+                        content_type: schedule.content_type,
+                        supabase_url: SUPABASE_URL,
+                        supabase_key: SUPABASE_SERVICE_KEY,
+                    }),
+                })
+                results.push({ schedule_id: schedule.schedule_id, log_id: logId, n8n_status: n8nRes.status, plan, method: 'n8n_generate' })
+            }
         }
 
         // ── Auto-cleanup: delete storage files from published posts older than retention ──

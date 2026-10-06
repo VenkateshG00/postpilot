@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useRef, useCallback } from "react"
-import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap } from "lucide-react"
+import { Sparkles, Loader2, RefreshCw, Send, CheckCircle2, Clock, PartyPopper, ImagePlus, Wand2, Upload, X, Image, Film, CircleDot, Hash, ArrowUpRight, Zap, Type } from "lucide-react"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
 import { useToast } from "@/components/ui/Toast"
 
@@ -74,6 +74,7 @@ export default function CreatePostClient({
   const [credits, setCredits] = useState(initialCredits)
   const [gen, setGen] = useState(false)
   const [genImg, setGenImg] = useState(false)
+  const [genCap, setGenCap] = useState(false)
   const [posting, setPosting] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [posted, setPosted] = useState<"now" | "scheduled" | null>(null)
@@ -693,7 +694,7 @@ export default function CreatePostClient({
             <div>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>What should this {activeTab} be about?</label>
               <textarea value={brief} onChange={e => setBrief(e.target.value)} rows={3} placeholder="e.g. Diwali wishes to our patients · Weekend 20% off on cleanings" style={{ ...inputStyle, resize: "none" }} />
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Generating costs 1 credit (Pexels stock photo included).</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)", opacity: 0.6 }}>Generating costs 1 credit. AI image costs extra credits based on provider.</p>
             </div>
             <button onClick={() => generate()} disabled={gen || !accountId} className="btn-primary w-full flex items-center justify-center gap-2 text-sm disabled:opacity-50">
               {gen ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : <><Sparkles size={16} /> Generate {activeTab}</>}
@@ -724,10 +725,24 @@ export default function CreatePostClient({
               {aiImageProvider !== "none" && (
                 <p className="text-xs -mt-1" style={{ color: "var(--text-muted)" }}><ImagePlus size={11} className="inline mr-1" />Tap &quot;AI image&quot; to replace with a unique AI-generated image.</p>
               )}
-              <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-primary)" }}>{preview.caption}</p>
-              <div className="flex gap-2">
-                <button onClick={() => generate()} disabled={gen || genImg} className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
-                  {gen ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Regenerate <span className="text-xs" style={{ color: "var(--text-muted)" }}>(1 cr)</span>
+              <textarea
+                value={preview.caption}
+                onChange={e => {
+                  const val = e.target.value
+                  setPreview(p => p ? { ...p, caption: val } : p)
+                  setCaption(val)
+                }}
+                rows={5}
+                className="w-full text-sm rounded-lg p-3 resize-y"
+                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", outline: "none" }}
+                placeholder="Edit your caption..."
+              />
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={regenerateCaption} disabled={genCap || gen || genImg} className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
+                  {genCap ? <Loader2 size={16} className="animate-spin" /> : <Type size={16} />} Regen Caption <span className="text-xs" style={{ color: "var(--text-muted)" }}>(1 cr)</span>
+                </button>
+                <button onClick={generateAIImage} disabled={genImg || gen || genCap || aiImageProvider === "none" || credits < aiImageCredits} className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
+                  {genImg ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />} Regen Image <span className="text-xs" style={{ color: "var(--text-muted)" }}>(${"{aiImageCredits}"} cr)</span>
                 </button>
                 <button onClick={() => publish()} disabled={posting || genImg} className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
                   {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
