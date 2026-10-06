@@ -259,6 +259,26 @@ export default function CreatePostClient({
     } finally { setGenImg(false) }
   }
 
+  async function regenerateCaption() {
+    if (!preview) return
+    const text = brief.trim() || preview.topic || 'update'
+    setError(""); setGenCap(true)
+    try {
+      const res = await fetch("/api/posts/custom/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief: text }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed")
+      setPreview(p => p ? { ...p, caption: data.caption, topic: data.topic } : p)
+      setCaption(data.caption)
+      if (typeof data.credits_left === "number") setCredits(data.credits_left)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Caption regeneration failed")
+    } finally { setGenCap(false) }
+  }
+
   function pickFestival(f: Festival) {
     if (!accountId) { setError("Connect an Instagram account first"); return }
     setBrief(f.greeting); setMode("ai"); generate(f.greeting)
