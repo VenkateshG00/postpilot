@@ -46,3 +46,29 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let body: Record<string, unknown> = {}
+  try { body = await req.json() } catch {}
+
+  const id = body.id as string | undefined
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+  const svc = await createServiceClient()
+  const { error } = await svc
+    .from('post_logs')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .eq('status', 'draft')
+
+  if (error) {
+    return NextResponse.json({ error: `Failed to delete draft: ${error.message}` }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

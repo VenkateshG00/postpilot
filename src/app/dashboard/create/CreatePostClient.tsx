@@ -7,6 +7,7 @@ import {
   Zap, Type, Heart, MessageCircle, Bookmark, MoreHorizontal, Share2,
   Smile, Save, TrendingUp, ChevronDown, ChevronUp
 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 import { upcomingFestivals, whenLabel, type Festival } from "@/lib/festivals"
 import { useToast } from "@/components/ui/Toast"
 
@@ -150,6 +151,25 @@ export default function CreatePostClient({
 
   const captionRef = useRef<HTMLTextAreaElement>(null)
   const emojiRef = useRef<HTMLDivElement>(null)
+
+  /* ── Prefill from draft URL params ── */
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const draftCaption = searchParams.get("caption")
+    const draftImage = searchParams.get("image_url")
+    const draftAccount = searchParams.get("account_id")
+    const draftType = searchParams.get("type") as ContentTab | null
+    if (draftCaption || draftImage) {
+      if (draftAccount) setAccountId(draftAccount)
+      if (draftType && ["post","reel","story"].includes(draftType)) setActiveTab(draftType)
+      if (draftCaption) setCaption(draftCaption)
+      if (draftImage) {
+        setPreview({ caption: draftCaption || "", image_url: draftImage, topic: searchParams.get("topic") || "" })
+        setMode("ai")
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const upcoming = useMemo(() => upcomingFestivals(45, 8), [])
   const tabConfig = TAB_CONFIG.find(t => t.value === activeTab)!
@@ -771,7 +791,7 @@ export default function CreatePostClient({
 
           {/* ═══ Upload mode ═══ */}
           {mode === "upload" && (
-            <div style={{ ...glass, padding: 24 }} className="space-y-5">
+            <div style={{ ...glass, padding: "18px 20px" }} className="space-y-4">
               {/* Account */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>Instagram account</label>
@@ -929,21 +949,16 @@ export default function CreatePostClient({
 
           {/* ═══ AI mode ═══ */}
           {mode === "ai" && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Festivals */}
               {upcoming.length > 0 && (
-                <div style={{ ...glass, padding: 24 }}>
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)" }}>
-                      <PartyPopper size={14} style={{ color: "var(--accent)" }} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Upcoming festivals</p>
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>One click drafts a greeting post.</p>
-                    </div>
+                <div style={{ ...glass, padding: "16px 20px" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <PartyPopper size={14} style={{ color: "var(--accent)" }} />
+                    <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>Upcoming festivals</p>
+                    <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>· tap to draft</p>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
+                  <div className="flex flex-wrap gap-1.5">
                     {upcoming.map(f => (
                       <button key={f.date + f.name} onClick={() => pickFestival(f)} disabled={gen || !accountId}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs transition-all disabled:opacity-50 hover:scale-[1.02]"
@@ -957,7 +972,7 @@ export default function CreatePostClient({
               )}
 
               {/* AI form */}
-              <div style={{ ...glass, padding: 24 }} className="space-y-4">
+              <div style={{ ...glass, padding: "18px 20px" }} className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)", letterSpacing: "0.08em" }}>Instagram account</label>
                   <select value={accountId} onChange={e => setAccountId(e.target.value)} style={{ ...inputStyle, appearance: "none" }}>
@@ -984,7 +999,7 @@ export default function CreatePostClient({
 
               {/* AI Edit Controls */}
               {preview && (
-                <div style={{ ...glass, padding: 24 }} className="space-y-4">
+                <div style={{ ...glass, padding: "18px 20px" }} className="space-y-3">
                   {captionEditor}
 
                   <div className="flex gap-2">

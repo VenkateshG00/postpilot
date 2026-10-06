@@ -1,16 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, Grid3X3, List, Image, AlertCircle, Clock, CheckCircle2, Filter } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ExternalLink, Grid3X3, List, Image, AlertCircle, Clock, CheckCircle2, Filter, Edit2, Trash2 } from 'lucide-react'
 import { formatDateIST, friendlyPostError } from '@/lib/utils'
 
-type Status = 'all' | 'published' | 'scheduled' | 'failed' | 'pending'
+type Status = 'all' | 'published' | 'scheduled' | 'failed' | 'pending' | 'draft'
 
 const STATUS_TABS: { value: Status; label: string }[] = [
   { value: 'all',       label: 'All' },
   { value: 'published', label: 'Published' },
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'pending',   label: 'Pending' },
+  { value: 'draft',     label: 'Drafts' },
   { value: 'failed',    label: 'Failed' },
 ]
 
@@ -20,6 +22,7 @@ function StatusBadge({ status }: { status: string }) {
     scheduled: { bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', icon: <Clock size={9} /> },
     pending:   { bg: 'rgba(234,179,8,0.12)',  color: '#eab308', icon: <Clock size={9} /> },
     failed:    { bg: 'rgba(239,68,68,0.12)',  color: '#ef4444', icon: <AlertCircle size={9} /> },
+    draft:     { bg: 'rgba(168,85,247,0.12)', color: '#a855f7', icon: <Clock size={9} /> },
   }
   const s = map[status] ?? { bg: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', icon: null }
   return (
@@ -39,7 +42,7 @@ function dateLabel(log: any) {
 }
 
 /* ── Grid card ─────────────────────────────────────── */
-function GridCard({ log }: { log: any }) {
+function GridCard({ log, onUseDraft, onDeleteDraft, isDraftDeleting }: { log: any; onUseDraft?: (log: any) => void; onDeleteDraft?: (id: string) => void; isDraftDeleting?: string | null }) {
   return (
     <div
       className="card overflow-hidden group relative"
@@ -82,6 +85,18 @@ function GridCard({ log }: { log: any }) {
         )}
       </div>
 
+      {/* Draft actions */}
+      {log.status === 'draft' && (
+        <div className="flex items-center gap-1.5 px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button onClick={() => onUseDraft?.(log)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-80" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <Edit2 size={10} /> Use draft
+          </button>
+          <button onClick={() => onDeleteDraft?.(log.id)} disabled={isDraftDeleting === log.id} className="w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:opacity-80" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <Trash2 size={12} />
+          </button>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="px-3 py-2.5">
         <p className="text-xs line-clamp-1 mb-1" style={{ color: 'var(--text-primary)' }}>
@@ -109,7 +124,7 @@ function GridCard({ log }: { log: any }) {
 }
 
 /* ── List row ──────────────────────────────────────── */
-function ListRow({ log }: { log: any }) {
+function ListRow({ log, onUseDraft, onDeleteDraft, isDraftDeleting }: { log: any; onUseDraft?: (log: any) => void; onDeleteDraft?: (id: string) => void; isDraftDeleting?: string | null }) {
   return (
     <div
       className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/3"
@@ -156,16 +171,19 @@ function ListRow({ log }: { log: any }) {
         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{dateLabel(log)}</span>
       </div>
 
-      {/* Link */}
-      <div className="w-8 shrink-0 flex justify-center">
-        {log.ig_permalink ? (
-          <a
-            href={log.ig_permalink}
-            target="_blank"
-            rel="noreferrer"
-            className="transition-colors hover:opacity-70"
-            style={{ color: 'var(--text-muted)' }}
-          >
+      {/* Actions */}
+      <div className="w-24 shrink-0 flex items-center gap-1">
+        {log.status === 'draft' ? (
+          <>
+            <button onClick={() => onUseDraft?.(log)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all hover:opacity-80" style={{ background: 'var(--accent)', color: '#fff' }}>
+              <Edit2 size={9} /> Use
+            </button>
+            <button onClick={() => onDeleteDraft?.(log.id)} disabled={isDraftDeleting === log.id} className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:opacity-80" style={{ color: '#ef4444' }}>
+              <Trash2 size={10} />
+            </button>
+          </>
+        ) : log.ig_permalink ? (
+          <a href={log.ig_permalink} target="_blank" rel="noreferrer" className="transition-colors hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
             <ExternalLink size={13} />
           </a>
         ) : <span />}
@@ -176,8 +194,30 @@ function ListRow({ log }: { log: any }) {
 
 /* ── Main client component ─────────────────────────── */
 export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
+  const router = useRouter()
   const [activeStatus, setActiveStatus] = useState<Status>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  async function deleteDraft(id: string) {
+    if (!confirm('Delete this draft?')) return
+    setDeleting(id)
+    try {
+      await fetch('/api/posts/draft', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      window.location.reload()
+    } catch { setDeleting(null) }
+  }
+
+  function useDraft(log: any) {
+    const params = new URLSearchParams()
+    if (log.caption) params.set('caption', log.caption)
+    if (log.image_url) params.set('image_url', log.image_url)
+    if (log.social_account_id) params.set('account_id', log.social_account_id)
+    if (log.topic_used) params.set('topic', log.topic_used)
+    if (log.content_type) params.set('type', log.content_type)
+    params.set('from_draft', log.id)
+    router.push('/dashboard/create?' + params.toString())
+  }
 
   const filtered = activeStatus === 'all'
     ? allLogs
@@ -274,7 +314,7 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filtered.map(log => <GridCard key={log.id} log={log} />)}
+          {filtered.map(log => <GridCard key={log.id} log={log} onUseDraft={useDraft} onDeleteDraft={deleteDraft} isDraftDeleting={deleting} />)}
         </div>
       ) : (
         <div
@@ -290,9 +330,9 @@ export default function PostsClient({ logs: allLogs }: { logs: any[] }) {
             <div className="w-28 shrink-0 hidden md:block text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Topic</div>
             <div className="w-24 shrink-0 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Status</div>
             <div className="w-32 shrink-0 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Date</div>
-            <div className="w-8 shrink-0" />
+            <div className="w-24 shrink-0 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Actions</div>
           </div>
-          {filtered.map(log => <ListRow key={log.id} log={log} />)}
+          {filtered.map(log => <ListRow key={log.id} log={log} onUseDraft={useDraft} onDeleteDraft={deleteDraft} isDraftDeleting={deleting} />)}
         </div>
       )}
     </div>
