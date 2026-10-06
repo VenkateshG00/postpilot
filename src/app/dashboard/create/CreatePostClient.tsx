@@ -721,58 +721,84 @@ export default function CreatePostClient({
             </button>
           </div>
 
-          {/* AI Preview */}
+          {/* AI Preview — Clean Card */}
           {preview && (
-            <div className="card p-6 mt-5 space-y-4">
-              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Preview</p>
+            <div className="mt-5 overflow-hidden" style={{ borderRadius: "16px", border: "1px solid var(--border)", background: "var(--card-bg, #fff)" }}>
+              {/* Image section */}
               <div className="relative">
                 {preview.image_url ? (
-                  <img src={preview.image_url} alt="" className="w-full max-w-sm rounded-xl object-cover" />
+                  <img src={preview.image_url} alt="" className="w-full aspect-square object-cover" />
                 ) : (
-                  <div className="w-full max-w-sm h-48 rounded-xl flex items-center justify-center text-sm" style={{ background: "var(--bg)", color: "var(--text-muted)" }}>No image</div>
-                )}
-                {!genImg && aiImageProvider !== "none" && (
-                  <button onClick={generateAIImage} disabled={genImg || credits < aiImageCredits} title={credits < aiImageCredits ? `Need ${aiImageCredits} credits` : "Generate AI image"} className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40 transition-all" style={{ background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
-                    <Wand2 size={13} /> AI image <span style={{ color: "var(--text-muted)" }}>({aiImageCredits} cr)</span>
-                  </button>
-                )}
-                {genImg && (
-                  <div className="absolute inset-0 max-w-sm rounded-xl flex flex-col items-center justify-center gap-2 text-sm" style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
-                    <Loader2 size={20} className="animate-spin" style={{ color: "var(--accent)" }} /><span>Generating AI image...</span>
+                  <div className="w-full aspect-square flex items-center justify-center text-sm" style={{ background: "var(--bg)", color: "var(--text-muted)" }}>
+                    <div className="text-center">
+                      <ImagePlus size={32} className="mx-auto mb-2" style={{ opacity: 0.4 }} />
+                      <p>No image generated</p>
+                    </div>
                   </div>
                 )}
+                {genImg && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm" style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)", color: "var(--text-muted)" }}>
+                    <Loader2 size={24} className="animate-spin" style={{ color: "var(--accent)" }} />
+                    <span className="font-medium">Generating AI image...</span>
+                  </div>
+                )}
+                {/* Regen Image button overlay */}
+                {!genImg && !genCap && aiImageProvider !== "none" && (
+                  <button onClick={generateAIImage} disabled={genImg || gen || genCap || credits < aiImageCredits}
+                    className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium disabled:opacity-40 transition-all hover:scale-105"
+                    style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,0,0,0.08)", color: "var(--text-primary)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                    <ImagePlus size={14} /> Regenerate image <span style={{ color: "var(--text-muted)" }}>({aiImageCredits} cr)</span>
+                  </button>
+                )}
               </div>
-              {aiImageProvider !== "none" && (
-                <p className="text-xs -mt-1" style={{ color: "var(--text-muted)" }}><ImagePlus size={11} className="inline mr-1" />Tap &quot;AI image&quot; to replace with a unique AI-generated image.</p>
-              )}
-              <textarea
-                value={preview.caption}
-                onChange={e => {
-                  const val = e.target.value
-                  setPreview(p => p ? { ...p, caption: val } : p)
-                  setCaption(val)
-                }}
-                rows={5}
-                className="w-full text-sm rounded-lg p-3 resize-y"
-                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", outline: "none" }}
-                placeholder="Edit your caption..."
-              />
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={regenerateCaption} disabled={genCap || gen || genImg} className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
-                  {genCap ? <Loader2 size={16} className="animate-spin" /> : <Type size={16} />} Regen Caption <span className="text-xs" style={{ color: "var(--text-muted)" }}>(1 cr)</span>
-                </button>
-                <button onClick={generateAIImage} disabled={genImg || gen || genCap || aiImageProvider === "none" || credits < aiImageCredits} className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50">
-                  {genImg ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />} Regen Image <span className="text-xs" style={{ color: "var(--text-muted)" }}>(${"{aiImageCredits}"} cr)</span>
-                </button>
-                <button onClick={() => publish()} disabled={posting || genImg} className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm disabled:opacity-50">
-                  {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
-                </button>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 flex-wrap" style={{ borderTop: "1px solid var(--border)" }}>
-                <Clock size={14} style={{ color: "var(--text-muted)" }} />
-                <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule for</span>
-                <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm" style={inputStyle} />
-                <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor || genImg} className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap disabled:opacity-50">Schedule</button>
+
+              {/* Caption section */}
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "var(--accent)", color: "#fff" }}>
+                    {(accounts.find(a => a.id === accountId)?.account_name || "?")[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                    @{accounts.find(a => a.id === accountId)?.account_name || "account"}
+                  </span>
+                </div>
+
+                <textarea
+                  value={preview.caption}
+                  onChange={e => {
+                    const val = e.target.value
+                    setPreview(p => p ? { ...p, caption: val } : p)
+                    setCaption(val)
+                  }}
+                  rows={6}
+                  className="w-full text-sm rounded-xl p-3.5 resize-y transition-colors"
+                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)", outline: "none", lineHeight: "1.6" }}
+                  placeholder="Edit your caption..."
+                />
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2">
+                  <button onClick={regenerateCaption} disabled={genCap || gen || genImg}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40 hover:scale-[1.02]"
+                    style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                    {genCap ? <Loader2 size={15} className="animate-spin" /> : <Type size={15} />}
+                    Regen caption
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>1 cr</span>
+                  </button>
+                  <button onClick={() => publish()} disabled={posting || genImg || genCap}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50">
+                    {posting ? <><Loader2 size={16} className="animate-spin" /> Posting...</> : <><Send size={16} /> {activeTab === "reel" ? "Post reel" : activeTab === "story" ? "Post story" : "Post now"}</>}
+                  </button>
+                </div>
+
+                {/* Schedule row */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                  <Clock size={14} style={{ color: "var(--text-muted)" }} />
+                  <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-muted)" }}>or schedule for</span>
+                  <input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="flex-1 text-sm rounded-xl" style={inputStyle} />
+                  <button onClick={() => publish(scheduledFor)} disabled={posting || !scheduledFor || genImg}
+                    className="btn-secondary flex items-center gap-2 text-sm whitespace-nowrap rounded-xl disabled:opacity-50">Schedule</button>
+                </div>
               </div>
             </div>
           )}
