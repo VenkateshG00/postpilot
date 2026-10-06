@@ -77,16 +77,16 @@ function qualityDot(q: "peak" | "good") {
 
 /* Glass card */
 const glass: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--card-bg, #fff) 72%, transparent)",
-  backdropFilter: "blur(24px) saturate(1.4)",
-  WebkitBackdropFilter: "blur(24px) saturate(1.4)",
-  border: "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
-  boxShadow: "0 8px 40px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.02), inset 0 0.5px 0 rgba(255,255,255,0.12)",
-  borderRadius: 22,
+  background: "color-mix(in srgb, var(--bg-card, #fff) 82%, transparent)",
+  backdropFilter: "blur(20px) saturate(1.3)",
+  WebkitBackdropFilter: "blur(20px) saturate(1.3)",
+  border: "1px solid color-mix(in srgb, var(--border) 60%, transparent)",
+  boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+  borderRadius: 20,
 }
 const glassInner: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--bg) 80%, transparent)",
-  border: "1px solid color-mix(in srgb, var(--border) 40%, transparent)",
+  background: "color-mix(in srgb, var(--bg) 90%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
   borderRadius: 14,
 }
 
@@ -555,7 +555,7 @@ export default function CreatePostClient({
             }}>
               <div className="flex items-center justify-center text-[10px] font-bold" style={{
                 width: "100%", height: "100%", borderRadius: "50%",
-                background: "var(--card-bg, #fff)", color: "var(--accent)",
+                background: "var(--bg-card, #fff)", color: "var(--accent)",
               }}>
                 {acctName[0].toUpperCase()}
               </div>
@@ -654,7 +654,7 @@ export default function CreatePostClient({
 
   /* ═══════════ JSX ═══════════ */
   return (
-    <div>
+    <div style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--accent-brand) 3%, var(--bg)) 0%, var(--bg) 40%, color-mix(in srgb, var(--accent) 2%, var(--bg)) 100%)", minHeight: "100%" }}>
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -989,17 +989,17 @@ export default function CreatePostClient({
 
                   <div className="flex gap-2">
                     <button onClick={regenerateCaption} disabled={genCap || gen || genImg}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40 cursor-pointer"
                       style={{ ...glassInner, borderRadius: 12, color: "var(--text-primary)", padding: "10px 12px" }}>
                       {genCap ? <Loader2 size={14} className="animate-spin" /> : <Type size={14} />}
                       New caption <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>1 cr</span>
                     </button>
                     {aiImageProvider !== "none" && (
                       <button onClick={generateAIImage} disabled={genImg || gen || genCap || credits < aiImageCredits}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium transition-all disabled:opacity-40 cursor-pointer"
                         style={{ ...glassInner, borderRadius: 12, color: "var(--text-primary)", padding: "10px 12px" }}>
                         {genImg ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
-                        New image <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>{aiImageCredits} cr</span>
+                        AI image <span className="text-[10px] ml-1" style={{ color: "var(--text-muted)" }}>{aiImageCredits} cr</span>
                       </button>
                     )}
                   </div>
